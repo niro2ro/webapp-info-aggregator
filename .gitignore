@@ -1,0 +1,57 @@
+# ===== .NET =====
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userprefs
+.vs/
+.vscode/
+*.dll
+*.exe
+*.pdb
+
+# ===== 秘密情報（絶対にコミットしない）=====
+# User Secrets は %APPDATA% 配下に保存されるため通常ここには来ないが、念のため
+secrets.json
+appsettings.*.Local.json
+appsettings.Local.json
+appsettings.Development.json
+*.env
+.env
+.env.*
+
+# ===== EF Core / DB =====
+*.db
+*.db-shm
+*.db-wal
+
+# ===== Docker（データボリューム等）=====
+# docker-compose.yml 自体はコミットする。ローカル生成物のみ除外
+**/pgdata/
+**/postgres-data/
+
+# ===== OS / エディタ =====
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.swp
+*~
+
+# ===== Rider / JetBrains =====
+.idea/
+
+# ===== テスト・カバレッジ =====
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+*.coverage
