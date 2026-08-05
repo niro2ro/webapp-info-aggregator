@@ -55,3 +55,6 @@ $RECYCLE.BIN/
 coverage*.json
 coverage*.xml
 *.coverage
+
+# ===== Claude Code（PCローカル設定・同期しない）=====
+.claude/settings.local.json
