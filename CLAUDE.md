@@ -9,9 +9,9 @@
 
 1. **いきなり実装（コード）を書き始めない。** ウォーターフォールの工程順に進める。前工程の成果物が確定・レビュー承認されてから次工程に入る。
 2. **応答は日本語で行う。**
-3. **C# / .NET 固有のイディオム・設計パターンは、選択理由を必ず説明する。** 開発者は C# 実務未経験のため「なぜこう書くのか」を省略しない（§2 参照）。
+3. **Java / Spring・Vaadin 固有のイディオム・設計パターンは、選択理由を必ず説明する。** 開発者は Java 実務未経験のため「なぜこう書くのか」を省略しない（§2 参照）。
 4. **ライブラリのバージョンや外部 API 仕様は記憶に頼らず、着手時に公式ドキュメントを確認する。** 特に LINE Messaging API と料金プランは改定されやすい。
-5. **秘密情報（接続文字列・API キー・LINE トークン）をソースやリポジトリに直書きしない。** appsettings + User Secrets → 環境変数で管理する。
+5. **秘密情報（接続文字列・API キー・LINE トークン）をソースやリポジトリに直書きしない。** `application.yml` はプレースホルダのみとし、実値は環境変数 / `.env`（ローカル）→ 本番は環境変数・Secret 管理で注入する。
 
 ---
 
@@ -31,11 +31,11 @@
 
 - 業務経験: Delphi による会計 ERP パッケージの開発・保守（約4年、ウォーターフォール）
 - 得意: 設計書ベース開発、DB 設計、業務要件整理、テスト工程
-- **C# は学習中**（文法は理解、実務経験なし）
-- 未経験: ASP.NET Core / EF Core / Blazor / DI コンテナ / async・await / LINQ の実践利用
+- **Java は学習中**（文法は理解、実務経験なし）
+- 未経験: Spring Boot / Spring Data JPA・Hibernate / Vaadin Flow / DI（Spring コンテナ）/ ラムダ・Stream API / ビルドツール(Maven) の実践利用
 - AI: Claude Code / MCP サーバー自作経験あり。LLM 特性はある程度理解
 
-→ **ウォーターフォールの工程・設計書文化には精通している。逆に .NET 固有の書き方は都度説明が必要。**
+→ **ウォーターフォールの工程・設計書文化には精通している。逆に Java / Spring 固有の書き方は都度説明が必要。**（DB設計とSQLには強いため、JPA より SQL/DDL ベースの説明が響きやすい）
 
 ---
 
@@ -47,8 +47,8 @@
 | `01_要件定義/` | 要件定義 | 要件定義書、機能一覧、画面一覧、テーブル定義(DDL)、外部I/F仕様、エラー方針 | `requirements-definition` |
 | `02_基本設計/` | 基本設計（外部設計） | 画面設計、画面遷移、API/バッチI/F、ER図、テーブル定義書、メッセージ一覧 | `basic-design` |
 | `03_詳細設計/` | 詳細設計（内部設計） | クラス設計、シーケンス、モジュール仕様、DIポリシー、例外設計 | `detailed-design` |
-| `04_実装/` | 実装 | .NET ソリューション（Web / バッチ / ドメイン / インフラ / テスト各プロジェクト） | `implementation` |
-| `05_単体テスト/` | 単体テスト | 単体テスト仕様書、xUnit テストコード、実施結果/エビデンス | `unit-testing` |
+| `04_実装/` | 実装 | Maven マルチモジュール（web / batch / domain / infrastructure / test 各モジュール） | `implementation` |
+| `05_単体テスト/` | 単体テスト | 単体テスト仕様書、JUnit 5 テストコード、実施結果/エビデンス | `unit-testing` |
 | `06_結合テスト/` | 結合テスト | 結合テスト仕様書、シナリオ、実施結果、既知不具合一覧 | `integration-testing` |
 
 各フォルダには directory-scoped な skill が置いてある。その工程の作業をするときは対応する skill を呼び出す（例: `/requirements-definition`）。skill 名が重複する場合は、作業対象ファイルを含むフォルダの skill を優先する。
@@ -61,18 +61,21 @@
 
 | 層 | 選定 | 備考 |
 |---|---|---|
-| 言語 | C# / .NET 8 以降 | |
-| バッチ | コンソールアプリ（Generic Host） | 実行して終了する。Web と別プロセス |
-| Web | ASP.NET Core + Blazor Server | localhost |
-| ORM | Entity Framework Core | |
+| 言語 | Java 21 (LTS) 以降 | 仮想スレッド(Loom)前提で並行処理を単純化 |
+| 基盤 | Spring Boot 3.x | DI / 設定 / Web を一体提供 |
+| ビルド | Maven（マルチモジュール） | web / batch / domain / infrastructure |
+| バッチ | Spring Boot 別アプリ + `CommandLineRunner` | 実行して終了する。Web と別プロセス。重くなれば Spring Batch |
+| Web | **Spring Boot + Vaadin Flow** | サーバー側 Java だけで画面を書くステートフルUI。localhost・単一プロセス |
+| ORM | Spring Data JPA + Hibernate | 複雑クエリは JPQL / 必要なら jOOQ を局所併用 |
+| マイグレーション | **Flyway**（SQL ベース） | `V1__*.sql` に DDL を書く。テーブル定義書がそのまま反映される |
 | DB | **PostgreSQL（確定）** | 開発中は Docker Compose でローカル起動。VPS 移行後もそのまま |
-| HTTP | HttpClientFactory + Polly | リトライ・タイムアウト・サーキットブレーカー |
-| HTML 解析 | AngleSharp | |
-| RSS | System.ServiceModel.Syndication | |
-| LLM | Claude API | 収集時の構造化のみ。通知時は使わない |
-| 通知 | LINE Messaging API | LINE Notify は 2025-03-31 終了済み。Notify 前提の記事に注意 |
-| 設定 | appsettings.json + User Secrets | トークン直書き禁止 |
-| テスト | xUnit | |
+| HTTP | Spring `RestClient` + **Resilience4j** | リトライ・タイムアウト・サーキットブレーカー |
+| HTML 解析 | **jsoup** | |
+| RSS | **ROME (rome-tools)** | |
+| LLM | Claude API（**anthropic-sdk-java** 公式） | 収集時の構造化のみ。通知時は使わない |
+| 通知 | LINE Messaging API（**line-bot-sdk-java** 公式） | LINE Notify は 2025-03-31 終了済み。Notify 前提の記事に注意 |
+| 設定 | `application.yml` + 環境変数 / `.env` | トークン直書き禁止 |
+| テスト | JUnit 5 + Mockito + **Testcontainers** | Testcontainers で本物の PostgreSQL を起動して結合検証 |
 | 起動 | タスクスケジューラ（ログオン時、遅延5分） | VPS では cron / systemd timer |
 
 ---
@@ -80,8 +83,8 @@
 ## 5. 全工程で貫く設計制約（後付けで直しにくいので最初から守る）
 
 - **冪等性必須**: 1日に複数回起動されうる。同じ記事を重複登録・重複通知しない。DB 制約（`Articles.UrlHash` ユニーク、`ArticleNotifications(UserId, ArticleId)`）で担保し、アプリ側チェックだけに頼らない。同日2回目以降は通知しない。
-- **日時は UTC 保存 / 表示時に JST 変換**。`TimeZoneInfo` の識別子を埋め込まない（Windows "Tokyo Standard Time" と Linux "Asia/Tokyo" が異なる）。
-- **VPS 移行前提**: バッチと Web を別プロセスに。Windows 固有 API を使わない。パスは `Path.Combine`（`C:\` を書かない）。設定値は全外部化。ログはファイル依存を避け DB / 標準出力へ。文字コードは UTF-8 統一。SQLite は使わない。
+- **日時は UTC 保存 / 表示時に JST 変換**。DB は `timestamptz`、Java 側は `Instant`（UTC）で保持し、表示直前に `ZoneId.of("Asia/Tokyo")` で `ZonedDateTime` へ変換する。ゾーンIDはコードに散在させず一箇所（定数/設定）に集約する。※Java の `ZoneId` は IANA tz 名（"Asia/Tokyo"）で全OS共通のため .NET のような Windows/Linux 識別子差異は無いが、ハードコード分散は避ける。
+- **VPS 移行前提**: バッチと Web を別プロセスに。Windows 固有 API を使わない。パスは `Path.of(...)` で組み立て（`C:\` 等の絶対パスを書かない）。設定値は全外部化。ログはファイル依存を避け DB / 標準出力へ。文字コードは UTF-8 統一。SQLite は使わない。
 - **LLM はコストがユーザー数に比例しない構造**にする。呼び出しは収集時の構造化に限定。RSS で取れる情報源を優先し LLM 使用を減らす。取得は「RSS → 専用パーサー → LLM」のフォールバック。
 - **権利配慮**: 記事本文をそのまま保存・表示しない（自作要約＋元URLのみ）。公式画像を自サーバー保存しない。ロゴ/ビジュアルを使わない。robots.txt 尊重。同一ホストへのリクエスト間隔1秒以上。User-Agent に連絡先を含める。スクレイピング禁止サイトは情報源から除外。→ README に明記する。
 - **障害分離**: 1情報源の失敗が他情報源の処理を止めない。
@@ -93,7 +96,7 @@
 
 | Phase | 内容 | 完成条件 |
 |---|---|---|
-| 0 | Docker Compose で PostgreSQL 起動、EF Core 接続確認 | マイグレーションが通る |
+| 0 | Docker Compose で PostgreSQL 起動、Spring Boot + JPA 接続確認、Flyway マイグレーション実行 | Flyway マイグレーションが通る |
 | 1 | DB 設計、テーマ登録、RSS 収集、一覧表示 | 1テーマ分が日付順に並ぶ |
 | 2 | LLM 構造化、重複排除、情報源追加 | 3ソース以上から収集 |
 | 3 | お気に入り、未読管理、フィルタ、検索 | 日常的に使える |
@@ -108,10 +111,12 @@ Phase 5 までで個人利用として完成。実装工程（`04_実装/`）は
 
 ## 7. 未決事項（要件定義で必ず確定させる）
 
-PROJECT_BRIEF §10 の未決事項は要件定義工程で開発者に質問して確定する:
-- 対象範囲（アニメ/漫画限定か汎用か）、カテゴリ5分類の妥当性
-- 最初に実装する情報源3つ（RSS 提供有無・利用規約を調査）
-- Blazor Server か Web API+別フロントか、LLM は Claude API でよいか、日本語全文検索の要否（pg_bigm / pg_trgm）
-- 日付の表記ゆれ（「9月上旬」「秋頃」「予約受付中」）の格納方式（確定日と曖昧表現を別カラム or 精度フラグ）← 早期に決める
+PROJECT_BRIEF §10 の未決事項は要件定義工程で確定済み（`01_要件定義/未決事項回答ログ.md` 参照）:
+- 対象範囲＝アニメ・漫画中心／構造は汎用、カテゴリ＝7区分で確定
+- 最初の情報源3つ＝B案（MANTANWEB / HOBBY Watch / Gamer）で確定（RSS/robots/規約は着手時に実地確認）
+- Web 構成＝**Vaadin Flow**（Java へのピボットに伴い Blazor Server から変更）、LLM＝Claude API、全文検索＝pg_trgm で確定
+- 日付の表記ゆれ＝代表日＋原文＋精度フラグの3カラム方式で確定
 
-DB が PostgreSQL である点は確定。質問不要。
+DB が PostgreSQL である点は確定。
+
+> **技術スタックのピボット（2026-08-05）**: 当初は C# / .NET（Blazor Server）想定だったが、開発者判断で **Java（Spring Boot + Vaadin Flow）学習を兼ねたポートフォリオ**へ変更。要件（機能・非機能・画面・データ設計・外部I/F・エラー方針）は言語非依存のため不変で、技術構成（§4）と一部の実装メモのみを差し替えた。一次入力 `PROJECT_BRIEF.md` は歴史的経緯として原文（.NET 想定）のまま保持し、本 CLAUDE.md と要件定義成果物が上書き・優先する。
