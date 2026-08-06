@@ -7,6 +7,8 @@ Claude Code は本書を読んだうえで、未決事項（末尾「決定が�
 
 いきなり実装に入らないこと。まず要件を確定させる。
 
+> **技術スタックのピボット（2026-08-05 追記）**: 当初は C# / .NET（Blazor Server）で構想していたが、開発者判断で **Java（Spring Boot + Vaadin Flow）学習を兼ねたポートフォリオ**へ変更した。本書の技術記述はこれに合わせて更新済み。確定した設計判断とその根拠は `01_要件定義/未決事項回答ログ.md`（特に Q12）を正とする。
+
 ---
 
 ## 1. 背景と目的
@@ -20,7 +22,7 @@ Claude Code は本書を読んだうえで、未決事項（末尾「決定が�
 ### 副次的な目的
 本プロジェクトは**転職活動用のポートフォリオ**を兼ねる。したがって以下を重視する。
 
-- モダンな C# / .NET のスタックで実装すること
+- モダンな Java / Spring のスタックで実装すること
 - 「なぜその設計にしたか」を説明できること（README に設計判断を記載）
 - AI を使う箇所と使わない箇所の切り分けが明確であること
 - 権利・コスト・冪等性への配慮が見えること
@@ -33,11 +35,11 @@ Claude Code は以下を前提に、説明の粒度と提案内容を調整す�
 
 - 業務経験：Delphi による会計 ERP パッケージの開発・保守（約4年、ウォーターフォール）
 - 得意：設計書ベースの開発、DB 設計、業務要件の整理、テスト工程
-- **C# は学習中**。文法は理解しているが、実務での使用経験はない
-- 未経験の技術：ASP.NET Core、Entity Framework Core、Blazor、DI コンテナ、非同期処理（async/await）、LINQ の実践的利用
+- **Java は学習中**。文法は理解しているが、実務での使用経験はない
+- 未経験の技術：Spring Boot、Spring Data JPA / Hibernate、Vaadin Flow、DI（Spring）コンテナ、ラムダ・Stream API、ビルドツール(Maven) の実践的利用
 - AI 関連：Claude Code / MCP サーバーの自作経験あり。LLM の特性はある程度理解している
 
-したがって、**C# / .NET 固有のイディオムや設計パターンについては、選択理由を明示的に説明すること**。「なぜこう書くのか」の説明を省略しないこと。
+したがって、**Java / Spring 固有のイディオムや設計パターンについては、選択理由を明示的に説明すること**。「なぜこう書くのか」の説明を省略しないこと。
 
 ---
 
@@ -76,9 +78,9 @@ PC 起動時にバッチが走るため、以下が仕様上の前提となる�
 |---|---|
 | DB | 最初から PostgreSQL を使う。SQLite は使わない（移行時のデータ型・大文字小文字の差異でハマるため） |
 | プロセス分離 | バッチと Web を別プロセスにする。Windows サービス化はしない（Linux で作り直しになる） |
-| OS 依存 | Windows 固有の API を使わない。パスは `Path.Combine` を使い `C:\` 等を書かない |
-| 設定値 | 接続文字列・API キー・収集間隔などをすべて外部化する（appsettings + User Secrets → 環境変数） |
-| 日時 | **すべて UTC で DB に保存し、表示時にローカル時刻へ変換する。** Windows と Linux ではタイムゾーン識別子が異なる（"Tokyo Standard Time" / "Asia/Tokyo"）ため、`TimeZoneInfo` を直接埋め込まない |
+| OS 依存 | Windows 固有の API を使わない。パスは `Path.of(...)` を使い `C:\` 等を書かない |
+| 設定値 | 接続文字列・API キー・収集間隔などをすべて外部化する（`application.yml` にプレースホルダ → 実値は環境変数 / `.env`） |
+| 日時 | **すべて UTC で DB に保存し、表示時にローカル時刻へ変換する。** Java 側は `Instant`（UTC）で保持し、表示直前に `ZoneId.of("Asia/Tokyo")` で JST 変換。ゾーンIDは一箇所に集約する（`ZoneId` は IANA tz 名で全OS共通のため .NET のような識別子差異は無いが、ハードコード分散は避ける） |
 | ファイル出力 | ログを含めローカルファイルへの依存を避け、DB または標準出力に寄せる |
 | 文字コード | UTF-8 で統一する |
 
@@ -89,7 +91,7 @@ PC 起動時にバッチが走るため、以下が仕様上の前提となる�
 | DB 移行 | `pg_dump` / `pg_restore` でデータを移送。スキーマは同一のため変換は不要 |
 | バッチ起動 | タスクスケジューラ → cron または systemd timer に置き換え |
 | 通知トリガー | 「PC 起動時」から「毎朝定時」に変更。§4.3 の未通知フラグ方式のままで対応できる設計にしておくこと |
-| 設定管理 | User Secrets → 環境変数 |
+| 設定管理 | ローカルは `.env` / 環境変数 → 本番は環境変数・Secret 管理 |
 | HTTPS | Let's Encrypt で証明書を取得 |
 | 認証 | 外部公開に伴い認証を必須化する。デモ用の読み取り専用モードの要否を検討する |
 | 死活監視 | UptimeRobot 等で監視し、停止時に通知が来るようにする |
@@ -195,19 +197,22 @@ Claude Code は移行時、本節を参照して手順書を作成すること�
 
 | 層 | 選定 | 備考 |
 |---|---|---|
-| 言語 | C# / .NET 8 以降 | |
-| バッチ | コンソールアプリ（Generic Host） | 実行して終了する |
-| Web | ASP.NET Core + Blazor Server | localhost |
-| ORM | Entity Framework Core | |
+| 言語 | Java 21 (LTS) 以降 | 仮想スレッド(Loom)前提 |
+| 基盤 | Spring Boot 3.x | DI / 設定 / Web を一体提供 |
+| ビルド | Maven（マルチモジュール） | |
+| バッチ | Spring Boot 別アプリ + `CommandLineRunner` | 実行して終了する |
+| Web | Spring Boot + Vaadin Flow | localhost・サーバー側 Java だけのステートフルUI |
+| ORM | Spring Data JPA + Hibernate | |
+| マイグレーション | Flyway（SQLベース） | `V1__*.sql` に DDL |
 | DB | **PostgreSQL（確定）** | 開発中は Docker でローカル起動。VPS 移行時もそのまま使う |
 | DB 起動 | Docker Compose | `docker compose up -d` で立ち上がる構成にする |
-| HTTP | HttpClientFactory + Polly | リトライ、タイムアウト、サーキットブレーカー |
-| HTML 解析 | AngleSharp | |
-| RSS | System.ServiceModel.Syndication | |
-| LLM | Claude API | |
-| 通知 | LINE Messaging API | |
-| 設定管理 | appsettings.json + User Secrets | **トークンの直書き禁止** |
-| テスト | xUnit | |
+| HTTP | RestClient + Resilience4j | リトライ、タイムアウト、サーキットブレーカー |
+| HTML 解析 | jsoup | |
+| RSS | ROME (rome-tools) | |
+| LLM | Claude API（anthropic-sdk-java 公式） | |
+| 通知 | LINE Messaging API（line-bot-sdk-java 公式） | |
+| 設定管理 | `application.yml` + 環境変数 / `.env` | **トークンの直書き禁止** |
+| テスト | JUnit 5 + Mockito + Testcontainers | |
 | 起動 | タスクスケジューラ（ログオン時、遅延5分） | |
 
 ライブラリのバージョンや API 仕様は変わっている可能性があるため、**着手時に最新のドキュメントを確認すること**。
@@ -265,7 +270,7 @@ Claude Code は移行時、本節を参照して手順書を作成すること�
 4. 利用者が公式アカウントを友だち追加する（**これがないと push できない**）
 5. ユーザーID を取得して DB に登録
 
-アクセストークンは User Secrets または環境変数で管理し、**ソースコードやリポジトリに含めない**。
+アクセストークンは環境変数 / `.env`（`application.yml` はプレースホルダのみ）で管理し、**ソースコードやリポジトリに含めない**。
 
 ---
 
@@ -302,7 +307,7 @@ Claude Code は要件定義に入る前に、以下を開発者に確認する�
 
 ### 10.3 技術選定
 - **DB は PostgreSQL で確定。この点は質問不要。** Docker でローカル起動する
-- Blazor Server か、Web API + 別フロントか
+- Web 構成（Vaadin Flow か、Thymeleaf + htmx か、REST API + 別フロントか）
 - LLM は Claude API でよいか
 - 日本語の全文検索が必要か（必要なら pg_bigm または pg_trgm の導入を検討）
 
@@ -318,7 +323,7 @@ Claude Code は要件定義に入る前に、以下を開発者に確認する�
 
 | Phase | 内容 | 完成条件 | 実施時期 |
 |---|---|---|---|
-| 0 | Docker Compose で PostgreSQL 起動、EF Core 接続確認 | マイグレーションが通る | 着手時 |
+| 0 | Docker Compose で PostgreSQL 起動、Spring Boot + JPA 接続確認、Flyway 実行 | Flyway マイグレーションが通る | 着手時 |
 | 1 | DB 設計、テーマ登録、RSS 収集、一覧表示 | 1テーマ分の情報が日付順に並ぶ | |
 | 2 | LLM による構造化、重複排除、情報源追加 | 3ソース以上から収集できる | |
 | 3 | お気に入り、未読管理、フィルタ、検索 | 日常的に使える | |
@@ -341,7 +346,7 @@ Phase 5 までで個人利用として完成する。
 2. 回答を踏まえて `docs/requirements.md` に正式な要件定義書を作成する
    - 機能一覧、画面一覧、テーブル定義（DDL レベル）、外部 I/F 仕様、エラーハンドリング方針を含める
 3. 要件定義書のレビューを受けてから、Phase 1 の設計に進む
-4. C# / .NET 固有の設計判断については、選択理由を必ず説明する
+4. Java / Spring 固有の設計判断については、選択理由を必ず説明する
 5. ライブラリのバージョンや外部 API の仕様は、記憶に頼らず公式ドキュメントを確認する
 
 **いきなりコードを書き始めないこと。**
