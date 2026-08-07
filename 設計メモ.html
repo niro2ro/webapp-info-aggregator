@@ -69,6 +69,15 @@
     white-space:nowrap;}
   .legend{font-size:12.5px;color:var(--muted);margin:0 0 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
   .legend .star{color:var(--star);font-weight:700;}
+  .note{background:var(--accent-weak);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:10px;padding:16px 18px;margin:0 0 18px;box-shadow:var(--shadow);}
+  .note h3{margin:0 0 10px;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .note p{margin:6px 0;font-size:13.5px;color:var(--muted);}
+  .note p b{color:var(--ink);}
+  .note .mini{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;}
+  .note .mini td{border:0;border-bottom:1px solid var(--line2);padding:7px 10px;vertical-align:top;}
+  .note .mini td:first-child{font-weight:600;white-space:nowrap;color:var(--ink);width:32%;}
+  .note .mini tr:last-child td{border-bottom:0;}
   .placeholder{background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:48px 28px;
     text-align:center;color:var(--muted);box-shadow:var(--shadow);}
   .placeholder .big{font-size:40px;margin-bottom:8px;opacity:.5;}
@@ -189,8 +198,8 @@
           </tr>
           <tr class="starred">
             <td class="k"><span class="star">★</span>拡張性・移行性</td>
-            <td class="d">OS非依存・Web/バッチ別プロセス・設定全外部化・SQLite不使用・UTF-8統一 <span class="id">NFR-09</span>。日時はUTC保存/JST表示 <span class="id">NFR-08</span>。<b>秘密情報は環境変数で外部化（案A・12-factor）</b>：機密（LINEトークン/Claudeキー/DBパスワード）は環境変数のみ、<code>application.yml</code>はプレースホルダのみでリポジトリに実値を置かない。非機密の環境差分はSpring Profilesで切替 <span class="id">NFR-11</span>。</td>
-            <td class="w">VPS移行が<b>確定済みの将来</b>。移行を阻害する制約（Windows固有API・ローカルパス・時刻ゾーン散在）は<b>後付けで直しにくいので最初から</b>守る。秘密情報は<b>案A（環境変数）</b>を採用＝手間最小で移行性・安全性を両立し説明も容易。<b>※将来の高度化余地</b>：Jasypt等で<b>暗号化した秘密をリポジトリにコミットする案C</b>（秘密の履歴管理・より一段深い見せ方）も選択肢で、必要になれば後日検討してよい（マスターキー管理は結局env方式と同様に必要）。</td>
+            <td class="d">OS非依存・Web/バッチ別プロセス・設定全外部化・SQLite不使用・UTF-8統一 <span class="id">NFR-09</span>。日時はUTC保存/JST表示 <span class="id">NFR-08</span>。<b>秘密情報は環境変数で外部化（案A・12-factor）</b>：機密（LINEトークン/Claudeキー/DBパスワード）は環境変数のみ、<code>application.yml</code>はプレースホルダのみでリポジトリに実値を置かない。非機密の環境差分はSpring Profilesで切替 <span class="id">NFR-11</span>。<b>コンテナ化＝Docker採用</b>：開発中はアプリを直実行＋DBのみDocker、<b>Phase 6のVPS移行時にアプリもDocker化</b>（マルチステージDockerfile＋compose一括起動） <span class="id">NFR-12</span>。</td>
+            <td class="w">VPS移行が<b>確定済みの将来</b>。移行を阻害する制約（Windows固有API・ローカルパス・時刻ゾーン散在）は<b>後付けで直しにくいので最初から</b>守る。秘密情報は<b>案A（環境変数）</b>を採用＝手間最小で移行性・安全性を両立し説明も容易。<b>※将来の高度化余地</b>：Jasypt等で<b>暗号化した秘密をリポジトリにコミットする案C</b>（秘密の履歴管理・より一段深い見せ方）も選択肢で、必要になれば後日検討してよい（マスターキー管理は結局env方式と同様に必要）。<b>Docker</b>は移行の必須ではない（JARはOS非依存）が、<b>Windows→Linuxの環境差異を消して移行を安全化し、ポートフォリオでDockerスキルを示せる</b>ため採用。開発の反復速度を守るため導入は成果物として残るPhase 6とした。</td>
           </tr>
           <tr>
             <td class="k">コスト上限</td>
@@ -200,6 +209,22 @@
         </tbody>
       </table></div>
     </section>
+
+    <!-- 補足解説：Docker -->
+    <div class="note">
+      <h3>💡 補足解説：Docker とは（未経験者向け）</h3>
+      <p><b>ひとことで</b>：アプリを「動く環境ごと」1つの箱に固めて、どのマシンでも同じに動かす道具。「自分のPCでは動くのに別サーバーでは動かない」という<b>環境差異</b>をなくす（Delphi/ERP でいう「客先環境を揃える苦労」を消す）。</p>
+      <p><b>仮想マシン(VM)との違い</b>：VM は OS 丸ごとを仮想化して重い。コンテナは OS の核(カーネル)をホストと共有し、アプリと依存だけを隔離するので<b>軽い・秒で起動</b>（例え：VM＝一戸建てを各自建てる／コンテナ＝1棟のマンションの各部屋）。</p>
+      <p><b>覚える用語は4つ</b>：</p>
+      <table class="mini">
+        <tr><td>イメージ(image)</td><td>アプリ一式を固めた“型”。不変 ＝ プログラムの<b>クラス</b>にあたる</td></tr>
+        <tr><td>コンテナ(container)</td><td>イメージを起動した“実働の1つ” ＝ <b>インスタンス</b>にあたる</td></tr>
+        <tr><td>Dockerfile</td><td>イメージの作り方レシピ（ビルド手順書）</td></tr>
+        <tr><td>レジストリ</td><td>イメージを配布する倉庫（Docker Hub 等。Maven Central のイメージ版）</td></tr>
+      </table>
+      <p>複数の箱をまとめて起動する指揮書が <b>Docker Compose</b>。消えては困るデータ（DBの中身）は「<b>ボリューム</b>」という外部領域に逃がす。</p>
+      <p><b>この案件では既に使用中</b>：Phase 0 で PostgreSQL を Docker Compose で起動している（イメージ取得→コンテナ起動→データはボリューム保存）。④の論点は「<b>DBだけでなくアプリ(Web/バッチ)も箱に入れるか</b>」の一点で、<b>開発は直実行／Phase 6 VPS でアプリもDocker化</b>と決定（<span class="id">NFR-12</span>・項目3参照）。</p>
+    </div>
 
     <!-- 4 -->
     <section class="item">
