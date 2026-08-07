@@ -1,0 +1,442 @@
+<meta charset="utf-8">
+<title>設計メモ — テーマ別最新情報アグリゲーター</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+    --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+    --star:#b8860b; --star-bg:#fff8e6; --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+      --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+      --star:#e5c26b; --star-bg:#2a2410; --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --star:#e5c26b; --star-bg:#2a2410; --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+    --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+    --star:#b8860b; --star-bg:#fff8e6; --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px;}
+  header.page{margin-bottom:22px;}
+  .kicker{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:600;text-transform:uppercase;}
+  h1{font-size:30px;margin:.15em 0 .1em;letter-spacing:.01em;}
+  .sub{color:var(--muted);font-size:14px;}
+  .tabs{display:flex;gap:6px;margin:26px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .tab{appearance:none;border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:600;
+    padding:11px 18px;cursor:pointer;border-radius:8px 8px 0 0;position:relative;font-family:inherit;}
+  .tab:hover{color:var(--ink);background:var(--line2);}
+  .tab[aria-selected="true"]{color:var(--accent);}
+  .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;
+    background:var(--accent);border-radius:3px;}
+  .panel{display:none;padding-top:26px;}
+  .panel.active{display:block;animation:fade .18s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  .lead{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    box-shadow:var(--shadow);font-size:14px;color:var(--muted);margin-bottom:24px;}
+  .lead b{color:var(--ink);}
+  section.item{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0;margin:0 0 18px;
+    box-shadow:var(--shadow);overflow:hidden;}
+  .item > h2{display:flex;align-items:center;gap:12px;margin:0;padding:16px 20px;font-size:17px;
+    border-bottom:1px solid var(--line2);}
+  .num{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:var(--accent-weak);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;}
+  .tbl-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px;}
+  th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line2);}
+  thead th{color:var(--muted);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--line2);font-weight:700;}
+  tbody tr:last-child td{border-bottom:0;}
+  td.k{width:23%;font-weight:600;white-space:nowrap;}
+  td.k .star{color:var(--star);font-weight:700;margin-right:3px;}
+  td.d{width:34%;color:var(--ink);}
+  td.w{width:43%;color:var(--muted);}
+  tr.starred td.k{background:var(--star-bg);}
+  code{background:var(--chip);padding:.08em .4em;border-radius:5px;font-size:.88em;
+    font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .id{display:inline-block;background:var(--chip);color:var(--muted);border-radius:5px;padding:.02em .42em;
+    font-size:.82em;font-weight:600;margin:1px 2px 1px 0;font-family:"SF Mono",Menlo,Consolas,monospace;
+    white-space:nowrap;}
+  .legend{font-size:12.5px;color:var(--muted);margin:0 0 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+  .legend .star{color:var(--star);font-weight:700;}
+  .placeholder{background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:48px 28px;
+    text-align:center;color:var(--muted);box-shadow:var(--shadow);}
+  .placeholder .big{font-size:40px;margin-bottom:8px;opacity:.5;}
+  .placeholder h2{margin:0 0 6px;color:var(--ink);font-size:19px;}
+  .placeholder p{margin:2px 0;font-size:14px;}
+  .foot{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px;}
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="kicker">設計メモ / Design Notes</div>
+    <h1>設計メモ</h1>
+    <div class="sub">テーマ別最新情報アグリゲーター — 「なぜこの設計にしたか」を工程別に残す記録</div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="工程">
+    <button class="tab" role="tab" id="tab-req" aria-controls="p-req" aria-selected="true">要件定義</button>
+    <button class="tab" role="tab" id="tab-ext" aria-controls="p-ext" aria-selected="false">外部設計</button>
+    <button class="tab" role="tab" id="tab-int" aria-controls="p-int" aria-selected="false">内部設計</button>
+  </div>
+
+  <!-- ============ 要件定義 ============ -->
+  <div class="panel active" id="p-req" role="tabpanel" aria-labelledby="tab-req">
+    <div class="lead">
+      要件定義で決めた内容を、確認用の <b>10 項目チェックリスト</b>に対応させ、それぞれ「<b>何を決めたか</b>」と「<b>なぜその設計にしたか</b>」を残す。
+      出典は <code>01_要件定義/要件定義書.md</code> と <code>01_要件定義/未決事項回答ログ.md</code>（意思決定の根拠：Q1〜Q15）。
+    </div>
+    <div class="legend">
+      <span><span class="star">★</span> ＝ 特に重要（設計判断・根拠を要する項目）</span>
+      <span><span class="id">FR/SC/TBL/NFR/D</span> ＝ 要件定義書のトレース用ID</span>
+    </div>
+
+    <!-- 1 -->
+    <section class="item">
+      <h2><span class="num">1</span>スコープ・目的</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>目的・提供価値</td>
+            <td class="d">アニメ・漫画のグッズ／プライズ／カプセルトイ等、複数媒体に分散する最新情報を1か所に自動集約し、テーマの新着を効率よく把握する。Java 習得を兼ねた転職用ポートフォリオ。</td>
+            <td class="w">人気商品はすぐ売り切れ、情報が媒体ごとに散る＝「探す手間」が課題。価値の核はそこ。<b>即時アラートではなく「集約して探す手間を減らす」</b>と正直に線引きした（即時性は Phase 6 で後追い）。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>対象範囲 / スコープ外</td>
+            <td class="d"><b>内</b>＝収集・一覧表示・LINE通知。<b>外</b>＝本文/公式画像の保存、共有・コメント等ソーシャル、価格比較・在庫連携、購入・予約・SNS投稿。</td>
+            <td class="w">「あえて作らないもの」を明示し、後工程の実装が意図から逸れないようにする。本文非保存はスコープ判断であり<b>権利配慮（§9）とも一致</b>。将来候補（在庫・3名以上・汎用化）は別枠で記録。</td>
+          </tr>
+          <tr>
+            <td class="k">想定利用者・利用シーン</td>
+            <td class="d">2名（本人＋協力者1名）。自宅 Windows PC で常時稼働せず、ログオン時にバッチ起動。<span class="id">NFR-01</span></td>
+            <td class="w">小規模・非常時稼働という前提が、後述の<b>冪等性必須・LINE無料枠・コスト設計</b>すべての土台。ここを固定しないと非機能が決まらない。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>成功基準</td>
+            <td class="d">①登録→自動収集（RSS主・必要箇所のみLLM）→一覧・検索 ②お気に入り新着をLINEに1通 ③2名のデータが混ざらず一通り動作 ④AIは収集時のみ・月500円以内。</td>
+            <td class="w"><b>検証できる形</b>に落とした。この4基準から必要機能を洗い出して既存FRと照合（トップダウン照合＝回答ログ Q15）し、抜けていた4点（定期実行/LINE連携/LLMコスト可視化/利用者管理）を補完した。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 2 -->
+    <section class="item">
+      <h2><span class="num">2</span>機能</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">機能一覧</td>
+            <td class="d"><span class="id">FR-01</span>テーマ管理 / <span class="id">FR-02</span>収集 / <span class="id">FR-03</span>通知 / <span class="id">FR-04</span>一覧表示 / <span class="id">FR-05</span>お気に入り / <span class="id">FR-06</span>管理 / <span class="id">FR-07</span>認証・利用者。</td>
+            <td class="w">成功基準①〜④を過不足なく満たす単位に分割。<b>収集(FR-02)と通知(FR-03)を別機能・別バッチに分離</b>したのは、1情報源の失敗や再実行が通知に波及しないようにするため。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>優先順位（Must/Should/Could）</td>
+            <td class="d"><b>Must</b>：テーマ登録・RSS収集・日付順一覧（Phase 1-2）。<b>Should</b>：お気に入り・フィルタ/検索・LINE通知（Phase 3-4）。<b>Could</b>：管理画面・LLMコスト可視化・VPS化（Phase 5-6）。</td>
+            <td class="w">個人開発かつ学習兼のため<b>「最短で動くものから」</b>。まずRSSだけで骨格（1テーマが日付順に並ぶ）を通し、LLM・重複排除・通知は後追い。Phase分割（項目10）と一体で管理。</td>
+          </tr>
+          <tr>
+            <td class="k">トリガー・入力・出力</td>
+            <td class="d">収集＝スケジューラ/手動起動→情報源→記事DB。通知＝バッチ→お気に入りの新着→LINE push。閲覧＝Web操作→画面。</td>
+            <td class="w">起点が「PC起動時の一括バッチ」なので、入力は時刻ではなく<b>「前回以降の新着」</b>。この非同期・まとめ処理という性質が冪等性要件を生む。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>やらないこと（境界）</td>
+            <td class="d">秒単位の即時アラートはしない／記事本文の転載はしない／通知フェーズではLLMを一切呼ばない。</td>
+            <td class="w">機能の境界を明示。<b>通知時LLM不使用</b>は「AIコストを利用者数に比例させない」設計判断の帰結（要約は収集時に生成済みを使う）。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 3 -->
+    <section class="item">
+      <h2><span class="num">3</span>非機能要件（品質特性）</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">性能</td>
+            <td class="d">収集バッチ15分以内 <span class="id">NFR-03</span>／一覧表示2秒以内 <span class="id">NFR-04</span>。同時実行は2名で軽微。</td>
+            <td class="w">利用者2名・非常時稼働なので過大な性能目標は不要。全文検索は <code>pg_trgm</code>＋GINインデックスで2秒目標を担保（<span class="id">D7</span>）。</td>
+          </tr>
+          <tr>
+            <td class="k">可用性・稼働条件</td>
+            <td class="d">常時稼働しない。PC起動時にまとめて収集・通知。1日複数回起動されうる。</td>
+            <td class="w">この稼働モデルが<b>冪等性を必須にする直接の理由</b>。同じ記事を重複登録・重複通知しない、同日2回目以降は通知しない、を設計前提に据えた。</td>
+          </tr>
+          <tr>
+            <td class="k">データ量・保持期間</td>
+            <td class="d">記事2年・ログ1ヶ月で定期パージ <span class="id">NFR-05</span>。ただしブックマーク済み記事は対象外。</td>
+            <td class="w"><b>2年</b>は前年同期比較（周年グッズ・季節イベント・続編）ができるようにするドメイン判断。対象期間と保持期間を一致させた。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>セキュリティ・認証/認可</td>
+            <td class="d">ローカルは簡易認証、VPS移行時に必須化 <span class="id">NFR-02</span>。トークン等の秘密情報はソース直書き禁止・環境変数/.env 注入。</td>
+            <td class="w">2名のローカル運用に本格認証は過剰投資。<b>公開（VPS）タイミングで強化する段階方針</b>にしてコストと安全性を両立。秘密情報の外部化は最初から徹底（後戻り困難なため）。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>拡張性・移行性</td>
+            <td class="d">OS非依存・Web/バッチ別プロセス・設定全外部化・SQLite不使用・UTF-8統一 <span class="id">NFR-09</span>。日時はUTC保存/JST表示 <span class="id">NFR-08</span>。</td>
+            <td class="w">VPS移行が<b>確定済みの将来</b>。移行を阻害する制約（Windows固有API・ローカルパス・時刻ゾーン散在）は<b>後付けで直しにくいので最初から</b>守る。</td>
+          </tr>
+          <tr>
+            <td class="k">コスト上限</td>
+            <td class="d">AI 月500円以内目標 <span class="id">NFR-06</span>／LINE無料枠 月200通前提。</td>
+            <td class="w">この2つの上限が<b>「RSS優先・LLMは補完のみ」「通知は1通に集約」</b>という設計の駆動力。コスト設計を非機能として明示し、可視化機能(FR-06-06)で検証可能にした。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 4 -->
+    <section class="item">
+      <h2><span class="num">4</span>データ</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">管理対象（エンティティ）</td>
+            <td class="d">Users / Themes / ThemeCategories / Sources / Articles / ArticleThemeMatches / FavoriteThemes / FavoriteSources / Bookmarks / ReadStates / ArticleNotifications / NotificationLogs / CrawlLogs / LlmUsageLogs。</td>
+            <td class="w">機能から素直に導出。<b>お気に入りはテーマ用/情報源用にテーブル分割</b>（当初のポリモーフィック1テーブル案を却下）。FKで参照整合性をDBに担保させるため。</td>
+          </tr>
+          <tr>
+            <td class="k">データ項目・型・制約</td>
+            <td class="d">DDLレベルで定義。列挙型は <code>smallint</code> コード値＋コメントで保持。日時は <code>timestamptz</code>。</td>
+            <td class="w">Hibernate既定の <code>@Enumerated(ORDINAL)</code> は<b>列挙の並び順に暗黙依存し危険</b>なので使わず、コード値を明示するConverterを挟む。値の追加でスキーマ変更が不要になる利点も。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>一意性・重複の定義</td>
+            <td class="d">「同じ記事」＝ <code>Articles.url_hash</code> が同一（URL正規化＝クエリ除去・リダイレクト解決後にハッシュ化）で UNIQUE。別サイトの同一情報はタイトル類似度＋発生日でグルーピング。</td>
+            <td class="w"><b>冪等性の核。</b>何をもって重複とするかを先に固定しないと、多重起動で重複登録・重複通知が起きる。アプリ判定に頼らずDBのUNIQUE制約を最終防衛線にする。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>保持・削除ポリシー</td>
+            <td class="d">記事は2年超で定期パージ。<b>ただし誰かが Bookmarks 済みの記事は消さない</b>（「後で見る」を保護）。</td>
+            <td class="w">保持と利用者の意図が衝突する箇所。単純な期限削除だと保存済みが消える事故が起きるため、パージ条件に<b>ブックマーク除外</b>を明示した。</td>
+          </tr>
+          <tr>
+            <td class="k">整合性ルール（親子・削除連動）</td>
+            <td class="d">Articles/Users/Themes配下は <b>ON DELETE CASCADE</b>。Sources配下のみ <b>RESTRICT</b>。</td>
+            <td class="w">子データの孤児化を防ぐためCASCADE。ただし<b>収集済み記事を持つ情報源の誤削除は事故になる</b>のでSourcesだけRESTRICTにし、無効化は <code>is_active=false</code> で行う。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 5 -->
+    <section class="item">
+      <h2><span class="num">5</span>外部インターフェース</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">連携先</td>
+            <td class="d">収集元（RSS/HTML）、Claude API（構造化）、LINE Messaging API（通知）。</td>
+            <td class="w">収集は取得、Claudeは整形、LINEは配信と役割が明確。LLMは差し替え可能にするため <code>LlmStructurer</code> インターフェースで抽象化しDI注入。</td>
+          </tr>
+          <tr>
+            <td class="k">方式・頻度・入出力</td>
+            <td class="d">RSSは <b>ROME</b>、HTTPは <code>RestClient</code>＋Resilience4j、必要時 <b>jsoup</b>。Claudeは本文→JSON構造化。LINEは push＋Flexカルーセル。</td>
+            <td class="w">取得は<b>RSS→専用パーサー→LLM</b>の3段フォールバック <span class="id">FR-02-04</span>。RSSは最初から構造化済みで安定・低コスト・権利面で安全なので最優先。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>外部制約への対応</td>
+            <td class="d">LINE無料枠200通＝<b>1通に集約</b>（カルーセル）＋通数をDB記録し上限接近で送信停止しアプリ内表示へ。LLM課金＝RSS優先で呼び出しを減らす。robots.txt尊重・間隔1秒・UAに連絡先・禁止サイト除外。</td>
+            <td class="w">無料枠/課金/規約という<b>外部の有限資源とルールが設計を縛る</b>。カウントは「送信先×吹き出し数」なので吹き出しを増やさない集約が効く。権利遵守はポートフォリオ評価にも資する。</td>
+          </tr>
+          <tr>
+            <td class="k">連携障害時の扱い</td>
+            <td class="d">情報源単位で失敗を分離（1失敗で全体を止めない）。Resilience4jでリトライ/タイムアウト/CB。LLM失敗は当該記事スキップ。</td>
+            <td class="w">複数外部依存があるため<b>1点の障害を全体障害にしない</b>のが方針。失敗は握りつぶさず <code>CrawlLogs</code> に記録して可視化。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 6 -->
+    <section class="item">
+      <h2><span class="num">6</span>画面・操作（要件レベル）</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">画面一覧・遷移</td>
+            <td class="d"><span class="id">SC-01</span>ログイン <span class="id">SC-02</span>タイムライン <span class="id">SC-03</span>記事詳細 <span class="id">SC-04</span>テーマ管理 <span class="id">SC-05</span>お気に入り <span class="id">SC-06</span>情報源マスタ <span class="id">SC-07</span>管理ダッシュボード <span class="id">SC-08</span>実行ログ <span class="id">SC-09</span>利用者・通知設定。</td>
+            <td class="w">中心は<b>タイムライン(SC-02)</b>。「集約して探す手間を減らす」目的に直結する画面を主役に据え、管理系は分離。詳細レイアウトは基本設計で確定（要件レベルに留める）。</td>
+          </tr>
+          <tr>
+            <td class="k">操作の粒度</td>
+            <td class="d">ログイン→一覧を起点に、詳細/テーマ/お気に入り/管理へ分岐。Web構成は Spring Boot + <b>Vaadin Flow</b> <span class="id">D5</span>。</td>
+            <td class="w">Vaadinは<b>サーバー側JavaだけでステートフルなUIを書ける</b>。フロント言語を別に学ばずJava習得に集中でき、localhost単一プロセスで運用が軽い（ポートフォリオの狙いと一致）。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 7 -->
+    <section class="item">
+      <h2><span class="num">7</span>制約・前提</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>技術前提</td>
+            <td class="d">Java 21 / Spring Boot 3.x / Vaadin Flow / PostgreSQL（確定 <span class="id">D8</span>）/ Flyway / Spring Data JPA。</td>
+            <td class="w">当初の .NET(Blazor) から<b>Java学習を兼ねたポートフォリオへピボット</b>（回答ログ Q12）。機能・非機能・画面・データ設計は言語非依存で不変、技術構成のみ差し替え。DBは一貫してPostgreSQL。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>法的・権利・コンプラ</td>
+            <td class="d">記事本文/公式画像を保存・表示しない（自作要約＋元URLのみ）。ロゴ/ビジュアル不使用。robots.txt尊重・スクレイピング禁止サイト除外。READMEに明記。</td>
+            <td class="w">著作権・規約リスクを避けるのが大前提。<b>RSS優先も権利面の安全性が理由の一つ</b>（サイトが自ら公開する正規の配信窓口）。設計判断として説明できる形にした。</td>
+          </tr>
+          <tr>
+            <td class="k">運用制約</td>
+            <td class="d">自宅Windows PC、タスクスケジューラ（ログオン時・遅延5分）で起動。VPSではcron/systemd timer。</td>
+            <td class="w">定期実行はOS側スケジューラの仕事＝<b>運用要件（非FR）</b>と切り分け。アプリはヘッドレスで別プロセス実行できる設計だけを負う（機能要件と運用要件の分離）。</td>
+          </tr>
+          <tr>
+            <td class="k">予算・期間</td>
+            <td class="d">AI 月500円以内。転職活動開始の約1ヶ月前までにVPSで公開URLを提示（Phase 6）。</td>
+            <td class="w">ポートフォリオとしての締切（公開URL）とコスト上限を前提に、Phase 5までで個人利用完成→Phase 6で公開、と段階を切った。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 8 -->
+    <section class="item">
+      <h2><span class="num">8</span>品質・エラー方針</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>エラーハンドリング方針</td>
+            <td class="d">情報源単位で失敗分離 <span class="id">NFR-10</span>／HTTPはResilience4jでリトライ・タイムアウト・サーキットブレーカー（回数・間隔は設定外部化）／重複登録のUNIQUE違反は正常系として扱う／通数上限到達で送信停止しアプリ内表示。</td>
+            <td class="w">外部依存が多く不安定なので<b>「1点の失敗で全体を止めない」</b>を軸に据えた。重複を例外でなく正常系として扱うのは冪等な多重起動を許すため。</td>
+          </tr>
+          <tr>
+            <td class="k">異常系の振る舞い</td>
+            <td class="d">他情報源は<b>続ける</b>／LLM失敗は当該記事を<b>スキップ</b>（バッチは止めない）／失敗は必ず<b>記録</b>。</td>
+            <td class="w">「止める・続ける・通知する」の判断を場面ごとに事前定義。バッチ全体停止は影響が大きいので、局所失敗は握って記録し前進させる。</td>
+          </tr>
+          <tr>
+            <td class="k">ログ・監査の方針</td>
+            <td class="d">ローカルファイル依存を避け、<b>DB（CrawlLogs / NotificationLogs / LlmUsageLogs）＋標準出力</b>に寄せる。UTF-8統一。</td>
+            <td class="w">VPS移行時にファイルパス依存が足かせになるのを避ける <span class="id">NFR-09</span>。収集・通知・LLMコストをDBに残すことで管理画面から可視化・検証できる。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 9 -->
+    <section class="item">
+      <h2><span class="num">9</span>用語・ルール</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>用語定義（ユビキタス言語）</td>
+            <td class="d"><b>テーマ</b>＝登録キーワード／<b>記事</b>＝収集した1情報／<b>発生日</b>＝代表日 <code>EventDate</code>／<b>カテゴリ</b>＝8区分／<b>お気に入り</b>＝テーマ/情報源（通知対象）／<b>ブックマーク</b>＝後で見る（通知対象外）／<b>通数</b>＝送信先×吹き出し数。</td>
+            <td class="w">言葉の意味を1つに固定して、要件〜設計〜実装のズレを防ぐ。特に<b>「お気に入り（通知する）」と「ブックマーク（通知しない）」を明確に別概念</b>として区別した。</td>
+          </tr>
+          <tr>
+            <td class="k">ビジネスルール（計算・判定）</td>
+            <td class="d">整列キー＝<code>COALESCE(event_date, created_at::date)</code>／通数＝利用者数×吹き出し数／同日2回目以降は通知抑止／月コスト集計はJST月に丸めて合算。</td>
+            <td class="w">曖昧な日付（NULL）でもタイムラインが破綻しないよう代理キーで整列。無料枠・冪等性という制約を、判定ルールとして具体化した。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 10 -->
+    <section class="item">
+      <h2><span class="num">10</span>進め方・トレーサビリティ</h2>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>項目</th><th>決めたこと</th><th>なぜこの設計にしたか</th></tr></thead>
+        <tbody>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>ID体系</td>
+            <td class="d">機能 <span class="id">FR-xx-xx</span>／画面 <span class="id">SC-xx</span>／テーブル <span class="id">TBL-xxx</span>／非機能 <span class="id">NFR-xx</span>／設計判断 <span class="id">Dx</span>。</td>
+            <td class="w">要件→設計→実装→テストを<b>IDでたどれる</b>ようにする。後工程の成果物に前工程のIDを併記させ、変更影響とトレースを効かせる（ウォーターフォールの肝）。</td>
+          </tr>
+          <tr>
+            <td class="k">レビュー・承認プロセス</td>
+            <td class="d">各工程の成果物を開発者レビュー→承認後に次工程へ。要件定義書が承認されるまで設計・実装に進まない。</td>
+            <td class="w">前工程の確定を待って次に進むことで手戻りを抑える。工程順を守ること自体をCLAUDE.md §0の最重要ルールに据えている。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>フェーズ分割・リリース計画</td>
+            <td class="d">Phase 0（基盤）→1（RSS収集・一覧）→2（LLM・重複排除）→3（お気に入り・検索）→4（LINE通知・冪等性）→5（管理・自動運用）→6（VPS移行・公開）。</td>
+            <td class="w"><b>Phase 5までで個人利用として完成、Phase 6で公開</b>。動くものを早く出し段階的に価値を足す。優先順位（項目2）と一体で管理。</td>
+          </tr>
+          <tr class="starred">
+            <td class="k"><span class="star">★</span>未決事項の管理</td>
+            <td class="d">未決は <code>未決事項回答ログ.md</code>（Q1〜Q15）に決定と根拠を記録。決めきれない項目は「Phaseで先送り」と明記。</td>
+            <td class="w">意思決定の根拠を後から追えるように残す。成功基準からのトップダウン照合（Q15）で見つけた4つの隙間もここに決定として記録し、FR/画面/データ設計へ反映済み。</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <div class="foot">
+      出典：<code>01_要件定義/要件定義書.md</code>（v1.2）／<code>01_要件定義/未決事項回答ログ.md</code>。
+      本メモは「なぜ」を残すための補助資料であり、正本は要件定義書とする。
+    </div>
+  </div>
+
+  <!-- ============ 外部設計 ============ -->
+  <div class="panel" id="p-ext" role="tabpanel" aria-labelledby="tab-ext">
+    <div class="placeholder">
+      <div class="big">🧩</div>
+      <h2>外部設計（基本設計）</h2>
+      <p>画面設計・画面遷移・API/バッチI/F・ER図・メッセージ一覧などの設計判断をここに残します。</p>
+      <p>この工程はこれから着手します（現時点では枠のみ）。</p>
+    </div>
+  </div>
+
+  <!-- ============ 内部設計 ============ -->
+  <div class="panel" id="p-int" role="tabpanel" aria-labelledby="tab-int">
+    <div class="placeholder">
+      <div class="big">⚙️</div>
+      <h2>内部設計（詳細設計）</h2>
+      <p>クラス設計・シーケンス・DIポリシー・例外設計などの設計判断をここに残します。</p>
+      <p>この工程はこれから着手します（現時点では枠のみ）。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+    function select(tab){
+      tabs.forEach(function(t){
+        var on = t === tab;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        document.getElementById(t.getAttribute('aria-controls')).classList.toggle('active', on);
+      });
+    }
+    tabs.forEach(function(t, i){
+      t.addEventListener('click', function(){ select(t); });
+      t.addEventListener('keydown', function(e){
+        if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+          e.preventDefault();
+          var n = (i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+          tabs[n].focus(); select(tabs[n]);
+        }
+      });
+    });
+  })();
+</script>
