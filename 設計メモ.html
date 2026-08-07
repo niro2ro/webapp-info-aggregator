@@ -189,8 +189,8 @@
           </tr>
           <tr class="starred">
             <td class="k"><span class="star">★</span>拡張性・移行性</td>
-            <td class="d">OS非依存・Web/バッチ別プロセス・設定全外部化・SQLite不使用・UTF-8統一 <span class="id">NFR-09</span>。日時はUTC保存/JST表示 <span class="id">NFR-08</span>。</td>
-            <td class="w">VPS移行が<b>確定済みの将来</b>。移行を阻害する制約（Windows固有API・ローカルパス・時刻ゾーン散在）は<b>後付けで直しにくいので最初から</b>守る。</td>
+            <td class="d">OS非依存・Web/バッチ別プロセス・設定全外部化・SQLite不使用・UTF-8統一 <span class="id">NFR-09</span>。日時はUTC保存/JST表示 <span class="id">NFR-08</span>。<b>秘密情報は環境変数で外部化（案A・12-factor）</b>：機密（LINEトークン/Claudeキー/DBパスワード）は環境変数のみ、<code>application.yml</code>はプレースホルダのみでリポジトリに実値を置かない。非機密の環境差分はSpring Profilesで切替 <span class="id">NFR-11</span>。</td>
+            <td class="w">VPS移行が<b>確定済みの将来</b>。移行を阻害する制約（Windows固有API・ローカルパス・時刻ゾーン散在）は<b>後付けで直しにくいので最初から</b>守る。秘密情報は<b>案A（環境変数）</b>を採用＝手間最小で移行性・安全性を両立し説明も容易。<b>※将来の高度化余地</b>：Jasypt等で<b>暗号化した秘密をリポジトリにコミットする案C</b>（秘密の履歴管理・より一段深い見せ方）も選択肢で、必要になれば後日検討してよい（マスターキー管理は結局env方式と同様に必要）。</td>
           </tr>
           <tr>
             <td class="k">コスト上限</td>
