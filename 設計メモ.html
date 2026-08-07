@@ -324,8 +324,8 @@
           </tr>
           <tr class="starred">
             <td class="k"><span class="star">★</span>法的・権利・コンプラ</td>
-            <td class="d">記事本文/公式画像を保存・表示しない（自作要約＋元URLのみ）。ロゴ/ビジュアル不使用。robots.txt尊重・スクレイピング禁止サイト除外。READMEに明記。</td>
-            <td class="w">著作権・規約リスクを避けるのが大前提。<b>RSS優先も権利面の安全性が理由の一つ</b>（サイトが自ら公開する正規の配信窓口）。設計判断として説明できる形にした。</td>
+            <td class="d">記事本文/公式画像を保存・表示しない（自作要約＋元URLのみ）。ロゴ/ビジュアル不使用。<b>遵守を仕組みで担保＝2段ゲート</b>：規約ゲート（人手・`terms_reviewed`の情報源だけ収集）＋robotsゲート（自動・取得直前にrobots.txt判定しDisallowはスキップ、エラー時は当日スキップ）。スクレイピング禁止サイト除外。READMEに明記。 <span class="id">§7.0</span> <span class="id">FR-02-05/12</span></td>
+            <td class="w">著作権・規約リスクを避けるのが大前提。<b>RSS優先も権利面の安全性が理由の一つ</b>。さらに<b>「未確認は集めない（規約ゲート）」「取りに行く前に許可を確認（robotsゲート）」を運用任せにせず設計で強制</b>——権利配慮を仕組みで守れていることがポートフォリオの評価点。規約は機械判定不可→人手、robotsは判定可→自動、と役割分担。</td>
           </tr>
           <tr>
             <td class="k">運用制約</td>
@@ -340,6 +340,23 @@
         </tbody>
       </table></div>
     </section>
+
+    <!-- 補足解説：robots.txt -->
+    <div class="note">
+      <h3>💡 補足解説：robots.txt と遵守ゲート（未経験者向け）</h3>
+      <p><b>robots.txt とは</b>：サイトが「自動プログラム（ボット）に許可する巡回範囲」を書いておく取り決めファイル（<code>https://ホスト/robots.txt</code>）。うちは複数サイトを自動巡回する<b>ボットそのもの</b>なので、これを尊重するのがWebのマナーで、規約・権利トラブルを避ける前提。<b>技術的な鍵ではない</b>が、無視すると権利リスクになるので設計で守る（建物入口の「この扉から先はスタッフ専用」の案内板に従うイメージ）。</p>
+      <table class="mini">
+        <tr><td>Disallow: /admin/</td><td>ここ以下は取得しない</td></tr>
+        <tr><td>Allow: /news/</td><td>ここは取得OK</td></tr>
+        <tr><td>Crawl-delay: 1</td><td>アクセスは1秒以上あけて</td></tr>
+      </table>
+      <p><b>2段の遵守ゲート（効くタイミングが違う）</b>：</p>
+      <table class="mini">
+        <tr><td>規約ゲート（人手）</td><td>その<b>情報源を収集対象にするか</b>（収集開始前）。規約を人手で確認し <code>terms_reviewed</code> を立てた情報源だけ収集。未確認は集めない</td></tr>
+        <tr><td>robotsゲート（自動）</td><td>各<b>URLを取りに行く直前</b>。robots.txt を判定し Disallow のパスはスキップ。日次キャッシュ、パースは crawler-commons 等のライブラリ任せ、<b>取得エラー時は安全側で当日スキップ</b></td></tr>
+      </table>
+      <p><b>役割分担</b>：規約は機械で読めない→人手フラグ、robots.txt は機械判定できる→自動。どちらも「権利配慮を運用任せにせず<b>仕組みで守る</b>」ための関所（<span class="id">§7.0</span>・項目7参照）。</p>
+    </div>
 
     <!-- 8 -->
     <section class="item">
