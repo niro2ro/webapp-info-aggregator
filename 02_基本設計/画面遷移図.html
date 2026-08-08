@@ -135,21 +135,23 @@ strong{font-weight:700;}
     SC01 --&gt;|一般利用者を選択| SC02
     SC01 --&gt;|管理者を選択しPIN一致| SC02
     SC01 -.-&gt;|PIN不一致・ロック| SC01
+    SC01 --&gt;|利用者を管理しPIN一致| SC09
+    SC09 --&gt;|ログイン画面へ戻る| SC01
 
     subgraph COMMON["共通 user/admin ─ AppLayout ドロワー"]
         SC02["SC-02 タイムライン一覧：ホーム"]
         SC03["SC-03 記事詳細"]
         SC04["SC-04 テーマ管理"]
-        SC05["SC-05 お気に入り管理"]
-        SC09["SC-09 利用者・通知設定：自分の設定は共通"]
+        SC05["SC-05 LINE通知設定：お気に入り＋LINE連携"]
     end
 
     subgraph ADMIN["管理系 admin のみ ─ ドロワー下段"]
         SC06["SC-06 情報源マスタ管理"]
         SC07["SC-07 管理ダッシュボード"]
         SC08["SC-08 実行ログ"]
-        SC09A["SC-09 利用者管理ブロック：admin のみ"]
     end
+
+    SC09["SC-09 利用者登録・管理：admin・ログインから遷移"]
 
     SC02 --&gt;|カードのタイトル| SC03
     SC03 --&gt;|戻る| SC02
@@ -159,18 +161,16 @@ strong{font-weight:700;}
 
     SC02 &lt;--&gt;|ドロワー| SC04
     SC02 &lt;--&gt;|ドロワー| SC05
-    SC02 &lt;--&gt;|ドロワー| SC09
     SC05 --&gt;|ブックマーク記事| SC03
 
     SC02 &lt;--&gt;|ドロワー admin| SC06
     SC02 &lt;--&gt;|ドロワー admin| SC07
     SC02 &lt;--&gt;|ドロワー admin| SC08
-    SC09 -.-&gt;|admin時のみ表示| SC09A
 
     SC02 --&gt;|ログアウト| SC01
 
     classDef admin fill:#fde,stroke:#c69;
-    class SC06,SC07,SC08,SC09A admin;
+    class SC06,SC07,SC08,SC09 admin;
 </pre>
 <hr />
 <h2 id="2">2. 遷移一覧</h2>
@@ -238,7 +238,7 @@ strong{font-weight:700;}
 <td>BD-NAV-08</td>
 <td>SC-02</td>
 <td>SC-05</td>
-<td>ドロワー「お気に入り」</td>
+<td>ドロワー「LINE通知設定」</td>
 <td>共通</td>
 </tr>
 <tr>
@@ -250,10 +250,10 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>BD-NAV-10</td>
-<td>SC-02</td>
+<td>SC-01</td>
 <td>SC-09</td>
-<td>ドロワー「設定」</td>
-<td>共通</td>
+<td>ログイン画面「利用者を管理」→管理者PIN一致（Q26）</td>
+<td><strong>admin</strong></td>
 </tr>
 <tr>
 <td>BD-NAV-11</td>
@@ -277,6 +277,13 @@ strong{font-weight:700;}
 <td><strong>admin</strong></td>
 </tr>
 <tr>
+<td>BD-NAV-15</td>
+<td>SC-09</td>
+<td>SC-01</td>
+<td>「ログイン画面へ戻る」</td>
+<td><strong>admin</strong></td>
+</tr>
+<tr>
 <td>BD-NAV-14</td>
 <td>任意画面</td>
 <td>SC-01</td>
@@ -286,7 +293,8 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p>AppLayout のドロワーから各画面へ相互遷移できる（SC-02 を起点に図示したが、実際は共通画面間は相互移動可）。管理系メニュー（BD-NAV-11〜13）は admin のみドロワーに表示し、かつサーバー側（Spring Security）でも到達を拒否する（BD-SC-00-06）。</p>
+<p>AppLayout のドロワーから各画面へ相互遷移できる（SC-02 を起点に図示したが、実際は共通画面間は相互移動可）。管理系メニュー（BD-NAV-11〜13）は admin のみドロワーに表示し、かつサーバー側（Spring Security）でも到達を拒否する（BD-SC-00-06）。
+<strong>SC-09（利用者登録・管理）はドロワーに置かず、ログイン画面 SC-01 の「利用者を管理」入口から管理者PIN認証を経て遷移する</strong>（BD-NAV-10）。「ログインできる利用者は誰か」を管理する性質のため、ログイン前段に配置した（Q26）。</p>
 </blockquote>
 <hr />
 <h2 id="3">3. ロール別 到達可能画面</h2>
@@ -320,17 +328,12 @@ strong{font-weight:700;}
 <td>○（自分の分）</td>
 </tr>
 <tr>
-<td>SC-05 お気に入り管理</td>
+<td>SC-05 LINE通知設定（お気に入り＋LINE連携）</td>
 <td>○（自分の分）</td>
 <td>○（自分の分）</td>
 </tr>
 <tr>
-<td>SC-09 設定（自分のLINE/通知）</td>
-<td>○</td>
-<td>○</td>
-</tr>
-<tr>
-<td>SC-09 利用者管理ブロック</td>
+<td>SC-09 利用者登録・管理（ログインから遷移）</td>
 <td>✗</td>
 <td>○</td>
 </tr>
