@@ -203,13 +203,17 @@ tbody tr:hover{background:var(--line2)}
     </div>
 
     <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:14px">
+      <button class="user-row" style="border-style:dashed" onclick="openSignup()">
+        <span class="ava" style="background:#2f7d4f">＋</span>
+        <span><span class="nm">新規登録（誰でも）</span><br><span class="rl">自分を一般利用者で登録 → SC-10（PIN不要）</span></span>
+      </button>
       <button class="user-row" style="border-style:dashed" onclick="manageUsers()">
         <span class="ava" style="background:#4a5568">⚙</span>
-        <span><span class="nm">利用者を管理（管理者）</span><br><span class="rl">利用者の追加・編集 → SC-09（PIN認証）</span></span>
+        <span><span class="nm">利用者を管理（管理者）</span><br><span class="rl">編集・削除・Admin作成 → SC-09（PIN認証）</span></span>
         <span class="lock">🔒</span>
       </button>
     </div>
-    <div class="hint">「ログインできる利用者は誰か」を管理する導線をログイン前段に配置（Q26）。実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え、認可(role)は流用。</div>
+    <div class="hint">新規登録は誰でも可（User固定・PIN不要）。Admin昇格・PIN設定・他人の編集は管理者のみ＝自己昇格を防止（Q27）。実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え、認可(role)は流用。</div>
   </div>
 </div>
 
@@ -226,8 +230,24 @@ tbody tr:hover{background:var(--line2)}
         <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
       </tbody>
     </table></div>
-    <div class="hint">PINは4桁・BCryptでハッシュ保存（平文保存しない）。ロールは User/Admin。</div>
+    <div class="hint">PINは4桁・BCryptでハッシュ保存（平文保存しない）。ロールは User/Admin。ここでのみ Admin 作成・PIN設定・削除ができる。</div>
     <div style="margin-top:14px"><button class="btn ghost" onclick="showLogin()">‹ ログイン画面へ戻る</button></div>
+  </div>
+</div>
+
+<!-- ========== 新規アカウント登録（SC-10・誰でも・PIN不要） ========== -->
+<div id="signupView" class="login-view hidden" style="background:linear-gradient(160deg,#1f3a2a,#2f5a44)">
+  <div class="login-card">
+    <div class="screen-head"><h2 style="margin:0">新規アカウント登録</h2><span class="sc-id">SC-10</span></div>
+    <p class="lead">誰でも登録できます（PIN不要）。自分を「一般利用者」として登録します。</p>
+    <div class="field" style="margin-bottom:12px"><label>表示名（必須）</label><input type="text" placeholder="例：ともだちアカウント" style="min-width:100%"></div>
+    <div class="field" style="margin-bottom:12px"><label>ロール</label>
+      <input type="text" value="一般利用者（User）固定" disabled style="min-width:100%;opacity:.7"></div>
+    <div class="hint">管理者（Admin）は自己登録できません。管理者アカウントの作成・権限変更・削除は「利用者を管理（管理者）」からのみ可能です（自己昇格の防止・Q27）。</div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn" onclick="showLogin()">登録する</button>
+      <button class="btn ghost" onclick="showLogin()">‹ ログイン画面へ戻る</button>
+    </div>
   </div>
 </div>
 
@@ -598,6 +618,7 @@ function tab(btn, paneId){
 function showLogin(){
   document.getElementById('appView').classList.add('hidden');
   document.getElementById('userMgmtView').classList.add('hidden');
+  document.getElementById('signupView').classList.add('hidden');
   document.getElementById('loginView').classList.remove('hidden');
   document.getElementById('pinBox').classList.add('hidden'); pinBuf=[]; drawPin();
 }
@@ -607,9 +628,14 @@ function pickUser(kind){
   else { enterApp('user'); }
 }
 function manageUsers(){ pinTarget='usermgmt'; document.getElementById('pinBox').classList.remove('hidden'); }
+function openSignup(){
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('signupView').classList.remove('hidden');
+}
 function enterApp(r){
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('userMgmtView').classList.add('hidden');
+  document.getElementById('signupView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
   setRole(r); go('sc02');
 }
