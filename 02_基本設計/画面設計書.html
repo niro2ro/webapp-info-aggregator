@@ -88,6 +88,7 @@ strong{font-weight:700;}
     <div class="toc">
 <ul>
 <li><a href="#0">0. 全画面に共通する設計方針（★決定事項）</a><ul>
+<li><a href="#01-lumo">0.1 デザイントークン（Lumo カスタムテーマの上書き値・実装時の指針）</a></li>
 <li><a href="#applayout">共通レイアウト（AppLayout）</a></li>
 </ul>
 </li>
@@ -239,6 +240,86 @@ strong{font-weight:700;}
 <td>レスポンシブ</td>
 <td>自宅PCブラウザを主・協力者のモバイル確認を従とし、幅が狭い時は左ドロワーを自動折りたたみ、カードを1列化</td>
 <td>成功基準③（協力者テスト）</td>
+</tr>
+<tr>
+<td>BD-SC-00-09</td>
+<td>UIデザイン方針</td>
+<td><strong>Vaadin 標準の Lumo をカスタムテーマで作り込む</strong>方式を採用（プラグインを盛らない）。<code>frontend/themes/aggregator/styles.css</code> で Lumo の CSS カスタムプロパティ（<code>--lumo-primary-color</code>／<code>--lumo-border-radius</code>／フォント／余白）を上書きし、ダーク対応は <code>Lumo.DARK</code> バリアントで実現。デザイントークンは §0.1 に定義。図表（LLMコスト/通数）は商用の Vaadin Charts を避け、<strong>無料の add-on（ApexCharts.js／Chart.js）または Lumo の ProgressBar</strong> で表現。アイコンは Vaadin Icons（内蔵）。フォントは self-host（CDN 非依存＝オフライン/VPS/権利配慮）。理由＝Java/Vaadin 初学＋ポートフォリオでは、標準の完成度を活かし依存を最小化する方が保守性・説明可能性が高い（CLAUDE.md §2-3・§0-4）</td>
+<td>Q29・D5</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="01-lumo">0.1 デザイントークン（Lumo カスタムテーマの上書き値・実装時の指針）</h3>
+<p>モックアップ（<code>画面モックアップ.html</code>）で見た目を確定し、実装では下表を <code>styles.css</code> の Lumo プロパティに落とし込む。<strong>値は目安</strong>（実装着手時に微調整）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>種別</th>
+<th>トークン（モック→Lumo対応）</th>
+<th>値（ライト）</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基調背景</td>
+<td><code>--bg</code></td>
+<td><code>#f4f6fb</code></td>
+<td>冷色寄りのごく淡いグレー</td>
+</tr>
+<tr>
+<td>パネル/カード</td>
+<td><code>--lumo-base-color</code></td>
+<td><code>#ffffff</code></td>
+<td></td>
+</tr>
+<tr>
+<td>プライマリ</td>
+<td><code>--lumo-primary-color</code></td>
+<td><code>#4f46e5</code>（indigo）</td>
+<td>ボタン/リンク/アクティブ。グラデ <code>#4f46e5→#7c73f0</code> を強調用に</td>
+</tr>
+<tr>
+<td>文字</td>
+<td><code>--lumo-body-text-color</code></td>
+<td><code>#1a2233</code></td>
+<td></td>
+</tr>
+<tr>
+<td>補助文字</td>
+<td><code>--lumo-secondary-text-color</code></td>
+<td><code>#667085</code></td>
+<td></td>
+</tr>
+<tr>
+<td>角丸</td>
+<td><code>--lumo-border-radius-l/m/s</code></td>
+<td>16 / 12 / 8 px</td>
+<td>カード大きめの角丸で今風に</td>
+</tr>
+<tr>
+<td>影</td>
+<td><code>--lumo-box-shadow-*</code></td>
+<td>2段（近＋遠）の淡い影</td>
+<td>立体感は控えめ・上品に</td>
+</tr>
+<tr>
+<td>カテゴリ色</td>
+<td>（独自）</td>
+<td>グッズ=青／アニメ=紫／漫画=桃／イベント=橙／ゲーム=緑／ゲーセン=藍／カプセルトイ=赤／その他=灰</td>
+<td>chip で色分け（可読性優先）</td>
+</tr>
+<tr>
+<td>フォント</td>
+<td><code>--lumo-font-family</code></td>
+<td>Inter＋Noto Sans JP（self-host）</td>
+<td>日本語対応・CDN非依存</td>
+</tr>
+<tr>
+<td>ダーク</td>
+<td><code>Lumo.DARK</code> バリアント</td>
+<td>別トークン一式</td>
+<td>OS/切替に追従</td>
 </tr>
 </tbody>
 </table></div>
