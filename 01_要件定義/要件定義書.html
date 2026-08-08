@@ -180,7 +180,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>ステータス</td>
-<td><strong>開発者レビュー中（通しレビュー実施済・最終承認待ち）</strong>。カテゴリ8区分・日付3カラム・情報源B案・技術スタック Java（Spring Boot + Vaadin Flow）を確定。認証/認可・秘密情報・Docker・LLMコスト・LINE通知失敗・robots/規約遵守を実装レベルで確定</td>
+<td><strong>承認済み（2026-08-08・基本設計着手）</strong>。カテゴリ8区分・日付3カラム・情報源B案・技術スタック Java（Spring Boot + Vaadin Flow）を確定。認証/認可・秘密情報・Docker・LLMコスト・LINE通知失敗・robots/規約遵守を実装レベルで確定。以降は <code>02_基本設計/</code>（外部設計）で本書の FR/SC/TBL/NFR を参照し具体化する</td>
 </tr>
 </tbody>
 </table></div>
@@ -2343,7 +2343,7 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 - [x] 発生日に<strong>種別(EventDateKind＝発売日/開催日/放送日/受付開始/その他)</strong>を追加（Q24・案A）。一覧の並び順に「発売日順」を追加、日付は種別ラベル付き表示、フィルタに種別。判定はカテゴリ既定→原文キーワード→LLM出力（種別のためにLLMを新規に呼ばない）。<code>Articles.event_date_kind</code>・enum <code>EventDateKind</code> 新設</p>
 <p>確定済み（レビュー第8回・カプセルトイ情報源）:
 - [x] カテゴリ「カプセルトイ」に対応する専用情報源が第一陣に無い穴を解消（Q25）。<strong>電撃ホビーウェブ（KADOKAWA・カプセルトイタグ有り・規約ページ実在）を第一陣の4つ目に追加</strong>。カプセルトイ専門サイト（ガチャパラ等）・メーカー公式は控え。RSS/robots/規約は着手時に実地確認（本環境では外部アクセス遮断で未検証）</p>
-<p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。残るは開発者の最終承認のみ</strong>。承認後に <code>02_基本設計</code> へ進む。</p>
+<p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。2026-08-08 に開発者承認（「外部設計へ移行します」）を得て要件定義工程をクローズ</strong>。以降は <code>02_基本設計</code>（<code>basic-design</code> skill）で外部設計を行う。</p>
     <div class="doc-foot">テーマ別最新情報アグリゲーター 要件定義書 — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
   </main>
 </div>
