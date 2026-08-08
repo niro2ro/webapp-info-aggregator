@@ -11,6 +11,8 @@
   --line:#e8dec8; --line2:#f1ebda; --accent:#5f8768; --accent2:#8caf76; --accent-weak:#e8efe1;
   --chip:#efe7d5;
   --radius:16px; --radius-sm:10px;
+  --wa:rgba(95,135,104,.10);        /* 和柄（七宝）の線色・ライト */
+  --wa-top:rgba(255,255,255,.07);   /* 上部バーの和柄・白 */
   --serif:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP","Songti SC",serif;
   --shadow:0 1px 2px rgba(84,68,38,.07),0 8px 22px rgba(84,68,38,.10);
   --shadow-lg:0 14px 44px rgba(84,68,38,.18);
@@ -24,7 +26,7 @@
   :root:not([data-theme="light"]){
     --bg:#17140e; --panel:#211d15; --ink:#efe6d3; --muted:#ab9e85;
     --line:#342e22; --line2:#241f16; --accent:#8fb488; --accent2:#a8c795; --accent-weak:#26302a;
-    --chip:#2a251b;
+    --chip:#2a251b; --wa:rgba(150,185,140,.08); --wa-top:rgba(255,255,255,.05);
     --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.5);
     --shadow-lg:0 18px 50px rgba(0,0,0,.6);
     --topbar1:#20261f; --topbar2:#262338; --topbar-ink:#efe6d3; --drawer:#1b1710;
@@ -32,7 +34,14 @@
   }
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
+/* 和柄（七宝つなぎ＝重ね円）を淡い地紋として敷く。2層を半セルずらして円を重ねる */
+body{margin:0;color:var(--ink);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%),
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%);
+  background-size:38px 38px, 38px 38px;
+  background-position:0 0, 19px 19px;
   font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
   line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:.005em;}
 button{font-family:inherit;cursor:pointer}
@@ -45,7 +54,13 @@ button{font-family:inherit;cursor:pointer}
 
 /* ===== 上部バー ===== */
 .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;
-  background:linear-gradient(100deg,var(--topbar1),var(--topbar2));color:var(--topbar-ink);
+  background-color:var(--topbar1);color:var(--topbar-ink);
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa-top) 63%, var(--wa-top) 65%, transparent 66%),
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa-top) 63%, var(--wa-top) 65%, transparent 66%),
+    linear-gradient(100deg,var(--topbar1),var(--topbar2));
+  background-size:30px 30px, 30px 30px, cover;
+  background-position:0 0, 15px 15px, 0 0;
   padding:0 18px;height:58px;box-shadow:0 2px 14px rgba(16,20,50,.18);}
 .topbar .burger{background:transparent;border:0;color:inherit;font-size:20px;padding:6px 8px;border-radius:8px}
 .topbar .burger:hover{background:rgba(255,255,255,.1)}
@@ -158,8 +173,14 @@ tbody tr:hover{background:var(--line2)}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 
 /* ===== ログイン（SC-01） ===== */
-.login-view{min-height:100vh;display:grid;place-items:center;background:linear-gradient(160deg,#1f2a44,#33406a);padding:20px}
-.login-card{background:var(--panel);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:30px 28px;width:min(400px,92vw)}
+.login-view{position:relative;overflow:hidden;min-height:100vh;display:grid;place-items:center;
+  background:linear-gradient(160deg,#3c4a44,#4e4a60);padding:20px}
+.login-view::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 62%, rgba(255,255,255,.06) 63%, rgba(255,255,255,.06) 65%, transparent 66%),
+    radial-gradient(circle at 50% 50%, transparent 62%, rgba(255,255,255,.06) 63%, rgba(255,255,255,.06) 65%, transparent 66%);
+  background-size:34px 34px, 34px 34px; background-position:0 0, 17px 17px;}
+.login-card{position:relative;z-index:1;background:var(--panel);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:30px 28px;width:min(400px,92vw)}
 .login-card h2{margin:0 0 4px;font-size:19px}
 .login-card p.lead{margin:0 0 18px;color:var(--muted);font-size:12.5px}
 .user-row{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);
