@@ -43,9 +43,6 @@ button{font-family:inherit;cursor:pointer}
 .topbar .burger:hover{background:rgba(255,255,255,.1)}
 .topbar .app-title{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar .spacer{flex:1}
-.topbar .role-switch{display:flex;background:rgba(255,255,255,.12);border-radius:8px;padding:2px;font-size:12px}
-.topbar .role-switch button{background:transparent;border:0;color:var(--topbar-ink);padding:5px 10px;border-radius:6px;opacity:.7}
-.topbar .role-switch button.on{background:#fff;color:#1f2a44;opacity:1;font-weight:700}
 .topbar .who{font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .topbar .who .ava{width:26px;height:26px;border-radius:50%;background:#5a76c0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
 .topbar .logout{background:rgba(255,255,255,.12);border:0;color:inherit;font-size:12px;padding:6px 10px;border-radius:8px}
@@ -234,10 +231,6 @@ tbody tr:hover{background:var(--line2)}
     <button class="burger" onclick="toggleDrawer()">☰</button>
     <div class="app-title">📚 テーマ別最新情報アグリゲーター</div>
     <div class="spacer"></div>
-    <div class="role-switch" title="モック用：ロールを切り替えて管理系の出し分けを確認">
-      <button id="rbUser" class="on" onclick="setRole('user')">👤 user</button>
-      <button id="rbAdmin" onclick="setRole('admin')">🛠 admin</button>
-    </div>
     <div class="who"><span class="ava" id="whoAva">ヒ</span><span id="whoName">ひろP</span></div>
     <button class="logout" onclick="logout()">ログアウト</button>
   </div>
@@ -563,7 +556,7 @@ tbody tr:hover{background:var(--line2)}
       <section id="denied" class="screen hidden">
         <div class="deny"><div class="big">🔒</div>
           <h2>この画面は管理者専用です</h2>
-          <p>現在のロール（user）ではアクセスできません。上部の「🛠 admin」に切り替えると確認できます（モック）。<br>
+          <p>現在のロール（user）ではアクセスできません。管理系はログアウトして「管理者アカウント」でログインすると確認できます（モック）。<br>
           実装では Spring Security によりメニュー非表示＋URL直接アクセスも拒否します。</p>
         </div>
       </section>
@@ -588,17 +581,13 @@ function go(id){
 }
 
 function setRole(r){
+  // ロールはログイン時に確定（画面上の切替UIは持たない）。上部は氏名表示のみ。
   role = r;
-  document.getElementById('rbUser').classList.toggle('on', r==='user');
-  document.getElementById('rbAdmin').classList.toggle('on', r==='admin');
   const admin = (r==='admin');
   document.getElementById('whoName').textContent = admin ? '管理者アカウント' : 'ひろP';
   document.getElementById('whoAva').textContent = admin ? 'カ' : 'ヒ';
   document.getElementById('whoAva').style.background = admin ? '#b4623a' : '#5a76c0';
   document.querySelectorAll('.adminonly').forEach(e=>e.classList.toggle('hidden', !admin));
-  // user に戻したとき admin 画面を開いていたら弾く
-  const cur = document.querySelector('.screen:not(.hidden)');
-  if(!admin && cur && ['sc06','sc07','sc08','sc09'].includes(cur.id)) go('denied');
 }
 
 function tab(btn, paneId){
