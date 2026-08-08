@@ -137,6 +137,9 @@ strong{font-weight:700;}
     SC01 -.-&gt;|PIN不一致・ロック| SC01
     SC01 --&gt;|利用者を管理しPIN一致| SC09
     SC09 --&gt;|ログイン画面へ戻る| SC01
+    SC01 --&gt;|新規登録・PIN不要| SC10
+    SC10 --&gt;|登録し戻る| SC01
+    SC10["SC-10 新規アカウント登録：誰でも・User固定"]
 
     subgraph COMMON["共通 user/admin ─ AppLayout ドロワー"]
         SC02["SC-02 タイムライン一覧：ホーム"]
@@ -256,6 +259,20 @@ strong{font-weight:700;}
 <td><strong>admin</strong></td>
 </tr>
 <tr>
+<td>BD-NAV-16</td>
+<td>SC-01</td>
+<td>SC-10</td>
+<td>ログイン画面「新規登録」（PIN不要・誰でも）（Q27）</td>
+<td>未認証</td>
+</tr>
+<tr>
+<td>BD-NAV-17</td>
+<td>SC-10</td>
+<td>SC-01</td>
+<td>登録して「ログイン画面へ戻る」</td>
+<td>未認証</td>
+</tr>
+<tr>
 <td>BD-NAV-11</td>
 <td>SC-02</td>
 <td>SC-06</td>
@@ -309,6 +326,11 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>SC-01 ログイン</td>
+<td>○（未認証）</td>
+<td>○（未認証）</td>
+</tr>
+<tr>
+<td>SC-10 新規アカウント登録（誰でも・User固定）</td>
 <td>○（未認証）</td>
 <td>○（未認証）</td>
 </tr>
