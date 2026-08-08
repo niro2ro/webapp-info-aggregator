@@ -79,23 +79,28 @@ strong{font-weight:700;}
 .doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
 .doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
 .doc-nav a{color:var(--accent);}
+
+.tabwrap{max-width:1500px;margin:0 auto;}
+main.tabmain{padding:26px 34px 90px;min-width:0;}
+main.tabmain h1{font-size:27px;margin:.1em 0 .5em;}
+.tabbar{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--line);margin:18px 0 22px;}
+.tabbtn{background:transparent;border:0;color:var(--muted);font-family:inherit;font-size:14.5px;font-weight:600;
+  padding:10px 18px;border-radius:10px 10px 0 0;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;}
+.tabbtn:hover{background:var(--line2);color:var(--ink);}
+.tabbtn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-weak);}
+.tabpane{display:none;}
+.tabpane.active{display:block;animation:fade .18s ease;}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+main.tabmain pre.mermaid{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:24px;overflow:auto;text-align:center;line-height:1.2;min-height:64vh;display:flex;align-items:center;justify-content:center;}
+main.tabmain pre.mermaid svg{max-width:100%;height:auto;}
+@media (max-width:820px){ main.tabmain{padding:18px 14px 70px;} main.tabmain pre.mermaid{min-height:50vh;padding:12px;} }
 </style>
 </head>
 <body>
-<div class="layout">
-  <nav class="toc-side">
-    <div class="toc-title">目次</div>
-    <div class="toc">
-<ul>
-<li><a href="#1-mermaid">1. 全体遷移図（Mermaid）</a></li>
-<li><a href="#2">2. 遷移一覧</a></li>
-<li><a href="#3">3. ロール別 到達可能画面</a></li>
-</ul>
-</div>
-
-  </nav>
-  <main>
-    <div class="doc-nav">📁 02_基本設計/画面遷移図.md（正本は同名 .md）</div>
+<div class="tabwrap">
+  <main class="tabmain">
+    <div class="doc-nav">📁 02_基本設計/画面遷移図.md（正本は同名 .md）／タブで切替・図は全幅表示</div>
     <h1 id="_1">画面遷移図 — テーマ別最新情報アグリゲーター（基本設計）</h1>
 <div class="tbl-scroll"><table>
 <thead>
@@ -107,7 +112,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>版</td>
-<td>1.0（基本設計・初版）</td>
+<td>1.1（フロー整理：ハブ中心＋未認証/共通/管理でグルーピング。HTMLはタブ切替・全幅で図を大きく表示）</td>
 </tr>
 <tr>
 <td>作成日</td>
@@ -127,54 +132,68 @@ strong{font-weight:700;}
 <p>各画面の詳細は <a href="画面設計書.md"><code>画面設計書.md</code></a>。本書は画面間の遷移とロールによる到達可否を示す。</p>
 </blockquote>
 <hr />
-<h2 id="1-mermaid">1. 全体遷移図（Mermaid）</h2>
+
+    <div class="tabbar"><button class="tabbtn active" data-i="0">1. 全体遷移図（Mermaid）</button><button class="tabbtn" data-i="1">2. 遷移一覧</button><button class="tabbtn" data-i="2">3. ロール別 到達可能画面</button></div>
+    <div class="tabpane active" id="pane0">
 <pre class="mermaid">flowchart TD
-    START(["アクセス"]) --&gt; SC01
+    START(["アクセス"]) ==&gt; SC01
 
-    SC01["SC-01 ログイン：利用者選択＋管理者PIN"]
-    SC01 --&gt;|一般利用者を選択| SC02
-    SC01 --&gt;|管理者を選択しPIN一致| SC02
-    SC01 -.-&gt;|PIN不一致・ロック| SC01
-    SC01 --&gt;|新規登録・PIN不要| SC10
-    SC10 --&gt;|登録し戻る| SC01
-    SC10["SC-10 新規アカウント登録：誰でも・User固定"]
-
-    subgraph COMMON["共通 user/admin ─ AppLayout ドロワー"]
-        SC02["SC-02 タイムライン一覧：ホーム"]
-        SC03["SC-03 記事詳細"]
-        SC04["SC-04 テーマ管理"]
-        SC05["SC-05 LINE通知設定：お気に入り＋LINE連携"]
+    subgraph GUEST["① 未認証 ─ ログイン前"]
+        direction LR
+        SC01["SC-01 ログイン：利用者一覧＋管理者PIN"]
+        SC10["SC-10 新規登録：誰でも・User固定"]
+        SC01 --&gt;|新規登録| SC10
+        SC10 --&gt;|登録して戻る| SC01
     end
 
-    subgraph ADMIN["管理系 admin のみ ─ ドロワー下段"]
-        SC06["SC-06 情報源マスタ管理"]
-        SC07["SC-07 管理ダッシュボード"]
-        SC08["SC-08 実行ログ"]
-        SC09["SC-09 利用者登録・管理：編集/削除/Admin付与"]
+    SC01 ==&gt;|ログイン| SC02
+
+    subgraph APP["② ログイン後 ─ AppLayout"]
+        SC02["SC-02 タイムライン：ホーム・ハブ"]
+
+        subgraph COMMON["共通メニュー ─ user・admin"]
+            SC03["SC-03 記事詳細"]
+            SC04["SC-04 テーマ管理"]
+            SC05["SC-05 LINE通知設定"]
+        end
+
+        subgraph ADMING["管理メニュー ─ admin のみ"]
+            SC06["SC-06 情報源マスタ"]
+            SC07["SC-07 管理ダッシュボード"]
+            SC08["SC-08 実行ログ"]
+            SC09["SC-09 利用者登録・管理"]
+        end
+
+        SC02 --&gt; SC03
+        SC02 --&gt; SC04
+        SC02 --&gt; SC05
+        SC02 --&gt; SC06
+        SC02 --&gt; SC07
+        SC02 --&gt; SC08
+        SC02 --&gt; SC09
+        SC05 --&gt; SC03
     end
 
-    SC02 --&gt;|カードのタイトル| SC03
-    SC03 --&gt;|戻る| SC02
-    SC03 --&gt;|元記事を開く| EXT
-    SC02 --&gt;|元記事を開く| EXT
-    EXT(["外部サイト：元記事URL・新規タブ"])
-
-    SC02 &lt;--&gt;|ドロワー| SC04
-    SC02 &lt;--&gt;|ドロワー| SC05
-    SC05 --&gt;|ブックマーク記事| SC03
-
-    SC02 &lt;--&gt;|ドロワー admin| SC06
-    SC02 &lt;--&gt;|ドロワー admin| SC07
-    SC02 &lt;--&gt;|ドロワー admin| SC08
-    SC02 &lt;--&gt;|ドロワー admin| SC09
-
+    SC03 ==&gt;|元記事を開く・新規タブ| EXT(["外部サイト"])
     SC02 --&gt;|ログアウト| SC01
 
-    classDef admin fill:#fde,stroke:#c69;
+    classDef guest fill:#eef1e6,stroke:#9caf88,color:#3a352c;
+    classDef hub fill:#e2ecda,stroke:#5f8768,color:#2b3524;
+    classDef admin fill:#f3e7db,stroke:#c69a6a,color:#5a3f22;
+    class SC01,SC10 guest;
+    class SC02 hub;
     class SC06,SC07,SC08,SC09 admin;
 </pre>
+<p><strong>凡例・読み方</strong></p>
+<ul>
+<li><strong>① 未認証</strong>（緑）: ログイン前。<code>SC-01 ログイン</code> と <code>SC-10 新規登録</code>（誰でも・User固定）だけが使える。</li>
+<li><strong>② ログイン後</strong>: <code>SC-02 タイムライン</code>（緑＝ハブ）を起点に、<strong>共通メニュー</strong>（user/admin）と<strong>管理メニュー</strong>（admin のみ・橙）へ分岐。</li>
+<li><strong>太線</strong> <code>==&gt;</code> は主要な流れ（アクセス→ログイン→ホーム、記事→外部サイト）。</li>
+<li>ハブから各画面への矢印は <strong>AppLayout のドロワーによる遷移</strong>で、実際は<strong>双方向</strong>（各画面からドロワーでハブや他画面へ戻れる）。図では見やすさのため片方向で示す。<strong>正確な向き・契機は下の §2 遷移一覧</strong>を参照。</li>
+<li>管理メニュー（SC-06〜09）は <strong>admin ログイン時のみ表示</strong>され、user はメニュー非表示＋到達拒否（BD-SC-00-06）。</li>
+</ul>
 <hr />
-<h2 id="2">2. 遷移一覧</h2>
+</div><div class="tabpane" id="pane1">
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -305,7 +324,7 @@ strong{font-weight:700;}
 <strong>利用者登録・管理（SC-09）は管理者ログイン後にドロワー「管理」グループから利用する</strong>（BD-NAV-10・SC-06〜08 と同列）。ログイン画面（SC-01）には管理入口を置かず、新規登録（SC-10・誰でも）のみとする（Q28）。</p>
 </blockquote>
 <hr />
-<h2 id="3">3. ロール別 到達可能画面</h2>
+</div><div class="tabpane" id="pane2">
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -369,7 +388,7 @@ strong{font-weight:700;}
 </table></div>
 <blockquote>
 <p>✗ の画面/ブロックは user には<strong>メニュー非表示＋直接URLアクセスも拒否</strong>（authN/authZ 分離・NFR-02）。</p>
-</blockquote>
+</blockquote></div>
     <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>02_基本設計/画面遷移図.md</code>）</div>
   </main>
 </div>
@@ -379,7 +398,25 @@ strong{font-weight:700;}
   (function(){
     if (!window.mermaid) return;
     var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict', flowchart:{useMaxWidth:true}, er:{useMaxWidth:true} });
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict',
+      themeVariables:{ fontSize:'17px' },
+      flowchart:{ useMaxWidth:true, htmlLabels:true, nodeSpacing:55, rankSpacing:78, padding:16 } });
+  })();
+</script>
+<script>
+  (function(){
+    var btns = document.querySelectorAll('.tabbtn');
+    var panes = document.querySelectorAll('.tabpane');
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        btns.forEach(function(x){ x.classList.remove('active'); });
+        panes.forEach(function(x){ x.classList.remove('active'); });
+        b.classList.add('active');
+        var p = document.getElementById('pane' + b.dataset.i);
+        if (p) p.classList.add('active');
+        window.scrollTo(0, 0);
+      });
+    });
   })();
 </script>
 

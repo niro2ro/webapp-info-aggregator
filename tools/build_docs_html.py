@@ -25,6 +25,12 @@ TARGETS = [
     "02_基本設計/画面遷移図.md",
 ]
 
+# タブ切り替え＋全幅レイアウトで出力するファイル（図を大きく見せたいもの）。
+# H2 セクションごとにタブ化し、1画面に1セクションを全幅表示する。
+TABBED = {
+    "02_基本設計/画面遷移図.md",
+}
+
 STYLE = r"""
 :root{
   --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
@@ -113,6 +119,93 @@ MERMAID_JS = r"""
 </script>
 """
 
+# タブ表示（全幅・大きい図）用の追加スタイル
+TAB_STYLE = r"""
+.tabwrap{max-width:1500px;margin:0 auto;}
+main.tabmain{padding:26px 34px 90px;min-width:0;}
+main.tabmain h1{font-size:27px;margin:.1em 0 .5em;}
+.tabbar{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--line);margin:18px 0 22px;}
+.tabbtn{background:transparent;border:0;color:var(--muted);font-family:inherit;font-size:14.5px;font-weight:600;
+  padding:10px 18px;border-radius:10px 10px 0 0;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;}
+.tabbtn:hover{background:var(--line2);color:var(--ink);}
+.tabbtn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-weak);}
+.tabpane{display:none;}
+.tabpane.active{display:block;animation:fade .18s ease;}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+main.tabmain pre.mermaid{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:24px;overflow:auto;text-align:center;line-height:1.2;min-height:64vh;display:flex;align-items:center;justify-content:center;}
+main.tabmain pre.mermaid svg{max-width:100%;height:auto;}
+@media (max-width:820px){ main.tabmain{padding:18px 14px 70px;} main.tabmain pre.mermaid{min-height:50vh;padding:12px;} }
+"""
+
+MERMAID_JS_BIG = r"""
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  (function(){
+    if (!window.mermaid) return;
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict',
+      themeVariables:{ fontSize:'17px' },
+      flowchart:{ useMaxWidth:true, htmlLabels:true, nodeSpacing:55, rankSpacing:78, padding:16 } });
+  })();
+</script>
+<script>
+  (function(){
+    var btns = document.querySelectorAll('.tabbtn');
+    var panes = document.querySelectorAll('.tabpane');
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        btns.forEach(function(x){ x.classList.remove('active'); });
+        panes.forEach(function(x){ x.classList.remove('active'); });
+        b.classList.add('active');
+        var p = document.getElementById('pane' + b.dataset.i);
+        if (p) p.classList.add('active');
+        window.scrollTo(0, 0);
+      });
+    });
+  })();
+</script>
+"""
+
+
+def build_tabbed(title, src_rel, body):
+    """H2 セクションごとにタブ化した全幅ページを組み立てる。図タブを既定表示にする。"""
+    # 最初の <h2 で分割。先頭要素はイントロ（H1＋メタ＋前書き）
+    parts = re.split(r'(?=<h2\b)', body)
+    intro = parts[0]
+    sections = parts[1:]
+    tabs, panes = [], []
+    for i, sec in enumerate(sections):
+        mlab = re.search(r'<h2[^>]*>(.*?)</h2>', sec, flags=re.DOTALL)
+        label = re.sub(r'<[^>]+>', '', mlab.group(1)).strip() if mlab else f'{i+1}'
+        # パネル内の見出し（タブと重複）を除去
+        content = re.sub(r'^\s*<h2[^>]*>.*?</h2>', '', sec, count=1, flags=re.DOTALL)
+        active = ' active' if i == 0 else ''
+        tabs.append(f'<button class="tabbtn{active}" data-i="{i}">{_html.escape(label)}</button>')
+        panes.append(f'<div class="tabpane{active}" id="pane{i}">{content}</div>')
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_html.escape(title)}</title>
+<style>{STYLE}{TAB_STYLE}</style>
+</head>
+<body>
+<div class="tabwrap">
+  <main class="tabmain">
+    <div class="doc-nav">📁 {_html.escape(src_rel)}（正本は同名 .md）／タブで切替・図は全幅表示</div>
+    {intro}
+    <div class="tabbar">{''.join(tabs)}</div>
+    {''.join(panes)}
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>{_html.escape(src_rel)}</code>）</div>
+  </main>
+</div>
+{MERMAID_JS_BIG}
+</body>
+</html>
+"""
+
 
 def convert(src_rel):
     src = (ROOT / src_rel)
@@ -148,7 +241,11 @@ def convert(src_rel):
     title = re.sub(r"<[^>]+>", "", m.group(1).strip()) if m else src.stem
 
     has_mermaid = len(mermaids) > 0
-    page = f"""<!doctype html>
+
+    if src_rel in TABBED:
+        page = build_tabbed(title, src_rel, body)
+    else:
+        page = f"""<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
