@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画面モックアップ — テーマ別最新情報アグリゲーター</title>
+<style>
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#1c2230; --muted:#63708a;
+  --line:#e1e6ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#e9f0ff;
+  --chip:#eef1f6; --shadow:0 1px 2px rgba(20,30,60,.06),0 6px 20px rgba(20,30,60,.06);
+  --topbar:#1f2a44; --topbar-ink:#eaf0ff; --drawer:#ffffff;
+  --ok:#1a8f5a; --ok-bg:#e5f5ec; --warn:#c07a00; --warn-bg:#fbf1dd; --danger:#c23b3b; --danger-bg:#fbe7e7;
+  --unread:#2f5bd6;
+  --g-goods:#3f6bd6; --g-anime:#8a4fd0; --g-manga:#c05aa0; --g-event:#d07a2a;
+  --g-game:#2a9d8f; --g-arcade:#4a72c0; --g-gacha:#d05a5a; --g-other:#6b7688;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1219; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#7aa0ff; --accent-weak:#1b2740;
+    --chip:#222b39; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+    --topbar:#10151f; --topbar-ink:#dbe4f5; --drawer:#141a24;
+    --ok:#4bd08a; --ok-bg:#12301f; --warn:#e0a83a; --warn-bg:#2e2410; --danger:#f2807f; --danger-bg:#331717;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.6;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none !important}
+
+/* ===== モック注意帯 ===== */
+.mock-banner{background:repeating-linear-gradient(45deg,#ffd84d,#ffd84d 12px,#111 12px,#111 24px);
+  color:#111;font-weight:800;font-size:11.5px;text-align:center;padding:4px;letter-spacing:.04em;}
+.mock-banner span{background:#fff;padding:2px 10px;border-radius:20px;box-shadow:0 0 0 2px #111;}
+
+/* ===== 上部バー ===== */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;
+  background:var(--topbar);color:var(--topbar-ink);padding:0 16px;height:54px;}
+.topbar .burger{background:transparent;border:0;color:inherit;font-size:20px;padding:6px 8px;border-radius:8px}
+.topbar .burger:hover{background:rgba(255,255,255,.1)}
+.topbar .app-title{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .spacer{flex:1}
+.topbar .role-switch{display:flex;background:rgba(255,255,255,.12);border-radius:8px;padding:2px;font-size:12px}
+.topbar .role-switch button{background:transparent;border:0;color:var(--topbar-ink);padding:5px 10px;border-radius:6px;opacity:.7}
+.topbar .role-switch button.on{background:#fff;color:#1f2a44;opacity:1;font-weight:700}
+.topbar .who{font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.topbar .who .ava{width:26px;height:26px;border-radius:50%;background:#5a76c0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.topbar .logout{background:rgba(255,255,255,.12);border:0;color:inherit;font-size:12px;padding:6px 10px;border-radius:8px}
+.topbar .logout:hover{background:rgba(255,255,255,.22)}
+
+/* ===== レイアウト ===== */
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:calc(100vh - 78px)}
+.shell.drawer-closed{grid-template-columns:0 minmax(0,1fr)}
+.drawer{background:var(--drawer);border-right:1px solid var(--line);padding:14px 10px;overflow:hidden}
+.shell.drawer-closed .drawer{display:none}
+.nav-group{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:14px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;
+  color:var(--ink);padding:9px 10px;border-radius:9px;font-size:13.5px;margin:1px 0}
+.nav-item .ico{width:20px;text-align:center}
+.nav-item:hover{background:var(--line2)}
+.nav-item.active{background:var(--accent-weak);color:var(--accent);font-weight:700}
+.nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;border-radius:10px;padding:1px 7px;font-weight:700}
+.admin-lock{font-size:10.5px;color:var(--muted);margin:2px 8px 0}
+
+main{padding:22px 26px 60px;min-width:0}
+.screen-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.screen-head h1{font-size:20px;margin:0}
+.screen-head .sc-id{font-size:11px;color:var(--muted);background:var(--chip);border-radius:6px;padding:2px 8px}
+.screen-sub{color:var(--muted);font-size:12.5px;margin:2px 0 18px}
+
+/* ===== 共通部品 ===== */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+select,input[type=text],input[type=date],input[type=search]{font-family:inherit;font-size:13px;color:var(--ink);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:120px}
+.search{flex:1;min-width:180px}
+.search input{width:100%}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600}
+.btn.ghost{background:var(--panel);color:var(--accent);border:1px solid var(--line)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11px;padding:2px 9px;border-radius:20px;background:var(--chip);color:var(--muted);border:1px solid transparent}
+.chip.on{background:var(--accent-weak);color:var(--accent);border-color:var(--accent)}
+.cat{font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;color:#fff}
+.cat.goods{background:var(--g-goods)} .cat.anime{background:var(--g-anime)} .cat.manga{background:var(--g-manga)}
+.cat.event{background:var(--g-event)} .cat.game{background:var(--g-game)} .cat.arcade{background:var(--g-arcade)}
+.cat.gacha{background:var(--g-gacha)} .cat.other{background:var(--g-other)}
+.pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.danger{background:var(--danger-bg);color:var(--danger)}
+
+/* ===== 記事カード（SC-02） ===== */
+.art{display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line2)}
+.art:last-child{border-bottom:0}
+.art .date{flex:0 0 116px;display:flex;flex-direction:column;gap:2px}
+.art .date .kind{font-size:10.5px;font-weight:700;color:var(--muted)}
+.art .date .d{font-size:17px;font-weight:800;letter-spacing:.02em}
+.art .date .raw{font-size:10.5px;color:var(--muted)}
+.art .body{flex:1;min-width:0}
+.art .row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.art .title{font-size:14.5px;font-weight:700;color:var(--ink);text-decoration:none}
+.art .title:hover{color:var(--accent);text-decoration:underline}
+.art.unread .title::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--unread);margin-right:7px;vertical-align:middle}
+.art .summary{font-size:12.5px;color:var(--muted);margin:4px 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.art .meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+.art .meta a{color:var(--accent);text-decoration:none}
+.art .star{background:transparent;border:0;font-size:17px;color:#c9a227;padding:0 2px}
+.art .noimg{flex:0 0 64px;height:64px;border:1px dashed var(--line);border-radius:8px;display:grid;place-items:center;
+  font-size:9px;color:var(--muted);text-align:center;line-height:1.2}
+.pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px}
+.pager button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:5px 10px;font-size:12px}
+.pager button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.count-note{font-size:11.5px;color:var(--muted);text-align:center;padding-bottom:10px}
+
+/* ===== テーブル ===== */
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+thead th{background:var(--chip);font-size:11px;color:var(--muted);white-space:nowrap}
+tbody tr:hover{background:var(--line2)}
+.tbl-wrap{overflow-x:auto;border-radius:12px}
+
+/* ===== タブ ===== */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{background:transparent;border:0;padding:9px 14px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+/* ===== ダッシュボード ===== */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:16px}
+.stat{padding:16px 18px}
+.stat .k{font-size:11.5px;color:var(--muted);font-weight:700}
+.stat .v{font-size:26px;font-weight:800;margin:4px 0 2px}
+.stat .sub{font-size:11.5px;color:var(--muted)}
+.gauge{height:9px;background:var(--line2);border-radius:6px;overflow:hidden;margin-top:8px}
+.gauge > i{display:block;height:100%;border-radius:6px}
+.section-title{font-size:13px;font-weight:800;margin:20px 0 8px;color:var(--ink)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+
+/* ===== ログイン（SC-01） ===== */
+.login-view{min-height:100vh;display:grid;place-items:center;background:linear-gradient(160deg,#1f2a44,#33406a);padding:20px}
+.login-card{background:var(--panel);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:30px 28px;width:min(400px,92vw)}
+.login-card h2{margin:0 0 4px;font-size:19px}
+.login-card p.lead{margin:0 0 18px;color:var(--muted);font-size:12.5px}
+.user-row{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;padding:12px 14px;margin-bottom:10px;text-align:left}
+.user-row:hover{border-color:var(--accent);background:var(--accent-weak)}
+.user-row .ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff}
+.user-row .nm{font-weight:700;font-size:14px}
+.user-row .rl{font-size:11px;color:var(--muted)}
+.user-row .lock{margin-left:auto;font-size:16px}
+.pin-box{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:11px;background:var(--chip)}
+.pin-box .lab{font-size:12px;font-weight:700;margin-bottom:8px}
+.pin-dots{display:flex;gap:10px;margin-bottom:10px}
+.pin-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);display:inline-block}
+.pin-dots i.f{background:var(--accent)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.keypad button{padding:12px;font-size:16px;border:1px solid var(--line);background:var(--panel);border-radius:9px}
+.note{font-size:11px;color:var(--muted);margin-top:10px}
+
+.hint{font-size:11.5px;color:var(--muted);background:var(--chip);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.deny{padding:30px;text-align:center;color:var(--muted)}
+.deny .big{font-size:40px}
+@media(max-width:720px){ .shell{grid-template-columns:0 1fr} .art .noimg{display:none} .art .date{flex-basis:92px} }
+</style>
+</head>
+<body>
+
+<div class="mock-banner"><span>⚠ 画面イメージ（モックアップ）— 実装ではありません。基本設計 画面設計書.md の見た目確認用。データはサンプル。</span></div>
+
+<!-- ========== ログイン画面（SC-01） ========== -->
+<div id="loginView" class="login-view hidden">
+  <div class="login-card">
+    <h2>利用者を選択してください</h2>
+    <p class="lead">SC-01 ログイン ／ パスワード入力はありません（一般利用者はクリックのみ・管理者は4桁PIN）</p>
+
+    <button class="user-row" onclick="pickUser('user')">
+      <span class="ava" style="background:#5a76c0">ヒ</span>
+      <span><span class="nm">ひろP</span><br><span class="rl">一般利用者（ID: 2）</span></span>
+    </button>
+    <button class="user-row" onclick="pickUser('admin')">
+      <span class="ava" style="background:#b4623a">カ</span>
+      <span><span class="nm">管理者アカウント</span><br><span class="rl">管理者（ID: 1）</span></span>
+      <span class="lock">🔒</span>
+    </button>
+
+    <div id="pinBox" class="pin-box hidden">
+      <div class="lab">🔒 管理者PIN（4桁）を入力</div>
+      <div class="pin-dots"><i id="pd0"></i><i id="pd1"></i><i id="pd2"></i><i id="pd3"></i></div>
+      <div class="keypad">
+        <button onclick="pin(1)">1</button><button onclick="pin(2)">2</button><button onclick="pin(3)">3</button>
+        <button onclick="pin(4)">4</button><button onclick="pin(5)">5</button><button onclick="pin(6)">6</button>
+        <button onclick="pin(7)">7</button><button onclick="pin(8)">8</button><button onclick="pin(9)">9</button>
+        <button onclick="pinDel()">⌫</button><button onclick="pin(0)">0</button><button onclick="pinOk()">OK</button>
+      </div>
+      <div class="note">※連続5回失敗で数分ロック（総当たり抑止）。どれでもOKでログインします（モック）。</div>
+    </div>
+    <div class="hint">実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え。認可(role)はそのまま流用。</div>
+  </div>
+</div>
+
+<!-- ========== アプリ本体（AppLayout） ========== -->
+<div id="appView">
+  <div class="topbar">
+    <button class="burger" onclick="toggleDrawer()">☰</button>
+    <div class="app-title">📚 テーマ別最新情報アグリゲーター</div>
+    <div class="spacer"></div>
+    <div class="role-switch" title="モック用：ロールを切り替えて管理系の出し分けを確認">
+      <button id="rbUser" class="on" onclick="setRole('user')">👤 user</button>
+      <button id="rbAdmin" onclick="setRole('admin')">🛠 admin</button>
+    </div>
+    <div class="who"><span class="ava" id="whoAva">ヒ</span><span id="whoName">ひろP</span></div>
+    <button class="logout" onclick="logout()">ログアウト</button>
+  </div>
+
+  <div class="shell" id="shell">
+    <nav class="drawer">
+      <div class="nav-group">共通</div>
+      <button class="nav-item active" data-screen="sc02" onclick="go('sc02')"><span class="ico">🗒️</span>タイムライン<span class="badge">5</span></button>
+      <button class="nav-item" data-screen="sc04" onclick="go('sc04')"><span class="ico">🏷️</span>テーマ管理</button>
+      <button class="nav-item" data-screen="sc05" onclick="go('sc05')"><span class="ico">⭐</span>お気に入り</button>
+      <button class="nav-item" data-screen="sc09" onclick="go('sc09')"><span class="ico">⚙️</span>設定</button>
+
+      <div class="nav-group adminonly">管理（admin のみ）</div>
+      <button class="nav-item adminonly" data-screen="sc06" onclick="go('sc06')"><span class="ico">🌐</span>情報源マスタ</button>
+      <button class="nav-item adminonly" data-screen="sc07" onclick="go('sc07')"><span class="ico">📊</span>管理ダッシュボード</button>
+      <button class="nav-item adminonly" data-screen="sc08" onclick="go('sc08')"><span class="ico">📜</span>実行ログ</button>
+      <div class="admin-lock adminonly">🔒 user では非表示＋到達拒否</div>
+    </nav>
+
+    <main>
+      <!-- ===== SC-02 タイムライン ===== -->
+      <section id="sc02" class="screen">
+        <div class="screen-head"><h1>タイムライン</h1><span class="sc-id">SC-02</span></div>
+        <div class="screen-sub">お気に入り・登録テーマの新着を発生日順に。日付は種別ラベル付き（発売日／開催日／放送日…）。画像は権利配慮で非表示。</div>
+
+        <div class="toolbar">
+          <div class="field"><label>並び順</label>
+            <select><option>発生日順（既定）</option><option>発売日順</option><option>収集日順</option></select>
+          </div>
+          <div class="field"><label>方向</label><select><option>降順（新しい順）</option><option>昇順</option></select></div>
+          <div class="field search"><label>検索（タイトル・要約）</label><input type="search" placeholder="例：フィギュア"></div>
+        </div>
+        <div class="chips" style="margin-bottom:14px">
+          <span class="chip on">すべて</span><span class="chip">未読</span><span class="chip">未通知</span>
+          <span class="chip">グッズ</span><span class="chip">カプセルトイ</span><span class="chip">イベント</span>
+          <span class="chip">発売日</span><span class="chip">開催日</span><span class="chip">期間 ▸</span>
+        </div>
+
+        <div class="card">
+          <div class="art unread">
+            <div class="date"><span class="kind">発売日</span><span class="d">9/20</span><span class="raw"></span></div>
+            <div class="noimg">画像<br>非表示</div>
+            <div class="body">
+              <div class="row1"><span class="cat goods">グッズ</span>
+                <a class="title" href="#" onclick="go('sc03');return false">「呪術廻戦」渋谷事変 新作フィギュア 予約開始</a></div>
+              <div class="summary">五条悟の新規造形フィギュアが登場。全高約28cm、9月20日発売予定。予約は各店で受付開始。</div>
+              <div class="meta"><span>🌐 HOBBY Watch</span><a href="#" onclick="return false">元記事を開く ↗</a>
+                <button class="star" title="ブックマーク">☆</button></div>
+            </div>
+          </div>
+          <div class="art unread">
+            <div class="date"><span class="kind">開催日</span><span class="d">10/1</span><span class="raw"></span></div>
+            <div class="noimg">画像<br>非表示</div>
+            <div class="body">
+              <div class="row1"><span class="cat event">イベント</span>
+                <span class="pill danger">未通知（LINE未達）</span>
+                <a class="title" href="#" onclick="go('sc03');return false">「葬送のフリーレン」コラボカフェ 秋葉原で開催</a></div>
+              <div class="summary">期間限定コラボカフェが10月1日より開催。描き下ろしイラストのメニュー・グッズを展開。</div>
+              <div class="meta"><span>🌐 Gamer</span><span>📍 秋葉原</span><a href="#" onclick="return false">元記事を開く ↗</a>
+                <button class="star" title="ブックマーク">★</button></div>
+            </div>
+          </div>
+          <div class="art unread">
+            <div class="date"><span class="kind">発売日</span><span class="d">9月下旬</span><span class="raw">（原文：9月下旬）</span></div>
+            <div class="noimg">画像<br>非表示</div>
+            <div class="body">
+              <div class="row1"><span class="cat gacha">カプセルトイ</span>
+                <a class="title" href="#" onclick="go('sc03');return false">「チェンソーマン」カプセルトイ 第3弾 ラインナップ公開</a></div>
+              <div class="summary">全6種のラバーマスコットが9月下旬より順次登場。1回400円。設置店舗は公式で案内予定。</div>
+              <div class="meta"><span>🌐 電撃ホビーウェブ</span><a href="#" onclick="return false">元記事を開く ↗</a>
+                <button class="star" title="ブックマーク">☆</button></div>
+            </div>
+          </div>
+          <div class="art">
+            <div class="date"><span class="kind">放送日</span><span class="d">10/4</span><span class="raw"></span></div>
+            <div class="noimg">画像<br>非表示</div>
+            <div class="body">
+              <div class="row1"><span class="cat anime">アニメ</span>
+                <a class="title" href="#" onclick="go('sc03');return false">「SPY×FAMILY」TVアニメ 新シーズン 10月放送開始</a></div>
+              <div class="summary">新シーズンの放送日が決定。10月4日より各局で順次スタート。新キャラクターの情報も公開。</div>
+              <div class="meta"><span>🌐 MANTANWEB</span><a href="#" onclick="return false">元記事を開く ↗</a>
+                <button class="star" title="ブックマーク">☆</button></div>
+            </div>
+          </div>
+          <div class="art">
+            <div class="date"><span class="kind">発売日</span><span class="d">9/12</span><span class="raw"></span></div>
+            <div class="noimg">画像<br>非表示</div>
+            <div class="body">
+              <div class="row1"><span class="cat arcade">ゲームセンター</span>
+                <a class="title" href="#" onclick="go('sc03');return false">「ブルーロック」プライズ新作 ぬいぐるみ 9月中旬投入</a></div>
+              <div class="summary">クレーンゲーム向けプライズ景品として、Aサイズぬいぐるみ全5種が9月12日より順次投入。</div>
+              <div class="meta"><span>🌐 HOBBY Watch</span><a href="#" onclick="return false">元記事を開く ↗</a>
+                <button class="star" title="ブックマーク">☆</button></div>
+            </div>
+          </div>
+          <div class="pager">
+            <button>‹ 前</button><button class="on">1</button><button>2</button><button>3</button><button>次 ›</button>
+          </div>
+          <div class="count-note">全 48 件中 1–5 件（20件/ページ・NFR-04：一覧応答2秒）</div>
+        </div>
+      </section>
+
+      <!-- ===== SC-03 記事詳細 ===== -->
+      <section id="sc03" class="screen hidden">
+        <div class="screen-head"><h1>記事詳細</h1><span class="sc-id">SC-03</span></div>
+        <div class="screen-sub">要約＋元URLのみ。本文全文・公式画像は表示しない（権利配慮）。</div>
+        <button class="btn ghost sm" onclick="go('sc02')">‹ 一覧へ戻る</button>
+        <div class="card" style="padding:22px;margin-top:12px;max-width:720px">
+          <div class="chips" style="margin-bottom:10px"><span class="cat goods">グッズ</span>
+            <span class="pill ok">発売日</span></div>
+          <h2 style="margin:0 0 10px;font-size:20px">「呪術廻戦」渋谷事変 新作フィギュア 予約開始</h2>
+          <table style="max-width:520px">
+            <tr><th style="width:120px">発生日</th><td><b>発売日 2026/09/20</b>（原文：9月中旬）</td></tr>
+            <tr><th>カテゴリ</th><td>グッズ</td></tr>
+            <tr><th>場所</th><td>—</td></tr>
+            <tr><th>情報源</th><td>🌐 HOBBY Watch</td></tr>
+            <tr><th>収集日時</th><td>2026/08/08 09:12（JST）</td></tr>
+          </table>
+          <div class="section-title">要約（自作）</div>
+          <p style="font-size:13.5px;color:var(--ink)">五条悟の新規造形フィギュアが登場。全高約28cm、彩色済み完成品。2026年9月20日発売予定で、予約は主要ホビーショップにて受付開始。数量限定の店舗特典も用意される。</p>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <a class="btn" href="#" onclick="return false">元記事を開く ↗</a>
+            <button class="btn ghost">☆ ブックマーク（後で見る）</button>
+          </div>
+          <div class="hint">※「後で見る」＝ブックマークは<b>通知対象外</b>。データ2年パージからも除外されます。</div>
+        </div>
+      </section>
+
+      <!-- ===== SC-04 テーマ管理 ===== -->
+      <section id="sc04" class="screen hidden">
+        <div class="screen-head"><h1>テーマ管理</h1><span class="sc-id">SC-04</span></div>
+        <div class="screen-sub">自分の収集キーワードを登録。対象カテゴリを選び、収集ON/OFFを切替。</div>
+        <div class="card" style="padding:16px;margin-bottom:16px">
+          <div class="section-title" style="margin-top:0">＋ テーマを追加</div>
+          <div class="toolbar" style="margin-bottom:8px">
+            <div class="field"><label>キーワード</label><input type="text" placeholder="例：呪術廻戦"></div>
+            <div class="field"><label>収集有効</label><label class="toggle"><input type="checkbox" checked> ON</label></div>
+          </div>
+          <label style="font-size:10.5px;color:var(--muted);font-weight:700">対象カテゴリ（複数選択）</label>
+          <div class="chips" style="margin:4px 0 12px">
+            <span class="chip on">グッズ</span><span class="chip on">アニメ</span><span class="chip">漫画</span>
+            <span class="chip on">イベント</span><span class="chip">ゲーム</span><span class="chip">ゲームセンター</span>
+            <span class="chip on">カプセルトイ</span><span class="chip">その他</span>
+          </div>
+          <button class="btn">追加する</button>
+        </div>
+        <div class="tbl-wrap card">
+          <table>
+            <thead><tr><th>キーワード</th><th>対象カテゴリ</th><th>収集</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><b>呪術廻戦</b></td><td>グッズ・アニメ・イベント・カプセルトイ</td><td><span class="pill ok">有効</span></td>
+                <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+              <tr><td><b>葬送のフリーレン</b></td><td>グッズ・アニメ・イベント</td><td><span class="pill ok">有効</span></td>
+                <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+              <tr><td><b>チェンソーマン</b></td><td>グッズ・カプセルトイ</td><td><span class="pill warn">停止中</span></td>
+                <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hint">削除するとテーマに紐づくマッチも整理されます（DBの ON DELETE CASCADE）。同一キーワードの重複は登録できません。</div>
+      </section>
+
+      <!-- ===== SC-05 お気に入り ===== -->
+      <section id="sc05" class="screen hidden">
+        <div class="screen-head"><h1>お気に入り管理</h1><span class="sc-id">SC-05</span></div>
+        <div class="screen-sub">お気に入り＝<b>通知する</b>／ブックマーク＝<b>後で見るだけ（通知しない）</b>。</div>
+        <div class="tabs">
+          <button class="on" onclick="tab(this,'fav-theme')">テーマお気に入り</button>
+          <button onclick="tab(this,'fav-src')">情報源お気に入り</button>
+          <button onclick="tab(this,'fav-bm')">ブックマーク</button>
+        </div>
+        <div id="fav-theme" class="tabpane">
+          <div class="tbl-wrap card"><table>
+            <thead><tr><th>テーマ</th><th>お気に入り</th><th>通知</th></tr></thead>
+            <tbody>
+              <tr><td>呪術廻戦</td><td><span class="pill ok">★ 登録中</span></td><td><label class="toggle"><input type="checkbox" checked> 通知ON</label></td></tr>
+              <tr><td>葬送のフリーレン</td><td><span class="pill ok">★ 登録中</span></td><td><label class="toggle"><input type="checkbox"> 通知OFF</label></td></tr>
+              <tr><td>チェンソーマン</td><td><button class="btn ghost sm">☆ 追加</button></td><td>—</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="fav-src" class="tabpane hidden">
+          <div class="tbl-wrap card"><table>
+            <thead><tr><th>情報源</th><th>お気に入り</th><th>通知</th></tr></thead>
+            <tbody>
+              <tr><td>HOBBY Watch</td><td><span class="pill ok">★ 登録中</span></td><td><label class="toggle"><input type="checkbox" checked> 通知ON</label></td></tr>
+              <tr><td>電撃ホビーウェブ</td><td><span class="pill ok">★ 登録中</span></td><td><label class="toggle"><input type="checkbox" checked> 通知ON</label></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="fav-bm" class="tabpane hidden">
+          <div class="tbl-wrap card"><table>
+            <thead><tr><th>記事（後で見る）</th><th>収集日</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>「葬送のフリーレン」コラボカフェ 秋葉原で開催</td><td>2026/08/08</td>
+                <td><button class="btn ghost sm" onclick="go('sc03')">開く</button> <button class="btn ghost sm">解除</button></td></tr>
+            </tbody>
+          </table></div>
+          <div class="hint">ブックマークは通知されません。2年パージの対象外です。</div>
+        </div>
+      </section>
+
+      <!-- ===== SC-06 情報源マスタ（admin） ===== -->
+      <section id="sc06" class="screen hidden adminscreen">
+        <div class="screen-head"><h1>情報源マスタ管理</h1><span class="sc-id">SC-06</span><span class="pill warn">admin</span></div>
+        <div class="screen-sub">収集対象は「有効 かつ 規約確認済」のみ。未確認は登録できても収集されません（規約ゲート）。</div>
+        <div class="actions"><button class="btn">＋ 情報源を追加</button></div>
+        <div class="tbl-wrap card"><table>
+          <thead><tr><th>名称</th><th>取得方式</th><th>有効</th><th>規約確認</th><th>robots</th><th>最終取得</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><b>MANTANWEB</b></td><td>RSS</td><td><span class="pill ok">有効</span></td>
+              <td><span class="pill ok">確認済 08/07</span></td><td>尊重</td><td>08/08 09:10</td><td><button class="btn ghost sm">編集</button></td></tr>
+            <tr><td><b>HOBBY Watch</b></td><td>RSS</td><td><span class="pill ok">有効</span></td>
+              <td><span class="pill ok">確認済 08/07</span></td><td>尊重</td><td>08/08 09:11</td><td><button class="btn ghost sm">編集</button></td></tr>
+            <tr><td><b>Gamer</b></td><td>RSS</td><td><span class="pill ok">有効</span></td>
+              <td><span class="pill ok">確認済 08/07</span></td><td>尊重</td><td>08/08 09:11</td><td><button class="btn ghost sm">編集</button></td></tr>
+            <tr><td><b>電撃ホビーウェブ</b></td><td>RSS</td><td><span class="pill ok">有効</span></td>
+              <td><span class="pill danger">未確認 → 収集されません</span></td><td>尊重</td><td>—</td><td><button class="btn ghost sm">編集</button></td></tr>
+          </tbody>
+        </table></div>
+        <div class="hint">削除は不可（収集済み記事を守るため ON DELETE RESTRICT）。使わない情報源は「有効」をOFFに。規約確認が済んだら「規約確認」にチェックを入れると収集対象になります。</div>
+      </section>
+
+      <!-- ===== SC-07 管理ダッシュボード（admin） ===== -->
+      <section id="sc07" class="screen hidden adminscreen">
+        <div class="screen-head"><h1>管理ダッシュボード</h1><span class="sc-id">SC-07</span><span class="pill warn">admin</span></div>
+        <div class="screen-sub">バッチ手動実行・LINE通数・LLMコストの可視化（月500円ハードキャップ）。</div>
+        <div class="actions">
+          <button class="btn">▶ 収集バッチを実行</button>
+          <button class="btn ghost">✉ 通知バッチを実行</button>
+        </div>
+        <div class="grid3">
+          <div class="card stat">
+            <div class="k">LINE 通数（今月）</div><div class="v">42<span style="font-size:14px;color:var(--muted)"> / 200</span></div>
+            <div class="sub">無料枠まで余裕あり</div>
+            <div class="gauge"><i style="width:21%;background:var(--ok)"></i></div>
+          </div>
+          <div class="card stat">
+            <div class="k">LLM 概算コスト（今月）</div><div class="v">¥210<span style="font-size:14px;color:var(--muted)"> / ¥500</span></div>
+            <div class="sub">上限まで余裕（自前 usage 集計）</div>
+            <div class="gauge"><i style="width:42%;background:var(--warn)"></i></div>
+          </div>
+          <div class="card stat">
+            <div class="k">LLM 呼び出し（今月）</div><div class="v">86 回</div>
+            <div class="sub">入力 62,400 / 出力 12,800 tok・Sonnet</div>
+          </div>
+        </div>
+        <div class="hint">上限（¥500）到達で LLM 構造化を自動停止し、RSS のみで収集を継続（収集・表示は止めない）。</div>
+        <div class="section-title">収集結果の確認・削除（直近）</div>
+        <div class="tbl-wrap card"><table>
+          <thead><tr><th>タイトル</th><th>情報源</th><th>カテゴリ</th><th>収集日時</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>「呪術廻戦」渋谷事変 新作フィギュア 予約開始</td><td>HOBBY Watch</td><td>グッズ</td><td>08/08 09:12</td><td><button class="btn ghost sm">削除</button></td></tr>
+            <tr><td>「チェンソーマン」カプセルトイ 第3弾</td><td>電撃ホビーウェブ</td><td>カプセルトイ</td><td>08/08 09:12</td><td><button class="btn ghost sm">削除</button></td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <!-- ===== SC-08 実行ログ（admin） ===== -->
+      <section id="sc08" class="screen hidden adminscreen">
+        <div class="screen-head"><h1>実行ログ</h1><span class="sc-id">SC-08</span><span class="pill warn">admin</span></div>
+        <div class="screen-sub">収集ログ・通知ログ。失敗は分類別メッセージで表示。</div>
+        <div class="tabs">
+          <button class="on" onclick="tab(this,'log-crawl')">収集ログ</button>
+          <button onclick="tab(this,'log-notify')">通知ログ</button>
+        </div>
+        <div id="log-crawl" class="tabpane">
+          <div class="tbl-wrap card"><table>
+            <thead><tr><th>情報源</th><th>開始</th><th>取得</th><th>新規</th><th>結果</th><th>メッセージ</th></tr></thead>
+            <tbody>
+              <tr><td>MANTANWEB</td><td>08/08 09:10</td><td>24</td><td>6</td><td><span class="pill ok">成功</span></td><td>—</td></tr>
+              <tr><td>HOBBY Watch</td><td>08/08 09:11</td><td>31</td><td>9</td><td><span class="pill ok">成功</span></td><td>—</td></tr>
+              <tr><td>Gamer</td><td>08/08 09:11</td><td>18</td><td>3</td><td><span class="pill warn">一部失敗</span></td><td>1件の日付解析に失敗（スキップ）</td></tr>
+              <tr><td>電撃ホビーウェブ</td><td>08/08 09:11</td><td>0</td><td>0</td><td><span class="pill warn">スキップ</span></td><td>規約未確認のため対象外</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="log-notify" class="tabpane hidden">
+          <div class="tbl-wrap card"><table>
+            <thead><tr><th>送信先</th><th>送信日時</th><th>記事</th><th>通数</th><th>結果</th></tr></thead>
+            <tbody>
+              <tr><td>ひろP</td><td>08/08 09:15</td><td>5</td><td>1</td><td><span class="pill ok">成功</span></td></tr>
+              <tr><td>管理者アカウント</td><td>08/08 09:15</td><td>3</td><td>1</td><td><span class="pill danger">③認証失効：LINEトークンが無効です。設定を確認してください</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ===== SC-09 設定 ===== -->
+      <section id="sc09" class="screen hidden">
+        <div class="screen-head"><h1>利用者・通知設定</h1><span class="sc-id">SC-09</span></div>
+        <div class="screen-sub">自分のLINE連携・通知は本人が設定。利用者の追加/編集は admin のみ。</div>
+
+        <div class="card" style="padding:18px;margin-bottom:16px;max-width:620px">
+          <div class="section-title" style="margin-top:0">自分のLINE連携・通知（本人）</div>
+          <div class="toolbar">
+            <div class="field"><label>LINE ユーザーID</label><input type="text" value="Uxxxxxxxxxxxxxxxx" style="min-width:220px"></div>
+            <div class="field"><label>通知の全体ON/OFF</label><label class="toggle"><input type="checkbox" checked> 通知ON</label></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+            <span class="pill ok">● 連携OK</span><span style="font-size:12px;color:var(--muted)">直近送信：成功（08/08 09:15）</span>
+          </div>
+          <div class="hint">未追加・ブロック時はここに「友だち追加」案内（QR/リンク）が表示されます（③を受信側が自己解決）。</div>
+        </div>
+
+        <div class="card adminonly" style="padding:18px;max-width:820px">
+          <div class="section-title" style="margin-top:0">利用者管理 <span class="pill warn">admin のみ</span></div>
+          <div class="actions"><button class="btn">＋ 利用者を追加</button></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>表示名</th><th>ロール</th><th>管理者PIN</th><th>有効</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>管理者アカウント</td><td>Admin</td><td>設定済（****）</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
+              <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="userNote hidden deny" style="max-width:820px">利用者管理ブロックは admin のみ表示されます（現在 user）。</div>
+      </section>
+
+      <!-- 権限拒否（user が admin 画面へ来た場合） -->
+      <section id="denied" class="screen hidden">
+        <div class="deny"><div class="big">🔒</div>
+          <h2>この画面は管理者専用です</h2>
+          <p>現在のロール（user）ではアクセスできません。上部の「🛠 admin」に切り替えると確認できます（モック）。<br>
+          実装では Spring Security によりメニュー非表示＋URL直接アクセスも拒否します。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+let role = 'user';
+let pinBuf = [];
+
+function toggleDrawer(){ document.getElementById('shell').classList.toggle('drawer-closed'); }
+
+function go(id){
+  // admin画面のガード
+  const adminScreens = ['sc06','sc07','sc08'];
+  if(role==='user' && adminScreens.includes(id)){ id='denied'; }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  const el = document.getElementById(id); if(el) el.classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===id));
+  window.scrollTo(0,0);
+}
+
+function setRole(r){
+  role = r;
+  document.getElementById('rbUser').classList.toggle('on', r==='user');
+  document.getElementById('rbAdmin').classList.toggle('on', r==='admin');
+  const admin = (r==='admin');
+  document.getElementById('whoName').textContent = admin ? '管理者アカウント' : 'ひろP';
+  document.getElementById('whoAva').textContent = admin ? 'カ' : 'ヒ';
+  document.getElementById('whoAva').style.background = admin ? '#b4623a' : '#5a76c0';
+  document.querySelectorAll('.adminonly').forEach(e=>e.classList.toggle('hidden', !admin));
+  // user に戻したとき admin 画面を開いていたら弾く
+  const cur = document.querySelector('.screen:not(.hidden)');
+  if(!admin && cur && ['sc06','sc07','sc08'].includes(cur.id)) go('denied');
+}
+
+function tab(btn, paneId){
+  const tabs = btn.parentElement;
+  tabs.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const panes = tabs.parentElement.querySelectorAll('.tabpane');
+  panes.forEach(p=>p.classList.add('hidden'));
+  document.getElementById(paneId).classList.remove('hidden');
+}
+
+/* ログイン */
+function showLogin(){ document.getElementById('appView').classList.add('hidden'); document.getElementById('loginView').classList.remove('hidden'); document.getElementById('pinBox').classList.add('hidden'); pinBuf=[]; drawPin(); }
+function logout(){ showLogin(); }
+function pickUser(kind){
+  if(kind==='admin'){ document.getElementById('pinBox').classList.remove('hidden'); }
+  else { enterApp('user'); }
+}
+function enterApp(r){
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('appView').classList.remove('hidden');
+  setRole(r); go('sc02');
+}
+function pin(n){ if(pinBuf.length<4){ pinBuf.push(n); drawPin(); if(pinBuf.length===4) setTimeout(pinOk,150);} }
+function pinDel(){ pinBuf.pop(); drawPin(); }
+function pinOk(){ enterApp('admin'); }
+function drawPin(){ for(let i=0;i<4;i++){ document.getElementById('pd'+i).classList.toggle('f', i<pinBuf.length);} }
+
+/* 初期表示：ログイン画面から */
+showLogin();
+</script>
+</body>
+</html>
