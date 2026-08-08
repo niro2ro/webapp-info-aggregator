@@ -164,7 +164,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>バージョン</td>
-<td>1.4（発生日種別＝発売日順ソート/種別表示を追加＝Q24）</td>
+<td>1.5（カプセルトイ情報源＝電撃ホビーウェブを第一陣に追加＝Q25）</td>
 </tr>
 <tr>
 <td>作成日 / 最終改訂</td>
@@ -462,7 +462,7 @@ strong{font-weight:700;}
 <tr>
 <td>D4</td>
 <td>情報源(第一陣)</td>
-<td>MANTANWEB / HOBBY Watch / Gamer（グッズ・ゲームセンター主軸。RSS/robots/規約は着手時に実地確認）</td>
+<td>MANTANWEB / HOBBY Watch / Gamer / <strong>電撃ホビーウェブ</strong>（グッズ・ゲームセンター主軸＋<strong>カプセルトイ</strong>。RSS/robots/規約は着手時に実地確認）</td>
 </tr>
 <tr>
 <td>D5</td>
@@ -1374,7 +1374,7 @@ strong{font-weight:700;}
 </table></div>
 <blockquote>
 <p><strong>収集の遵守ゲート（2段）</strong>: 収集対象になるのは <strong><code>is_active = true</code> かつ <code>terms_reviewed = true</code></strong>（規約ゲート＝人手・情報源単位）の情報源のみ。さらに各URLの取得直前に <strong>robots.txt を自動判定</strong>（robots ゲート＝ページ単位）し、Disallow のパスはスキップして <code>CrawlLogs</code> に記録。詳細は §7.0 の robots 注記・FR-02-05 参照。
-第一陣シード: MANTANWEB(Rss) / HOBBY Watch(Rss) / Gamer(Rss)。RSS URL・robots・規約は着手時に実地確認し、規約OKなら <code>terms_reviewed=true</code> を立てる（<strong>それまで収集されない</strong>。本要件定義時点では環境ポリシーにより検証不可）。</p>
+第一陣シード: MANTANWEB(Rss) / HOBBY Watch(Rss) / Gamer(Rss) / <strong>電撃ホビーウェブ(Rss・カプセルトイ枠)</strong>。RSS URL・robots・規約は着手時に実地確認し、規約OKなら <code>terms_reviewed=true</code> を立てる（<strong>それまで収集されない</strong>。本要件定義時点では環境ポリシーにより検証不可）。</p>
 </blockquote>
 <h3 id="tbl-articles">TBL-Articles（記事）</h3>
 <div class="tbl-scroll"><table>
@@ -2101,16 +2101,24 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 <td>着手時に特定（運営イード＝アニメ！アニメ！/インサイドと同基盤）</td>
 <td><strong>アーケード・ゲームセンター</strong>筐体・ロケテ・イベント/ゲーム</td>
 </tr>
+<tr>
+<td>電撃ホビーウェブ</td>
+<td>RSS</td>
+<td>着手時に特定（<code>hobby.dengeki.com</code>。カプセルトイタグ <code>/tag/gatya/</code> あり）</td>
+<td><strong>カプセルトイ（ガチャ）</strong>・フィギュア/グッズ。KADOKAWA 運営のホビー総合メディア。<strong>カプセルトイ枠を埋めるために第一陣に追加</strong>（Q25）</td>
+</tr>
 </tbody>
 </table></div>
 <blockquote>
-<p><strong>検証に関する注記</strong>: 本要件定義時点では、実行環境のネットワークポリシーにより外部ホストへの HTTP アクセスが全て 403 で拒否され、上記 RSS の生死・robots.txt・利用規約を実地検証できていない。上記は WebSearch（二次情報）にもとづく暫定であり、<strong>Phase 1 着手時に実地確認する</strong>こと（RSS URL 特定・robots 尊重可否・規約上の可否）。使えない場合は控え候補（電撃ホビーウェブ／アニメージュプラス／アキバ総研 等）へ差し替える。</p>
+<p><strong>検証に関する注記</strong>: 本要件定義時点では、実行環境のネットワークポリシーにより外部ホストへの HTTP アクセスが全て遮断され、上記4サイトの RSS の生死・robots.txt・利用規約を実地検証できていない（電撃ホビーウェブは KADOKAWA 運営で利用規約ページ <code>hobby.dengeki.com/terms/</code> の実在のみ確認）。上記は WebSearch（二次情報）にもとづく暫定であり、<strong>Phase 1/2 着手時に実地確認する</strong>こと（RSS URL 特定・robots 尊重可否・規約上の可否）。使えない場合は控え候補（アニメージュプラス／アキバ総研 等、カプセルトイは下記専門サイト）へ差し替える。</p>
 </blockquote>
 <p>共通ルール: robots.txt 尊重、同一ホスト間隔1秒以上、User-Agent に連絡先を含める。RSS で不足する項目（要約・場所・発生日）は本文抽出→専用パーサー→LLM の順で補完。</p>
 <p>将来Phase再検討（今回は不採用）:
 - タイトー/セガ/バンダイナムコ等 ゲームセンター公式のプライズ告知（RSS無し＋JS動的描画。一次情報だが専用パーサー＋規約確認前提。当面は HOBBY Watch 経由で代替）
 - コミックナタリー（CDNがbotを遮断の疑い。採用時は規約確認＋許諾前提）
-- アニメイトタイムズ（公式RSS無し。専用パーサー実装＋規約確認前提）</p>
+- アニメイトタイムズ（公式RSS無し。専用パーサー実装＋規約確認前提）
+- <strong>カプセルトイ専門サイト（ガチャパラ／キャラグー／トイサンタ／ガチャガチャアイランド 等）</strong>：網羅性は高いが専門/個人系で規約・RSS・スクレイピング可否が不透明。電撃ホビーウェブのカプセルトイ枠で不足する場合の<strong>控え</strong>（採用時は規約・RSS を実地確認）
+- <strong>メーカー公式のガチャ新商品（ガシャポン公式＝バンダイ／タカラトミーアーツ 等）</strong>：一次情報だが公式サイトは RSS 無し＋JS動的描画の恐れ。専用パーサー＋規約確認前提で将来検討</p>
 <h3 id="72-claude-api">7.2 Claude API（構造化・収集時のみ）</h3>
 <ul>
 <li>入力: 本文抽出テキスト（＋ページのタイトル/URL）</li>
@@ -2333,6 +2341,8 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 - [x] 通しレビュー実施（v1.3）: ステータス「7区分→8区分」訂正、版数/改訂日更新、FR-04-02に未通知フィルタ追記、CrawlLogs→LlmUsageLogs の ON DELETE SET NULL を追記</p>
 <p>確定済み（レビュー第7回・発生日種別）:
 - [x] 発生日に<strong>種別(EventDateKind＝発売日/開催日/放送日/受付開始/その他)</strong>を追加（Q24・案A）。一覧の並び順に「発売日順」を追加、日付は種別ラベル付き表示、フィルタに種別。判定はカテゴリ既定→原文キーワード→LLM出力（種別のためにLLMを新規に呼ばない）。<code>Articles.event_date_kind</code>・enum <code>EventDateKind</code> 新設</p>
+<p>確定済み（レビュー第8回・カプセルトイ情報源）:
+- [x] カテゴリ「カプセルトイ」に対応する専用情報源が第一陣に無い穴を解消（Q25）。<strong>電撃ホビーウェブ（KADOKAWA・カプセルトイタグ有り・規約ページ実在）を第一陣の4つ目に追加</strong>。カプセルトイ専門サイト（ガチャパラ等）・メーカー公式は控え。RSS/robots/規約は着手時に実地確認（本環境では外部アクセス遮断で未検証）</p>
 <p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。残るは開発者の最終承認のみ</strong>。承認後に <code>02_基本設計</code> へ進む。</p>
     <div class="doc-foot">テーマ別最新情報アグリゲーター 要件定義書 — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
   </main>
