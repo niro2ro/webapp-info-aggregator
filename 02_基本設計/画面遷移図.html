@@ -129,42 +129,43 @@ strong{font-weight:700;}
 <hr />
 <h2 id="1-mermaid">1. 全体遷移図（Mermaid）</h2>
 <pre class="mermaid">flowchart TD
-    START([アクセス]) --&gt; SC01
+    START(["アクセス"]) --&gt; SC01
 
-    SC01["SC-01 ログイン&lt;br/&gt;利用者選択＋管理者PIN"]
+    SC01["SC-01 ログイン：利用者選択＋管理者PIN"]
     SC01 --&gt;|一般利用者を選択| SC02
-    SC01 --&gt;|管理者を選択→PIN一致| SC02
-    SC01 -. PIN不一致/ロック .-&gt; SC01
+    SC01 --&gt;|管理者を選択しPIN一致| SC02
+    SC01 -.-&gt;|PIN不一致・ロック| SC01
 
-    subgraph COMMON["共通（user / admin）— AppLayout ドロワー"]
-        SC02["SC-02 タイムライン（一覧）&lt;br/&gt;ホーム"]
+    subgraph COMMON["共通 user/admin ─ AppLayout ドロワー"]
+        SC02["SC-02 タイムライン一覧：ホーム"]
         SC03["SC-03 記事詳細"]
         SC04["SC-04 テーマ管理"]
         SC05["SC-05 お気に入り管理"]
-        SC09["SC-09 利用者・通知設定&lt;br/&gt;（自分の設定＝共通）"]
+        SC09["SC-09 利用者・通知設定：自分の設定は共通"]
     end
 
-    subgraph ADMIN["管理系（admin のみ）— ドロワー下段"]
+    subgraph ADMIN["管理系 admin のみ ─ ドロワー下段"]
         SC06["SC-06 情報源マスタ管理"]
         SC07["SC-07 管理ダッシュボード"]
         SC08["SC-08 実行ログ"]
-        SC09A["SC-09 利用者管理ブロック&lt;br/&gt;（admin のみ）"]
+        SC09A["SC-09 利用者管理ブロック：admin のみ"]
     end
 
     SC02 --&gt;|カードのタイトル| SC03
     SC03 --&gt;|戻る| SC02
-    SC03 --&gt;|元記事を開く| EXT([外部サイト&lt;br/&gt;元記事URL・新規タブ])
+    SC03 --&gt;|元記事を開く| EXT
     SC02 --&gt;|元記事を開く| EXT
+    EXT(["外部サイト：元記事URL・新規タブ"])
 
     SC02 &lt;--&gt;|ドロワー| SC04
     SC02 &lt;--&gt;|ドロワー| SC05
     SC02 &lt;--&gt;|ドロワー| SC09
     SC05 --&gt;|ブックマーク記事| SC03
 
-    SC02 &lt;--&gt;|ドロワー(admin)| SC06
-    SC02 &lt;--&gt;|ドロワー(admin)| SC07
-    SC02 &lt;--&gt;|ドロワー(admin)| SC08
-    SC09 -. admin時のみ表示 .- SC09A
+    SC02 &lt;--&gt;|ドロワー admin| SC06
+    SC02 &lt;--&gt;|ドロワー admin| SC07
+    SC02 &lt;--&gt;|ドロワー admin| SC08
+    SC09 -.-&gt;|admin時のみ表示| SC09A
 
     SC02 --&gt;|ログアウト| SC01
 
