@@ -1,0 +1,2313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>要件定義書 — テーマ別最新情報アグリゲーター</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+:root:not([data-theme="light"]) { }
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#20293733; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+/* Sidebar TOC */
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+/* Main */
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+/* Top bar (mobile TOC toggle) */
+.topbar{display:none;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#1">1. システム概要</a><ul>
+<li><a href="#_2">目的</a></li>
+<li><a href="#_3">成功基準</a></li>
+<li><a href="#_4">運用モデルに由来する前提</a></li>
+<li><a href="#_5">対象範囲（スコープ）</a></li>
+<li><a href="#_6">用語定義（ユビキタス言語）</a></li>
+<li><a href="#_7">ビジネスルール（計算・判定の決めごと）</a></li>
+</ul>
+</li>
+<li><a href="#2">2. 確定した主要な設計判断（詳細は回答ログ参照）</a></li>
+<li><a href="#3">3. 機能一覧</a><ul>
+<li><a href="#fr-01">FR-01 テーマ管理</a></li>
+<li><a href="#fr-02">FR-02 収集処理（バッチ・収集フェーズ）</a></li>
+<li><a href="#fr-03">FR-03 通知処理（バッチ・通知フェーズ／収集と分離）</a></li>
+<li><a href="#fr-04-web">FR-04 一覧表示（Web）</a></li>
+<li><a href="#fr-05">FR-05 お気に入り</a></li>
+<li><a href="#fr-06">FR-06 管理機能</a></li>
+<li><a href="#fr-07">FR-07 認証・利用者</a></li>
+<li><a href="#31-moscow">3.1 機能の優先順位（MoSCoW）</a></li>
+<li><a href="#32">3.2 機能の境界（やらないこと）</a></li>
+</ul>
+</li>
+<li><a href="#4">4. 非機能要件</a></li>
+<li><a href="#5">5. 画面一覧</a></li>
+<li><a href="#6-ddl">6. データ設計（DDL レベル）</a><ul>
+<li><a href="#_8">列挙値の定義</a></li>
+<li><a href="#tbl-users">TBL-Users（利用者）</a></li>
+<li><a href="#tbl-themes">TBL-Themes（テーマ）</a></li>
+<li><a href="#tbl-themecategories">TBL-ThemeCategories（テーマ別 収集対象カテゴリ）</a></li>
+<li><a href="#tbl-sources">TBL-Sources（情報源マスタ）</a></li>
+<li><a href="#tbl-articles">TBL-Articles（記事）</a></li>
+<li><a href="#tbl-articlethemematches">TBL-ArticleThemeMatches（記事×テーマ マッチ）</a></li>
+<li><a href="#tbl-favoritethemes">TBL-FavoriteThemes（テーマお気に入り）</a></li>
+<li><a href="#tbl-favoritesources">TBL-FavoriteSources（情報源お気に入り）</a></li>
+<li><a href="#tbl-bookmarks">TBL-Bookmarks（記事ブックマーク・後で見る）</a></li>
+<li><a href="#tbl-readstates">TBL-ReadStates（既読状態）</a></li>
+<li><a href="#tbl-articlenotifications">TBL-ArticleNotifications（記事別通知履歴・再送防止）</a></li>
+<li><a href="#tbl-notificationlogs">TBL-NotificationLogs（通知ログ・通数カウント）</a></li>
+<li><a href="#tbl-crawllogs">TBL-CrawlLogs（収集ログ）</a></li>
+<li><a href="#tbl-llmusagelogsllm">TBL-LlmUsageLogs（LLM利用ログ・コストカウント）</a></li>
+<li><a href="#db">冪等性の担保方法（DB レベル）</a></li>
+<li><a href="#on-delete">参照アクション（ON DELETE）方針</a></li>
+</ul>
+</li>
+<li><a href="#7">7. 外部インターフェース仕様</a><ul>
+<li><a href="#70-rss">7.0 収集方式の考え方（RSS 優先の理由）</a></li>
+<li><a href="#71">7.1 収集対象（インバウンド取得）</a></li>
+<li><a href="#72-claude-api">7.2 Claude API（構造化・収集時のみ）</a></li>
+<li><a href="#73-line-messaging-api">7.3 LINE Messaging API（通知・アウトバウンド）</a></li>
+</ul>
+</li>
+<li><a href="#8">8. エラーハンドリング方針</a><ul>
+<li><a href="#81-line">8.1 LINE 通知失敗の分類・対応（送信側）</a></li>
+</ul>
+</li>
+<li><a href="#9">9. 制約・遵守事項（全工程で維持）</a></li>
+<li><a href="#10">10. トレーサビリティ</a></li>
+<li><a href="#11-phase">11. 実装フェーズ対応（要件→Phase）</a></li>
+<li><a href="#12">12. レビュー観点（開発者へ）</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <h1 id="_1">要件定義書 — テーマ別最新情報アグリゲーター</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>バージョン</td>
+<td>1.3（★項目の実装レベル詰め＝Q16〜Q23 を反映）</td>
+</tr>
+<tr>
+<td>作成日 / 最終改訂</td>
+<td>2026-08-05 / 2026-08-07</td>
+</tr>
+<tr>
+<td>入力資料</td>
+<td><a href="../要件定義のためのもの/PROJECT_BRIEF.md"><code>要件定義のためのもの/PROJECT_BRIEF.md</code></a></td>
+</tr>
+<tr>
+<td>決定根拠</td>
+<td><a href="未決事項回答ログ.md"><code>未決事項回答ログ.md</code></a>（Q1〜Q23）</td>
+</tr>
+<tr>
+<td>ステータス</td>
+<td><strong>開発者レビュー中（通しレビュー実施済・最終承認待ち）</strong>。カテゴリ8区分・日付3カラム・情報源B案・技術スタック Java（Spring Boot + Vaadin Flow）を確定。認証/認可・秘密情報・Docker・LLMコスト・LINE通知失敗・robots/規約遵守を実装レベルで確定</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>1.3 改訂サマリ（2026-08-07）</strong>: 10項目チェックリストの★（高影響項目）を実装レベルまで詰めた。認証＝利用者選択＋管理者PIN／認可＝2ロール(Q16)、秘密情報＝環境変数(Q17)、Docker採用(Q18)、機能優先順位MoSCoW・境界(Q19)、用語定義新設(Q20)、LLMコスト＝ハードキャップ＋Sonnet(Q21)、LINE通知失敗の分類・再送(Q22)、robots/規約の2段遵守ゲート(Q23)。詳細は回答ログ Q16〜Q23。</p>
+<p><strong>技術スタックのピボット（2026-08-05）</strong>: 本プロジェクトは開発者判断で <strong>Java（Spring Boot + Vaadin Flow）学習を兼ねたポートフォリオ</strong>へ変更した。機能一覧(FR)・非機能(NFR)・画面(SC)・データ設計(TBL/DDL)・外部I/F・エラー方針・冪等性/UTC等の制約は<strong>言語非依存のため不変</strong>。変更は技術構成（D5 と実装メモ）に限る。詳細は回答ログ Q12 参照。</p>
+</blockquote>
+<hr />
+<h2 id="1">1. システム概要</h2>
+<p>アニメ・漫画などのテーマ（キーワード）を登録すると、関連する最新情報（グッズ・イベント・放送・コラボ等）を複数の情報源から自動収集し、発生日順の一覧で確認できる Web アプリケーション。お気に入り登録した対象に新着があれば LINE で通知する。</p>
+<h3 id="_2">目的</h3>
+<p>アニメ・漫画のグッズ、ゲームセンターのプライズ、カプセルトイ（ガチャ）などの最新情報は複数の媒体に分散し追うのが大変で、人気商品はすぐ売り切れる。これらを1か所に自動集約し、見たいテーマの新着を効率よく把握できるようにする。あわせて、本プロジェクトは Java（Spring Boot + Vaadin Flow）習得を兼ねた転職用ポートフォリオとする。</p>
+<blockquote>
+<p>補足: 収集は「PC 起動時にまとめて取得」方式であり、秒単位の即時アラートではない。目的は「1か所に集約して探す手間を減らす」こと。即時性は Phase 6（VPS・時刻ベース通知）で高める。</p>
+</blockquote>
+<h3 id="_3">成功基準</h3>
+<ol>
+<li>見たいテーマ（キーワード）を<strong>登録</strong>すると、システムが複数情報源から新着を自動収集し（<strong>RSS を主とし、必要な箇所のみ LLM で構造化</strong>）、発生日順の一覧・検索で確認できる。</li>
+<li>お気に入り対象に新着が出たら <strong>LINE に1通で通知</strong>が届く。</li>
+<li><strong>利用者2名それぞれのテーマ・お気に入り・既読・通知が互いに混ざらず</strong>、画面・機能が一通り不具合なく動作する（協力者テストで確認）。</li>
+<li>（コスト）AI 利用は<strong>収集時の構造化のみ</strong>で、月500円以内に収まる。</li>
+</ol>
+<ul>
+<li>想定利用者: 2名（開発者本人＋協力者1名）</li>
+<li>実行環境: 自宅 Windows PC（常時稼働しない）。バッチはタスクスケジューラでログオン時に起動。</li>
+<li>将来: 転職活動開始時に VPS へ移設（Phase 6・実施確定）。</li>
+<li>本プロジェクトは転職活動用ポートフォリオを兼ねる。</li>
+</ul>
+<h3 id="_4">運用モデルに由来する前提</h3>
+<ul>
+<li>通知は時刻ベースではなく「PC 起動時に前回以降の新着をまとめて届ける」方式。</li>
+<li>1日に複数回起動されうるため <strong>冪等性の担保が必須</strong>（重複登録・重複通知をしない、同日2回目以降は通知しない）。</li>
+</ul>
+<h3 id="_5">対象範囲（スコープ）</h3>
+<p>本システムが「どこからどこまでを扱うか」の線引き。ここで範囲外を明示することで、後工程の設計・実装が意図から逸れないようにする（決定根拠は回答ログ Q13）。</p>
+<p><strong>対象ドメイン</strong>: アニメ・漫画に関する最新情報。種別はカテゴリ8区分（グッズ／アニメ〔放送〕／漫画／イベント／ゲーム／ゲームセンター／カプセルトイ／その他）で表現する。「コラボ」は横断的な情報で、実体に応じてイベント（コラボカフェ等）やグッズ（コラボ商品）に分類する。</p>
+<p><strong>スコープ内（本プロジェクトで実現する）</strong>:
+- 情報の<strong>収集</strong>（複数情報源から自動収集）
+- <strong>一覧表示</strong>（発生日順タイムライン・フィルタ・検索・未読既読）
+- <strong>LINE 通知</strong>（お気に入り対象の新着）</p>
+<p><strong>スコープ外（今回は実現しない）</strong>:
+- 記事本文／公式画像の保存・表示（自作要約＋元URLのみ）
+- 利用者間の共有・コメント等のソーシャル機能
+- 価格比較・在庫連携
+- 購入・予約・SNS 投稿等のアクション連携</p>
+<p><strong>将来の機能追加候補（今回は外すが拡張余地として記録）</strong>:
+- 在庫情報の取り込み
+- 利用者数の拡大（3名以上）
+- 汎用アグリゲーターとしての展開</p>
+<p><strong>境界条件</strong>:
+- 言語＝日本語のみ／対象サイト＝国内のみ
+- 利用者＝2名固定
+- 対象期間＝直近<strong>2年分</strong>（DB 保持期間もこれに合わせる。NFR-05）。※前年と同時期・同種の新作（周年グッズ、季節イベント、シリーズ続編等）が出る傾向があり、前年同期と比較できるよう2年分を保持する</p>
+<p><strong>拡張方針</strong>: アニメ・漫画に<strong>特化</strong>した製品として提示する。テーマ／カテゴリ構造自体は特定ジャンルに依存しない汎用設計とし、将来の機能追加で汎用アグリゲーターとして見せられる余地を残す。</p>
+<h3 id="_6">用語定義（ユビキタス言語）</h3>
+<p>言葉の意味を1つに固定する。要件・設計・実装・DB・画面で<strong>同じ用語＝同じ意味</strong>とし、対応するテーブル/enum/機能IDを併記して工程間のブレをなくす（トレーサビリティ §10）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>用語</th>
+<th>定義</th>
+<th>対応（テーブル/enum/ID）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者（User）</td>
+<td>本システムを使う人。2名固定。ロールで admin/user を区別</td>
+<td>TBL-Users・enum UserRole</td>
+</tr>
+<tr>
+<td>ロール（Role）</td>
+<td>利用者の権限区分。admin＝管理機能可／user＝一般</td>
+<td>Users.role・FR-07-04</td>
+</tr>
+<tr>
+<td>テーマ（Theme）</td>
+<td>利用者が登録する収集キーワード（例「呪術廻戦」）。利用者ごとに保持</td>
+<td>TBL-Themes・FR-01</td>
+</tr>
+<tr>
+<td>カテゴリ（Category）</td>
+<td>情報の種別。8区分（グッズ/アニメ/漫画/イベント/ゲーム/ゲームセンター/カプセルトイ/その他）</td>
+<td>enum Category</td>
+</tr>
+<tr>
+<td>情報源（Source）</td>
+<td>記事を取得する対象サイト/フィード</td>
+<td>TBL-Sources</td>
+</tr>
+<tr>
+<td>robots.txt</td>
+<td>サイトが「自動プログラム（ボット）に許可する巡回範囲」を示す取り決めファイル。うちは収集ボットとして取得直前にこれを尊重する（robots ゲート）</td>
+<td>FR-02-05</td>
+</tr>
+<tr>
+<td>遵守ゲート</td>
+<td>収集前後の2段の関所。<strong>規約ゲート</strong>（人手・情報源単位・<code>terms_reviewed</code>）と <strong>robots ゲート</strong>（自動・ページ単位・robots.txt）。両方を満たさない収集はしない</td>
+<td>FR-02-05/12・TBL-Sources</td>
+</tr>
+<tr>
+<td>記事（Article）</td>
+<td>収集した最新情報1件。<strong>自作要約＋メタ情報＋元URL</strong>で構成し、本文・公式画像は保持しない</td>
+<td>TBL-Articles・FR-02</td>
+</tr>
+<tr>
+<td>発生日（EventDate）</td>
+<td>記事が表す事象の<strong>代表日</strong>。並び替え・期間フィルタのキー。曖昧な場合あり</td>
+<td>Articles.event_date</td>
+</tr>
+<tr>
+<td>発生日原文（EventDateText）</td>
+<td>発生日の元の表記（例「9月上旬」「予約受付中」）。表示用</td>
+<td>Articles.event_date_text</td>
+</tr>
+<tr>
+<td>発生日精度（EventDatePrecision）</td>
+<td>発生日の確からしさ（Exact/Month/Season/Ongoing/Unknown）</td>
+<td>enum EventDatePrecision</td>
+</tr>
+<tr>
+<td>収集（収集フェーズ）</td>
+<td>情報源から記事を取得し DB へ登録するバッチ処理。取得は RSS→専用パーサー→LLM の順</td>
+<td>FR-02・TBL-CrawlLogs</td>
+</tr>
+<tr>
+<td>通知（通知フェーズ）</td>
+<td>お気に入り対象の新着を LINE で送る処理。収集とは別プロセスで <strong>LLM 不使用</strong></td>
+<td>FR-03</td>
+</tr>
+<tr>
+<td>LLM構造化</td>
+<td>収集時に本文を Claude API でタイトル/日付/カテゴリ等へ構造化すること。<strong>通知時は行わない</strong></td>
+<td>FR-02-03・TBL-LlmUsageLogs</td>
+</tr>
+<tr>
+<td>マッチ（ArticleThemeMatch）</td>
+<td>記事と有効テーマの突合結果（どの記事がどのテーマに該当するか）</td>
+<td>TBL-ArticleThemeMatches・FR-02-10</td>
+</tr>
+<tr>
+<td>お気に入り（Favorite）</td>
+<td><strong>通知対象</strong>として登録したテーマ/情報源。通知 ON/OFF を持つ</td>
+<td>TBL-FavoriteThemes/FavoriteSources・FR-05</td>
+</tr>
+<tr>
+<td>ブックマーク（Bookmark）</td>
+<td>「後で見る」で保存した個別記事。<strong>通知対象ではない</strong>。データパージの除外対象</td>
+<td>TBL-Bookmarks・FR-05-03</td>
+</tr>
+<tr>
+<td>既読状態（ReadState）</td>
+<td>記事ごとの読んだ/未読の状態。利用者ごとに保持</td>
+<td>TBL-ReadStates・FR-04-04</td>
+</tr>
+<tr>
+<td>URLハッシュ（UrlHash）</td>
+<td>正規化した記事 URL のハッシュ。<strong>重複記事の同一判定キー</strong></td>
+<td>Articles.url_hash・FR-02-07/08</td>
+</tr>
+<tr>
+<td>通数（Message count）</td>
+<td>LINE 送信の消費単位＝<strong>送信先ユーザー数 × 吹き出し数</strong>。無料枠は月200通</td>
+<td>TBL-NotificationLogs</td>
+</tr>
+<tr>
+<td>カルーセル</td>
+<td>複数記事を1吹き出しにまとめる LINE の Flex Message 形式</td>
+<td>FR-03-03</td>
+</tr>
+<tr>
+<td>冪等性（Idempotency）</td>
+<td>複数回実行しても重複登録・重複通知が起きない性質。DB 制約で担保</td>
+<td>NFR-07・§6</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>用語の要注意点：<strong>「お気に入り」＝通知する／「ブックマーク」＝通知しない（後で見るだけ）</strong> は明確に別概念。<strong>「テーマ」＝登録して収集させるもの／「検索」＝収集済みからの絞り込み（FR-04-03）</strong> も別物。混同しないこと。</p>
+</blockquote>
+<h3 id="_7">ビジネスルール（計算・判定の決めごと）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ルール</th>
+<th>内容</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>タイムライン整列キー</td>
+<td><code>COALESCE(event_date, created_at::date)</code>（発生日不明は収集日で代理し新着扱い）</td>
+<td>FR-04-01</td>
+</tr>
+<tr>
+<td>記事の同一判定</td>
+<td><code>url_hash</code> 一致（正規化後）で重複とみなす。別サイトの同一情報はタイトル類似＋発生日でグルーピング</td>
+<td>FR-02-08/09</td>
+</tr>
+<tr>
+<td>取得優先順</td>
+<td>RSS → 専用パーサー → LLM（コスト・権利・安定性の順に有利）</td>
+<td>FR-02-04</td>
+</tr>
+<tr>
+<td>収集マナー</td>
+<td>robots.txt 尊重／同一ホスト間隔1秒以上／User-Agent に連絡先／禁止サイト除外</td>
+<td>FR-02-05</td>
+</tr>
+<tr>
+<td>通数カウント</td>
+<td>送信先ユーザー数 × 吹き出し数。1通に集約（カルーセル）。月200通接近で送信停止しアプリ内表示へ</td>
+<td>FR-03-03/05</td>
+</tr>
+<tr>
+<td>同日2回目の通知抑止</td>
+<td><code>Users.last_notified_at</code> を JST 日付で判定（本日既送なら送らない）</td>
+<td>FR-03-04</td>
+</tr>
+<tr>
+<td>LLMコスト集計</td>
+<td><code>called_at</code> を JST 月に丸めて <code>SUM(est_cost_micro_jpy)</code>（表示時に円換算）</td>
+<td>FR-06-06</td>
+</tr>
+<tr>
+<td>データ保持</td>
+<td>記事2年（ただし Bookmark 済みは除外）、ログ1ヶ月で定期パージ</td>
+<td>NFR-05</td>
+</tr>
+<tr>
+<td>日時の扱い</td>
+<td>UTC 保存（<code>timestamptz</code>）、表示直前に JST 変換</td>
+<td>NFR-08</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2">2. 確定した主要な設計判断（詳細は回答ログ参照）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>項目</th>
+<th>決定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>対象範囲</td>
+<td>アニメ・漫画中心。テーマ/カテゴリ構造は汎用</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>カテゴリ</td>
+<td>8区分（グッズ/アニメ/漫画/イベント/ゲーム/ゲームセンター/カプセルトイ/その他）</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>日付表記ゆれ</td>
+<td>代表日 <code>EventDate</code> + 原文 <code>EventDateText</code> + 精度 <code>EventDatePrecision</code></td>
+</tr>
+<tr>
+<td>D4</td>
+<td>情報源(第一陣)</td>
+<td>MANTANWEB / HOBBY Watch / Gamer（グッズ・ゲームセンター主軸。RSS/robots/規約は着手時に実地確認）</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>Web 構成</td>
+<td>Spring Boot + Vaadin Flow（サーバー側 Java だけで書くステートフルUI・単一プロセス）</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>LLM</td>
+<td>Claude API（<strong>Claude Sonnet</strong>）を収集時の構造化のみに使用。コストは <code>usage</code>×単価で自前計算し月500円をハードキャップ（NFR-06）</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>全文検索</td>
+<td>pg_trgm（タイトル・要約の部分一致に GIN インデックス）</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>DB</td>
+<td>PostgreSQL（Docker Compose でローカル起動）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3">3. 機能一覧</h2>
+<p>各機能に機能ID（<code>FR-xx-xx</code>）を付す。後工程（設計・実装・テスト）はこのIDを参照する。</p>
+<h3 id="fr-01">FR-01 テーマ管理</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-01-01</td>
+<td>テーマ登録</td>
+<td>キーワードを登録する</td>
+</tr>
+<tr>
+<td>FR-01-02</td>
+<td>テーマ編集</td>
+<td>キーワード・対象カテゴリ・有効フラグを編集</td>
+</tr>
+<tr>
+<td>FR-01-03</td>
+<td>テーマ削除</td>
+<td>テーマを削除（関連マッチは論理的に切り離す）</td>
+</tr>
+<tr>
+<td>FR-01-04</td>
+<td>収集対象カテゴリ指定</td>
+<td>テーマごとに収集対象カテゴリ（複数）を指定</td>
+</tr>
+<tr>
+<td>FR-01-05</td>
+<td>収集有効/無効切替</td>
+<td>テーマ単位で収集の ON/OFF</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fr-02">FR-02 収集処理（バッチ・収集フェーズ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-02-01</td>
+<td>RSS 取得</td>
+<td>RSS/Atom を直接パース（LLM 不使用）</td>
+</tr>
+<tr>
+<td>FR-02-02</td>
+<td>専用パーサー取得</td>
+<td>HTML 構造が安定した主要サイトを専用パーサーで取得（LLM 不使用）</td>
+</tr>
+<tr>
+<td>FR-02-03</td>
+<td>LLM 構造化</td>
+<td>上記以外は本文抽出→Claude API で構造化</td>
+</tr>
+<tr>
+<td>FR-02-04</td>
+<td>フォールバック制御</td>
+<td>取得順は RSS → 専用パーサー → LLM</td>
+</tr>
+<tr>
+<td>FR-02-05</td>
+<td>収集マナー遵守</td>
+<td><strong>robots.txt 自動ゲート</strong>：各URL取得の直前に対象サイトの robots.txt を取得（<strong>日次キャッシュ</strong>）し、Disallow のパスは取得せずスキップして <code>CrawlLogs</code> に記録。取得できない/無い場合は慣例どおり許可扱い、ただし<strong>取得エラー（タイムアウト等）は安全側で当日スキップ</strong>。robots.txt のパースは自前実装せず定番ライブラリ（例: crawler-commons）を利用。加えて同一ホスト間隔1秒以上、User-Agent にアプリ名＋連絡先を明記、Crawl-delay があれば従う</td>
+</tr>
+<tr>
+<td>FR-02-12</td>
+<td>規約遵守ゲート</td>
+<td>収集ループは <strong><code>is_active=true</code> かつ <code>terms_reviewed=true</code></strong> の情報源のみを対象にする。規約未確認（<code>terms_reviewed=false</code>）の情報源は登録できても<strong>収集されない</strong>（未確認は集めない、を仕組みで担保）。robots ゲート（FR-02-05）とは効くタイミングが異なる：規約＝情報源単位・収集開始前／robots＝ページ単位・取得直前</td>
+</tr>
+<tr>
+<td>FR-02-06</td>
+<td>抽出項目マッピング</td>
+<td>タイトル/カテゴリ/発生日(3項目)/場所/元URL/要約 を抽出（§7 参照）</td>
+</tr>
+<tr>
+<td>FR-02-07</td>
+<td>URL 正規化・ハッシュ</td>
+<td>クエリ除去・リダイレクト解決後にハッシュ化</td>
+</tr>
+<tr>
+<td>FR-02-08</td>
+<td>重複排除（一次）</td>
+<td>UrlHash のユニーク制約で重複登録を防ぐ</td>
+</tr>
+<tr>
+<td>FR-02-09</td>
+<td>類似グルーピング</td>
+<td>別サイトの同一情報をタイトル類似度＋発生日でグルーピング</td>
+</tr>
+<tr>
+<td>FR-02-10</td>
+<td>テーマ突合</td>
+<td>収集記事を有効テーマのキーワードと突合し、マッチを永続化</td>
+</tr>
+<tr>
+<td>FR-02-11</td>
+<td>LLM予算ガード</td>
+<td>LLM構造化（FR-02-03）を呼ぶ直前に、当月累計コスト（<code>LlmUsageLogs</code> 集計）が上限（安全マージン込み）に達していないか判定。達していれば <strong>LLM を呼ばずスキップし RSS/専用パーサーの結果で登録</strong>（収集は継続）。呼び出し後は <code>usage</code> からコストを算出し記録（NFR-06 ハードキャップ）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fr-03">FR-03 通知処理（バッチ・通知フェーズ／収集と分離）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-03-01</td>
+<td>未通知抽出</td>
+<td>未通知フラグ方式で前回通知以降の新着を抽出</td>
+</tr>
+<tr>
+<td>FR-03-02</td>
+<td>お気に入り絞込</td>
+<td>お気に入り登録（通知ON）対象のみを通知対象にする</td>
+</tr>
+<tr>
+<td>FR-03-03</td>
+<td>カルーセル集約</td>
+<td>複数件を1通（Flex Message カルーセル）にまとめる。<strong>カルーセルのバブル上限（LINE仕様上おおむね12件・着手時に公式確認）を超える分は切り詰め</strong>、残りは「他◯件はアプリで確認」と促しアプリ内表示に委ねる（無料枠を余計に消費しないため分割送信はしない）</td>
+</tr>
+<tr>
+<td>FR-03-04</td>
+<td>同日2回目抑止</td>
+<td>同日2回目以降の起動では送信しない</td>
+</tr>
+<tr>
+<td>FR-03-05</td>
+<td>通数管理</td>
+<td>送信通数をカウントし、月間上限接近で送信を停止しアプリ内表示のみに切替</td>
+</tr>
+<tr>
+<td>FR-03-06</td>
+<td>送信履歴記録</td>
+<td>送信履歴を記録し再送を防止（<code>ArticleNotifications</code> で担保）</td>
+</tr>
+<tr>
+<td>FR-03-07</td>
+<td>送信失敗の分類・再送制御</td>
+<td>送信失敗を <code>NotifyStatus</code>（§6 enum）に分類し <code>NotificationLogs</code> に記録。<strong>再送方針</strong>: ①一時障害/②レート制限＝同一実行内で短時間リトライ（Resilience4j・秒単位バックオフ）→ダメなら未通知を残し<strong>次回起動時に再送</strong>（常駐しないため「N分後」ではなく次回起動）。③認証失効/③ブロック＝自動リトライせず未通知を残す（原因解消後の次回起動で届く）が<strong>5日超過で打ち切り</strong>（アプリ内表示のみに切替）。④形式エラー＝<strong>打ち切り</strong>（同形式では必ず失敗＝不具合。スキップしログのみ）。⑤タイムアウト＝<strong>冪等キー付きで再送</strong>（届いたか不明なため二重送信を防ぎつつ次回起動で再送）。打ち切りは <code>ArticleNotifications</code> に「打ち切り」状態で記録し再送対象から外す。1利用者の失敗が他利用者の送信を止めない（NFR-10）</td>
+</tr>
+<tr>
+<td>FR-03-08</td>
+<td>二重送信防止（冪等キー）</td>
+<td>LINE push の冪等キー（<code>X-Line-Retry-Key</code> 相当・着手時に公式確認）を用い、⑤タイムアウト等の再送で二重配信を防ぐ。<code>ArticleNotifications</code>（FR-03-06）と二段で担保（NFR-07 冪等性）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>制約</strong>: 通知フェーズでは LLM を一切呼ばない（要約は収集時に生成済み）。</p>
+<p><strong>原則（受信側の安全網）</strong>: 新着記事は LINE 送信の成否に関係なく必ずアプリ内（タイムライン）に入る。<strong>LINE 通知は補助的なプッシュであり、アプリが情報の正</strong>。LINE が失敗しても受信側が情報を取りこぼすことはない。受信側がアクションを要するのは「③ブロック/未追加」のみで、SC-09 の LINE 連携ステータス＋友だち追加案内で自己解決できる。</p>
+<p><strong>将来要件（Phase 6・VPS移行後）</strong>: ローカルでは通知は「PC 起動時に前回以降の新着をまとめて届ける」方式だが、VPS で常時稼働するようになった後は、<strong>決まった時間に収集結果を通知するスケジュール通知設定</strong>（時刻ベース通知。例: 毎朝8時に前日分をまとめて送る等、利用者ごとに通知時刻を設定）を提供する。§11 Phase 6「通知の時刻ベース化」に対応。</p>
+</blockquote>
+<h3 id="fr-04-web">FR-04 一覧表示（Web）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-04-01</td>
+<td>日付順タイムライン</td>
+<td>発生日ベースで昇順/降順を切替表示。<code>event_date</code> が NULL（日付不明/受付中等）の記事は収集日時 <code>created_at</code> を代理キーとして整列し、新着として扱う（整列キー = <code>COALESCE(event_date, created_at::date)</code>、詳細は §6 参照）</td>
+</tr>
+<tr>
+<td>FR-04-02</td>
+<td>フィルタ</td>
+<td>テーマ / カテゴリ / 期間 / 未読 / <strong>未通知</strong>（FR-04-06）</td>
+</tr>
+<tr>
+<td>FR-04-03</td>
+<td>検索</td>
+<td>タイトル・要約の部分一致（pg_trgm）</td>
+</tr>
+<tr>
+<td>FR-04-04</td>
+<td>未読既読管理</td>
+<td>記事ごとの既読状態を保持・切替</td>
+</tr>
+<tr>
+<td>FR-04-05</td>
+<td>元記事リンク</td>
+<td>元URLへ遷移（本文・公式画像は保持しない）</td>
+</tr>
+<tr>
+<td>FR-04-06</td>
+<td>未通知の可視化</td>
+<td>LINE 通知の失敗・通数上限・打ち切り等で<strong>LINE に届かなかった新着をアプリ内で分かるように表示</strong>（受信側の安全網。LINE が来なくても取りこぼさない）。フィルタ（FR-04-02）で「未通知」を絞り込める</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fr-05">FR-05 お気に入り</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-05-01</td>
+<td>テーマお気に入り</td>
+<td>テーマ単位でお気に入り登録</td>
+</tr>
+<tr>
+<td>FR-05-02</td>
+<td>情報源お気に入り</td>
+<td>情報源単位でお気に入り登録</td>
+</tr>
+<tr>
+<td>FR-05-03</td>
+<td>記事ブックマーク</td>
+<td>個別記事を「後で見る」用に保存（通知対象ではない）</td>
+</tr>
+<tr>
+<td>FR-05-04</td>
+<td>通知 ON/OFF</td>
+<td>お気に入り（テーマ/情報源）ごとに通知の ON/OFF</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fr-06">FR-06 管理機能</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-06-01</td>
+<td>情報源マスタ登録</td>
+<td>URL・取得方式・有効フラグに加え、<strong>規約確認フラグ（<code>terms_reviewed</code>）・確認日・規約メモ</strong>を登録/編集（規約ゲート FR-02-12 の入口）。未確認のまま登録しても収集されない</td>
+</tr>
+<tr>
+<td>FR-06-02</td>
+<td>バッチ手動実行</td>
+<td>収集・通知バッチを手動起動</td>
+</tr>
+<tr>
+<td>FR-06-03</td>
+<td>収集結果の確認・削除</td>
+<td>収集記事を確認し手動削除</td>
+</tr>
+<tr>
+<td>FR-06-04</td>
+<td>通数残量表示</td>
+<td>LINE 月間通数の消費・残量を表示</td>
+</tr>
+<tr>
+<td>FR-06-05</td>
+<td>実行ログ閲覧</td>
+<td>収集ログ・通知ログを閲覧</td>
+</tr>
+<tr>
+<td>FR-06-06</td>
+<td>LLM利用状況の記録・確認</td>
+<td>LLM 呼び出しごとに回数・入出力トークン数・概算コスト（円、<code>usage</code>×単価の自前計算＝案A）を記録し、<strong>当月累計・残予算・上限到達状態</strong>を管理画面で確認。NFR-06「月500円以内」ハードキャップの可視化（LINE 通数管理 FR-06-04 の LLM 版）。上限接近で警告、<strong>上限到達で LLM 構造化を停止（FR-02-11）し RSS で収集継続</strong>（収集・表示は止めない）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>G1 定期自動実行の位置づけ（運用要件・非FR）</strong>: 収集/通知バッチの定期起動は、Phase 5 で Windows タスクスケジューラ（ログオン時・遅延5分）、Phase 6 で cron / systemd timer による<strong>運用要件</strong>として扱い、機能要件（FR）には含めない。アプリ側は「バッチを Web と別プロセスでヘッドレス実行できる（<code>CommandLineRunner</code>）」設計（NFR-09 移行性）でこれを担保する。手動起動は FR-06-02 で提供する。</p>
+</blockquote>
+<h3 id="fr-07">FR-07 認証・利用者</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-07-01</td>
+<td>認証（利用者選択＋管理者PIN）</td>
+<td>ログイン画面に有効な利用者の [ID＋表示名] を一覧表示し、クリックで選択ログイン。一般利用者はクレデンシャルなし（識別）。<strong>管理者は選択後に4桁PINを入力</strong>し <code>admin_pin_hash</code> と照合、連続失敗で一時ロック。VPS移行時に本格認証へ差し替え（Phase 6）</td>
+</tr>
+<tr>
+<td>FR-07-02</td>
+<td>利用者登録・編集</td>
+<td>利用者（表示名・<strong>ロール</strong>・<strong>管理者PIN</strong>・有効フラグ）を管理画面で追加・編集（<strong>admin 限定</strong>）。初期2名（admin 1・user 1 を想定）は seed 投入し、以降は画面から追加可能（<code>Users</code> テーブル）</td>
+</tr>
+<tr>
+<td>FR-07-03</td>
+<td>LINE連携設定</td>
+<td>利用者ごとの <code>line_user_id</code> の登録/更新と、通知の<strong>全体 ON/OFF</strong>（<code>Users.notify_enabled</code>）を設定画面で管理（<strong>本人が自分の分を設定可</strong>）。お気に入り単位の ON/OFF（FR-05-04）より上位のマスタスイッチ。ID 未登録／全体 OFF の利用者には通知しない。<strong>自分の LINE 連携ステータス（連携OK／未追加／直近送信失敗）を表示し、未追加・ブロック時は友だち追加の案内（QR/リンク）を出す</strong>（③ブロック/未追加を受信側が自己解決するため）</td>
+</tr>
+<tr>
+<td>FR-07-04</td>
+<td>認可（ロール制御）</td>
+<td>admin/user の2ロールで機能・画面を出し分ける。<strong>管理系（SC-06 情報源マスタ／SC-07 管理ダッシュボード＝LLMコスト含む／SC-08 実行ログ／SC-09 利用者管理）は admin 限定</strong>。Spring Security（<code>@PreAuthorize</code> 等）で制御し、認可層は VPS 移行後も不変</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="31-moscow">3.1 機能の優先順位（MoSCoW）</h3>
+<p>重要度を明示する。<strong>Must</strong>＝無いと成功基準が成立しない核／<strong>Should</strong>＝重要だが最初は無くても回る／<strong>Could</strong>＝あれば快適・後回し可。※重要度（MoSCoW）と着手順（Phase）は別軸で、Must でも着手が後段になることがある。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>機能</th>
+<th>重要度</th>
+<th>Phase</th>
+<th>理由（成功基準との対応）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-01 テーマ管理</td>
+<td><strong>Must</strong></td>
+<td>1</td>
+<td>①の入口。登録できないと始まらない</td>
+</tr>
+<tr>
+<td>FR-02 収集（RSS・抽出・URL正規化・重複排除・テーマ突合）</td>
+<td><strong>Must</strong></td>
+<td>1–2</td>
+<td>①の心臓。冪等性（重複排除）含む</td>
+</tr>
+<tr>
+<td>└ FR-02-03 LLM構造化／専用パーサー／類似グルーピング</td>
+<td><strong>Should</strong></td>
+<td>2</td>
+<td>RSSで骨格は回る。情報の充実は次段</td>
+</tr>
+<tr>
+<td>FR-04 一覧表示（タイムライン・元リンク）</td>
+<td><strong>Must</strong></td>
+<td>1</td>
+<td>①の出口</td>
+</tr>
+<tr>
+<td>└ FR-04-03 検索</td>
+<td><strong>Must</strong></td>
+<td><strong>2</strong></td>
+<td>成功基準①に「一覧・検索」と明記。<strong>Phase 2 で前倒し実装</strong></td>
+</tr>
+<tr>
+<td>└ FR-04-02 フィルタ／FR-04-04 未読既読</td>
+<td><strong>Should</strong></td>
+<td>3</td>
+<td>日常運用の快適さ</td>
+</tr>
+<tr>
+<td>FR-05 お気に入り（テーマ/情報源・通知ON/OFF）</td>
+<td><strong>Must</strong></td>
+<td>3</td>
+<td>②の前提（お気に入り新着を通知）</td>
+</tr>
+<tr>
+<td>└ FR-05-03 ブックマーク（後で見る）</td>
+<td><strong>Could</strong></td>
+<td>3</td>
+<td>便利機能・通知対象外</td>
+</tr>
+<tr>
+<td>FR-03 通知（LINE・カルーセル・冪等）</td>
+<td><strong>Must</strong></td>
+<td>4</td>
+<td>②そのもの</td>
+</tr>
+<tr>
+<td>FR-07 認証・認可</td>
+<td><strong>Must</strong></td>
+<td>5</td>
+<td>③データ分離の前提（利用者識別）</td>
+</tr>
+<tr>
+<td>FR-06 管理機能（情報源マスタ・バッチ手動・ログ）</td>
+<td><strong>Should</strong></td>
+<td>5</td>
+<td>運用に必要だが利用体験の核ではない</td>
+</tr>
+<tr>
+<td>└ FR-06-06 LLMコスト可視化</td>
+<td><strong>Should</strong></td>
+<td>5</td>
+<td>④の検証手段</td>
+</tr>
+<tr>
+<td>└ FR-06-03 収集結果削除 等</td>
+<td><strong>Could</strong></td>
+<td>5</td>
+<td>あれば便利</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32">3.2 機能の境界（やらないこと）</h3>
+<p>各機能が「どこで止まるか」を明示し、スコープクリープを防ぐ（全体のスコープ外は §1 を参照）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>機能</th>
+<th>ここまでやる</th>
+<th>やらない（境界）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>テーマ管理</td>
+<td>キーワード手動登録</td>
+<td>自動サジェスト・タグ推薦</td>
+</tr>
+<tr>
+<td>収集</td>
+<td>RSS／公開HTML／LLM構造化</td>
+<td>ログイン必須・robots 禁止サイトへの侵入、本文転載</td>
+</tr>
+<tr>
+<td>一覧・検索</td>
+<td>タイトル・要約の部分一致（pg_trgm）</td>
+<td>意味検索・レコメンド</td>
+</tr>
+<tr>
+<td>通知</td>
+<td>LINE・<strong>ローカルは PC 起動時まとめ</strong>（即時アラートではない）</td>
+<td>メール／Web Push。※<strong>VPS移行後（Phase 6）は「決まった時間の収集結果通知設定」＝時刻ベースのスケジュール通知を提供</strong>（FR-03 将来要件）</td>
+</tr>
+<tr>
+<td>お気に入り</td>
+<td>テーマ／情報源／ブックマーク</td>
+<td>利用者間の共有・コメント</td>
+</tr>
+<tr>
+<td>認証・認可</td>
+<td>利用者選択＋管理者PIN＋2ロール</td>
+<td>パスワードポリシー・多要素（VPS 以降で検討）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4">4. 非機能要件</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>項目</th>
+<th>要件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NFR-01</td>
+<td>利用者数</td>
+<td>2名</td>
+</tr>
+<tr>
+<td>NFR-02</td>
+<td>認証・認可</td>
+<td><strong>認証</strong>: ローカルは利用者選択方式（一覧から自分をクリック。一般利用者はクレデンシャルなしの識別、<strong>管理者のみ4桁PIN</strong>をハッシュ照合）。<strong>認可</strong>: admin/user の2ロールを Spring Security で制御。VPS移行時(Phase 6)に全利用者を本格認証（パスワード/OAuth）へ差し替え、認可層は不変（authN/authZ 分離）</td>
+</tr>
+<tr>
+<td>NFR-03</td>
+<td>バッチ所要時間</td>
+<td>収集バッチは15分以内</td>
+</tr>
+<tr>
+<td>NFR-04</td>
+<td>一覧応答</td>
+<td>一覧表示は2秒以内</td>
+</tr>
+<tr>
+<td>NFR-05</td>
+<td>データ保持</td>
+<td>記事<strong>2年</strong>、ログ1ヶ月（保持期間超過分は定期削除）。対象期間（直近2年分）と保持期間を一致させる（前年同期比較のため）。<strong>ただし、いずれかの利用者が <code>Bookmarks</code> に保存済みの記事はパージ対象外</strong>（「後で見る」を消さない）。パージ時は <code>Bookmarks</code> に存在しない・かつ <code>created_at</code> が2年超の記事のみ削除。関連する <code>ReadStates</code> / <code>ArticleThemeMatches</code> / <code>ArticleNotifications</code> は CASCADE で連動削除</td>
+</tr>
+<tr>
+<td>NFR-06</td>
+<td>AIコスト</td>
+<td><strong>月500円以内をハードキャップで担保</strong>。LLM は収集時の構造化のみ。コストは<strong>各APIレスポンスの <code>usage</code>（入出力トークン数）× モデル単価で自前計算</strong>し <code>LlmUsageLogs</code> に記録（案A）。<strong>当月累計が上限に達したら LLM 構造化を停止し RSS のみで収集を継続</strong>（収集・表示は止めない）。安全マージン（例: 上限の90%）で手前停止。<strong>使用モデルは Claude Sonnet</strong>（1日あたりの想定呼び出しが少なく、標準単価でも月500円に収まる見込み。単価はモデルごとに <code>application.yml</code> で設定）</td>
+</tr>
+<tr>
+<td>NFR-07</td>
+<td>冪等性</td>
+<td>複数回実行しても重複登録・重複通知が発生しない（DB制約で担保）</td>
+</tr>
+<tr>
+<td>NFR-08</td>
+<td>日時</td>
+<td>DB は <code>timestamptz</code>（UTC 保存）、Java 側は <code>Instant</code> で保持し表示直前に <code>ZoneId.of("Asia/Tokyo")</code> で JST 変換。ゾーンIDは一箇所に集約</td>
+</tr>
+<tr>
+<td>NFR-09</td>
+<td>移行性</td>
+<td>VPS へ移設可能（OS非依存・別プロセス・設定外部化・SQLite不使用）</td>
+</tr>
+<tr>
+<td>NFR-10</td>
+<td>障害分離</td>
+<td>1情報源の失敗が他情報源の処理を止めない</td>
+</tr>
+<tr>
+<td>NFR-11</td>
+<td>設定・秘密情報の外部化</td>
+<td><strong>12-factor 準拠で外部化する。機密（LINEトークン／Claude APIキー／DBパスワード等）は環境変数のみで注入し、<code>application.yml</code> はプレースホルダ <code>${...}</code> のみ・実値をリポジトリに置かない</strong>（ローカル＝<code>.env</code>（gitignore）、VPS＝systemd <code>EnvironmentFile</code> 等）。<strong>非機密の環境差分（DBホスト・ログレベル・User-Agent連絡先等）は Spring Profiles（<code>application-{profile}.yml</code>）で切替</strong>。OS依存の資格情報ストアは NFR-09 に反するため使わない</td>
+</tr>
+<tr>
+<td>NFR-12</td>
+<td>コンテナ化・デプロイ</td>
+<td><strong>Docker を採用する</strong>（Phase 0 で PostgreSQL は Docker Compose 済）。<strong>開発中はアプリ本体（web/batch）を JAR / IDE で直接実行</strong>し、PostgreSQL のみ Docker（反復速度優先）。<strong>Phase 6 の VPS 移行時にアプリもコンテナ化</strong>（マルチステージ <code>Dockerfile</code>）し、<code>docker compose</code> で web／batch／db を一括起動する。目的は <strong>Windows→Linux の環境差異解消と環境再現性</strong>（Docker は移行の必須条件ではないが、再現性とポートフォリオ価値のため採用）。秘密情報は compose の <code>env_file</code>／環境変数で注入し NFR-11 と整合させる。バッチは常駐せずワンショット実行のため、定期起動は運用要件（Phase 6＝cron/systemd timer, G1）と併せて設計する</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5">5. 画面一覧</h2>
+<p>各画面に画面ID（<code>SC-xx</code>）を付す。詳細レイアウトは基本設計で確定。</p>
+<p>アクセスロール列: <strong>共通</strong>=user/admin 両方、<strong>admin</strong>=管理者のみ（Spring Security で制御）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>画面</th>
+<th>主な内容</th>
+<th>アクセスロール</th>
+<th>関連機能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SC-01</td>
+<td>ログイン</td>
+<td>有効な利用者の <strong>[ID＋表示名] 一覧を表示しクリックで選択</strong>。管理者選択時は <strong>4桁PIN入力</strong>（パスワード欄なし）</td>
+<td>未認証</td>
+<td>FR-07-01</td>
+</tr>
+<tr>
+<td>SC-02</td>
+<td>タイムライン（一覧）</td>
+<td>発生日順一覧・フィルタ・検索・未読既読・<strong>未通知の可視化</strong>・元リンク</td>
+<td>共通</td>
+<td>FR-04</td>
+</tr>
+<tr>
+<td>SC-03</td>
+<td>記事詳細</td>
+<td>要約・カテゴリ・発生日（原文表示）・場所・元リンク・ブックマーク</td>
+<td>共通</td>
+<td>FR-04, FR-05-03</td>
+</tr>
+<tr>
+<td>SC-04</td>
+<td>テーマ管理</td>
+<td>テーマ登録/編集/削除・対象カテゴリ・有効切替（各自の分）</td>
+<td>共通</td>
+<td>FR-01</td>
+</tr>
+<tr>
+<td>SC-05</td>
+<td>お気に入り管理</td>
+<td>テーマ/情報源のお気に入りと通知ON/OFF・ブックマーク一覧（各自の分）</td>
+<td>共通</td>
+<td>FR-05</td>
+</tr>
+<tr>
+<td>SC-06</td>
+<td>情報源マスタ管理</td>
+<td>情報源の登録/編集・取得方式・有効フラグ</td>
+<td><strong>admin</strong></td>
+<td>FR-06-01</td>
+</tr>
+<tr>
+<td>SC-07</td>
+<td>管理ダッシュボード</td>
+<td>バッチ手動実行・LINE通数残量・<strong>LLM利用状況（回数/トークン/概算コスト）</strong>・収集結果確認/削除</td>
+<td><strong>admin</strong></td>
+<td>FR-06-02〜04, FR-06-06</td>
+</tr>
+<tr>
+<td>SC-08</td>
+<td>実行ログ</td>
+<td>収集ログ・通知ログ閲覧</td>
+<td><strong>admin</strong></td>
+<td>FR-06-05</td>
+</tr>
+<tr>
+<td>SC-09</td>
+<td>利用者・通知設定</td>
+<td><strong>利用者の追加/編集＝admin のみ</strong>。<strong>自分のLINEユーザーID登録・自分の通知の全体ON/OFF・LINE連携ステータス表示・未追加時の友だち追加案内＝本人(共通)</strong></td>
+<td>混在（下記）</td>
+<td>FR-07-02, FR-07-03</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>SC-09 はアクセスが混在する。利用者の追加・編集（他人を含む利用者管理）は <strong>admin 限定</strong>。自分の LINE 連携・通知ON/OFF の設定は <strong>本人(共通)</strong> が行える。実装上は同一画面内で管理者専用ブロックをロールで出し分ける。</p>
+</blockquote>
+<hr />
+<h2 id="6-ddl">6. データ設計（DDL レベル）</h2>
+<p>PostgreSQL 前提。日時は <code>timestamptz</code>（UTC 保存）。列挙型はアプリ側 enum に対応する <code>smallint</code>（コード値）で保持し、意味はコメントに明記する（JPA/Hibernate では <code>@Convert</code> で enum ↔ コード値を変換する <code>AttributeConverter</code> を用意する想定。※Hibernate 既定の <code>@Enumerated(ORDINAL)</code> は列挙順に暗黙依存し危険なため使わず、コード値を明示する Converter を挟む）。テーブルIDは <code>TBL-xxx</code>。</p>
+<blockquote>
+<p>命名は PostgreSQL の慣習に合わせ snake_case を基本とする（JPA エンティティ側は camelCase、<code>@Column</code>/命名戦略でマッピング）。DDL は Flyway（<code>V1__*.sql</code>）で管理する。以下は論理定義。物理カラム名・制約名は詳細設計で確定する。</p>
+</blockquote>
+<h3 id="_8">列挙値の定義</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>enum</th>
+<th>値（コード: 意味）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Category</td>
+<td>1:グッズ / 2:アニメ / 3:漫画 / 4:イベント / 5:ゲーム / 6:ゲームセンター / 7:カプセルトイ(ガチャ) / 9:その他</td>
+</tr>
+<tr>
+<td>EventDatePrecision</td>
+<td>0:Exact(確定日) / 1:Month(月まで) / 2:Season(季節・曖昧) / 3:Ongoing(受付中/発売中等の期間) / 9:Unknown</td>
+</tr>
+<tr>
+<td>FetchType</td>
+<td>1:Rss / 2:HtmlParser / 3:Llm</td>
+</tr>
+<tr>
+<td>CrawlStatus</td>
+<td>0:Success / 1:PartialError / 2:Failed</td>
+</tr>
+<tr>
+<td>LlmCallStatus</td>
+<td>0:Success / 1:Failed</td>
+</tr>
+<tr>
+<td>UserRole</td>
+<td>1:User（一般利用者） / 9:Admin（管理者）</td>
+</tr>
+<tr>
+<td>NotifyStatus</td>
+<td>0:Success / 1:TempError（一時障害・再送） / 2:RateLimited（レート制限・再送） / 3:AuthFailed（認証失効・停止＋警告） / 4:Blocked（ブロック/未追加・停止） / 5:FormatError（形式エラー・打ち切り） / 6:Timeout（応答不明・冪等キー再送） / 9:GaveUp（打ち切り確定＝④、または③の5日超過）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><code>FavoriteTargetType</code> は当初ポリモーフィック設計（1テーブルでテーマ/ソース両対応）を想定して置いていたが、参照整合性を DB 制約で担保するため <strong>お気に入りをテーブル分割</strong>（<code>FavoriteThemes</code> / <code>FavoriteSources</code>）した。分割により列挙型は不要となり廃止。</p>
+</blockquote>
+<h3 id="tbl-users">TBL-Users（利用者）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td>ログイン画面の利用者一覧に表示（表示名と併記）</td>
+</tr>
+<tr>
+<td>display_name</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>表示名。ログイン画面で一覧表示しクリック対象にする</td>
+</tr>
+<tr>
+<td>role</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 1</td>
+<td>UserRole enum（1:User / 9:Admin）。認可の判定に使う</td>
+</tr>
+<tr>
+<td>admin_pin_hash</td>
+<td>text</td>
+<td>NULL</td>
+<td>管理者の4桁PINのハッシュ（BCrypt）。admin 行のみ設定、user 行は NULL。平文PINは保存しない</td>
+</tr>
+<tr>
+<td>line_user_id</td>
+<td>text</td>
+<td>NULL, UNIQUE</td>
+<td>LINE ユーザーID（手動登録）</td>
+</tr>
+<tr>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>通知の全体ON/OFF</td>
+</tr>
+<tr>
+<td>last_notified_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>最終通知日時（UTC）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>認証方式（ローカル）</strong>: ログイン画面は有効な利用者の <code>id</code>＋<code>display_name</code> 一覧を表示し、クリックで選択する。一般利用者(role=User)はクレデンシャル入力なし（信頼前提の識別）。管理者(role=Admin)はクリック後に4桁PINを入力し <code>admin_pin_hash</code> と照合する。PINは低エントロピー（4桁）のため、連続失敗時の一時ロック（例: 5回失敗で数分ロック）を補助的に設ける。VPS移行(Phase 6)で全利用者パスワード/OAuth認証へ差し替える際は、本テーブルにクレデンシャル列を追加する（認可の <code>role</code> 列はそのまま流用）。</p>
+</blockquote>
+<h3 id="tbl-themes">TBL-Themes（テーマ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL</td>
+<td>所有者</td>
+</tr>
+<tr>
+<td>keyword</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>収集キーワード</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>収集有効</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>UNIQUE(user_id, keyword)</td>
+<td>同一利用者内でキーワード重複を防ぐ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-themecategories">TBL-ThemeCategories（テーマ別 収集対象カテゴリ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>theme_id</td>
+<td>bigint</td>
+<td>FK→Themes.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>category</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>Category enum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(theme_id, category)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-sources">TBL-Sources（情報源マスタ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>表示名</td>
+</tr>
+<tr>
+<td>url</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>フィード/ページURL</td>
+</tr>
+<tr>
+<td>fetch_type</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>FetchType enum</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>運用上の有効/無効</td>
+</tr>
+<tr>
+<td>terms_reviewed</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT false</td>
+<td><strong>利用規約を人手で確認済みか（規約ゲート）</strong>。false の情報源は収集対象外</td>
+</tr>
+<tr>
+<td>terms_reviewed_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>規約確認日（UTC）</td>
+</tr>
+<tr>
+<td>terms_note</td>
+<td>text</td>
+<td>NULL</td>
+<td>規約上の制約メモ（例「要約のみ可・画像転載禁止」）</td>
+</tr>
+<tr>
+<td>robots_respect</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>robots.txt を尊重するか（既定 true。robots ゲートは取得直前に自動判定、下記注記参照）</td>
+</tr>
+<tr>
+<td>last_fetched_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>最終取得日時（UTC）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>収集の遵守ゲート（2段）</strong>: 収集対象になるのは <strong><code>is_active = true</code> かつ <code>terms_reviewed = true</code></strong>（規約ゲート＝人手・情報源単位）の情報源のみ。さらに各URLの取得直前に <strong>robots.txt を自動判定</strong>（robots ゲート＝ページ単位）し、Disallow のパスはスキップして <code>CrawlLogs</code> に記録。詳細は §7.0 の robots 注記・FR-02-05 参照。
+第一陣シード: MANTANWEB(Rss) / HOBBY Watch(Rss) / Gamer(Rss)。RSS URL・robots・規約は着手時に実地確認し、規約OKなら <code>terms_reviewed=true</code> を立てる（<strong>それまで収集されない</strong>。本要件定義時点では環境ポリシーにより検証不可）。</p>
+</blockquote>
+<h3 id="tbl-articles">TBL-Articles（記事）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>source_id</td>
+<td>bigint</td>
+<td>FK→Sources.id, NOT NULL</td>
+<td>取得元</td>
+</tr>
+<tr>
+<td>title</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>見出し</td>
+</tr>
+<tr>
+<td>category</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>Category enum</td>
+</tr>
+<tr>
+<td>event_date</td>
+<td>date</td>
+<td>NULL</td>
+<td>代表日（並び替え・期間フィルタ用）</td>
+</tr>
+<tr>
+<td>event_date_text</td>
+<td>text</td>
+<td>NULL</td>
+<td>原文（「9月上旬」等・表示用）</td>
+</tr>
+<tr>
+<td>event_date_precision</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 9</td>
+<td>EventDatePrecision enum</td>
+</tr>
+<tr>
+<td>location</td>
+<td>text</td>
+<td>NULL</td>
+<td>場所（イベント時のみ）</td>
+</tr>
+<tr>
+<td>url</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>元URL</td>
+</tr>
+<tr>
+<td>url_hash</td>
+<td>text</td>
+<td>NOT NULL, <strong>UNIQUE</strong></td>
+<td>正規化URLのハッシュ（重複登録防止）</td>
+</tr>
+<tr>
+<td>summary</td>
+<td>text</td>
+<td>NULL</td>
+<td>自作要約（本文は保存しない）</td>
+</tr>
+<tr>
+<td>group_key</td>
+<td>text</td>
+<td>NULL</td>
+<td>類似グルーピングキー（別サイト同一情報の束ね）</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td>収集日時（UTC）</td>
+</tr>
+</tbody>
+</table></div>
+<p>インデックス:
+- <code>UNIQUE(url_hash)</code> … 冪等性の一次担保
+- <code>INDEX(event_date)</code>, <code>INDEX(created_at)</code>, <code>INDEX(source_id)</code>, <code>INDEX(category)</code>
+- <code>GIN(title gin_trgm_ops)</code>, <code>GIN(summary gin_trgm_ops)</code> … pg_trgm 部分一致</p>
+<blockquote>
+<p><strong>タイムライン整列キー（FR-04-01）</strong>: 並び替えは <code>COALESCE(event_date, created_at::date)</code> を基準にする。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日時で代理整列し、降順表示では新着として上位に来る。式インデックス <code>INDEX((COALESCE(event_date, created_at::date)))</code> を張り、一覧応答2秒（NFR-04）を担保する。</p>
+</blockquote>
+<h3 id="tbl-articlethemematches">TBL-ArticleThemeMatches（記事×テーマ マッチ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>article_id</td>
+<td>bigint</td>
+<td>FK→Articles.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>theme_id</td>
+<td>bigint</td>
+<td>FK→Themes.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>matched_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(article_id, theme_id)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-favoritethemes">TBL-FavoriteThemes（テーマお気に入り）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL, ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>theme_id</td>
+<td>bigint</td>
+<td>FK→Themes.id, NOT NULL, ON DELETE CASCADE</td>
+<td>対象テーマ</td>
+</tr>
+<tr>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>このお気に入りの通知ON/OFF</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(user_id, theme_id)</td>
+<td>重複登録防止</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-favoritesources">TBL-FavoriteSources（情報源お気に入り）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL, ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>source_id</td>
+<td>bigint</td>
+<td>FK→Sources.id, NOT NULL, ON DELETE CASCADE</td>
+<td>対象情報源</td>
+</tr>
+<tr>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>このお気に入りの通知ON/OFF</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(user_id, source_id)</td>
+<td>重複登録防止</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>当初の単一 <code>Favorites</code>（ポリモーフィックFK）を分割。各テーブルが Themes/Sources への本物の FK と <code>ON DELETE CASCADE</code> を持つため、削除済み対象を指す孤児お気に入りを DB が防ぐ（FR-05-01/02/04 に対応）。</p>
+</blockquote>
+<h3 id="tbl-bookmarks">TBL-Bookmarks（記事ブックマーク・後で見る）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>article_id</td>
+<td>bigint</td>
+<td>FK→Articles.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(user_id, article_id)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-readstates">TBL-ReadStates（既読状態）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>article_id</td>
+<td>bigint</td>
+<td>FK→Articles.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>read_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PK(user_id, article_id)</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-articlenotifications">TBL-ArticleNotifications（記事別通知履歴・再送防止）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>article_id</td>
+<td>bigint</td>
+<td>FK→Articles.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>notified_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td>通知（または打ち切り確定）日時（UTC）</td>
+</tr>
+<tr>
+<td>result</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>0:Delivered（通知済） / 1:GaveUp（打ち切り＝再送しない）。打ち切り（④形式エラー、③の5日超過）も本テーブルに記録して再送対象から外す</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><strong>PK(user_id, article_id)</strong></td>
+<td>同一記事の重複通知を防止。行が存在する＝再送しない（通知済 or 打ち切り）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>未通知＝本テーブルに <code>(user_id, article_id)</code> 行が無い状態。送信失敗（①②③⑤）では行を作らず未通知のまま残し次回起動で再送。成功（Delivered）と打ち切り（GaveUp）でのみ行を作り再送対象から外す。GaveUp の記事は SC-02 で「未通知（未達）」として可視化（FR-04-06）。</p>
+</blockquote>
+<h3 id="tbl-notificationlogs">TBL-NotificationLogs（通知ログ・通数カウント）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>bigint</td>
+<td>FK→Users.id, NOT NULL</td>
+<td>送信先</td>
+</tr>
+<tr>
+<td>sent_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td>送信日時（UTC）</td>
+</tr>
+<tr>
+<td>article_count</td>
+<td>int</td>
+<td>NOT NULL</td>
+<td>束ねた記事件数</td>
+</tr>
+<tr>
+<td>message_count</td>
+<td>int</td>
+<td>NOT NULL</td>
+<td>消費した通数（送信先×吹き出し数）</td>
+</tr>
+<tr>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td><code>NotifyStatus</code> enum（送信結果の分類）。失敗時は分類ごとに管理者向けメッセージを SC-07/SC-08 に表示</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>月間通数は <code>sent_at</code> を JST 月に丸めて <code>SUM(message_count)</code> で集計（表示時変換）。上限接近判定に用いる。</p>
+</blockquote>
+<h3 id="tbl-crawllogs">TBL-CrawlLogs（収集ログ）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>source_id</td>
+<td>bigint</td>
+<td>FK→Sources.id, NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>started_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td>開始（UTC）</td>
+</tr>
+<tr>
+<td>finished_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>終了（UTC）</td>
+</tr>
+<tr>
+<td>item_count</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>取得件数</td>
+</tr>
+<tr>
+<td>new_item_count</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>新規登録件数</td>
+</tr>
+<tr>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>CrawlStatus enum</td>
+</tr>
+<tr>
+<td>error_message</td>
+<td>text</td>
+<td>NULL</td>
+<td>失敗時のメッセージ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tbl-llmusagelogsllm">TBL-LlmUsageLogs（LLM利用ログ・コストカウント）</h3>
+<p>FR-06-06（LLM利用状況の記録・確認）用。LLM を呼び出すたびに1行記録し、当月累計で NFR-06「月500円以内」を検証する。NotificationLogs（LINE 通数）と対称の構造。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>called_at</td>
+<td>timestamptz</td>
+<td>NOT NULL</td>
+<td>呼び出し日時（UTC）</td>
+</tr>
+<tr>
+<td>model</td>
+<td>varchar(100)</td>
+<td>NOT NULL</td>
+<td>使用モデル名（コスト単価が変わるため保持）</td>
+</tr>
+<tr>
+<td>input_tokens</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>入力トークン数（API レスポンスの usage 値）</td>
+</tr>
+<tr>
+<td>output_tokens</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>出力トークン数（同上）</td>
+</tr>
+<tr>
+<td>est_cost_micro_jpy</td>
+<td>bigint</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>概算コスト（円の 100万分の1 単位＝マイクロ円。単価×トークンの小数を整数保持し丸め誤差を避ける。表示時に ÷1,000,000）</td>
+</tr>
+<tr>
+<td>crawl_log_id</td>
+<td>bigint</td>
+<td>FK→CrawlLogs.id, NULL</td>
+<td>どの収集実行に紐づくか（任意・トレース用）</td>
+</tr>
+<tr>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>LlmCallStatus enum（成功/失敗）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>月間コストは <code>called_at</code> を JST 月に丸めて <code>SUM(est_cost_micro_jpy)</code> で集計（表示時に円換算）。単価はモデルごとに設定（<code>application.yml</code>）から取得し、記録時に確定値を保存する（後日の単価改定で過去実績がぶれないようにする）。通知処理からは LLM を呼ばない（CLAUDE.md §5）ため、本ログは収集バッチ経由のみ増える。</p>
+</blockquote>
+<h3 id="db">冪等性の担保方法（DB レベル）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>担保</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>重複登録</td>
+<td><code>Articles.url_hash</code> の UNIQUE 制約。挿入時の一意制約違反を握って握りつぶす</td>
+</tr>
+<tr>
+<td>重複通知</td>
+<td><code>ArticleNotifications(user_id, article_id)</code> の PK</td>
+</tr>
+<tr>
+<td>同日2回目の通知抑止</td>
+<td><code>Users.last_notified_at</code> を JST 日付で判定（本日既送なら送信しない）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>アプリ側のチェックだけに頼らず、DB 制約を最終防衛線とする。</p>
+</blockquote>
+<h3 id="on-delete">参照アクション（ON DELETE）方針</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>親→子</th>
+<th>アクション</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Articles → ReadStates / ArticleThemeMatches / ArticleNotifications / Bookmarks</td>
+<td>CASCADE</td>
+<td>記事パージ（NFR-05）時に付随データを孤児化させない。※ブックマーク済み記事はそもそもパージ対象外なので通常 Bookmarks は連動しない</td>
+</tr>
+<tr>
+<td>Users → Themes / Favorite* / Bookmarks / ReadStates / ArticleNotifications</td>
+<td>CASCADE</td>
+<td>利用者削除時に個人データを一括除去（VPS移行後の退会想定）</td>
+</tr>
+<tr>
+<td>Themes → ThemeCategories / ArticleThemeMatches / FavoriteThemes</td>
+<td>CASCADE</td>
+<td>テーマ削除時にマッチ・お気に入りを整理（FR-01-03 の「関連マッチ切り離し」を DB で担保）</td>
+</tr>
+<tr>
+<td>Sources → Articles / FavoriteSources / CrawlLogs</td>
+<td>RESTRICT</td>
+<td>収集済み記事のある情報源の誤削除を防ぐ（無効化は is_active=false で行う）</td>
+</tr>
+<tr>
+<td>CrawlLogs → LlmUsageLogs（<code>crawl_log_id</code>）</td>
+<td>SET NULL</td>
+<td>CrawlLogs はログ1ヶ月でパージされる（NFR-05）。<code>crawl_log_id</code> は nullable のトレース用途なので、親ログ削除時は NULL 化して LlmUsageLogs は残す（当月コスト集計に影響させない）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="7">7. 外部インターフェース仕様</h2>
+<h3 id="70-rss">7.0 収集方式の考え方（RSS 優先の理由）</h3>
+<blockquote>
+<p>開発者向けの設計背景メモ（CLAUDE.md §0-3 の方針に基づき、選定理由を明文化）。</p>
+</blockquote>
+<h4 id="rss">RSS とは</h4>
+<p><strong>RSS（Really Simple Syndication）</strong> は、ニュースサイトやブログが「新着記事の一覧」を機械可読な XML 形式で配信する仕組み。人間向けの HTML ページとは別に、サイト自身が用意している「更新情報の配信口」である。1記事は以下のように、タイトル・URL・日付・要約・カテゴリが<strong>あらかじめタグで構造化</strong>されて届く。</p>
+<pre><code class="language-xml">&lt;item&gt;
+  &lt;title&gt;○○フェア開催決定&lt;/title&gt;
+  &lt;link&gt;https://example.jp/news/123&lt;/link&gt;
+  &lt;pubDate&gt;2026-08-06&lt;/pubDate&gt;
+  &lt;description&gt;△△が開催される…&lt;/description&gt;
+  &lt;category&gt;イベント&lt;/category&gt;
+&lt;/item&gt;
+</code></pre>
+<h4 id="3rss">3段階の取得方式と、RSS を最優先にする理由</h4>
+<p>本アプリの心臓部は「複数サイトから最新情報を集めて構造化する」ことであり、取得方式を次の優先順で切り替える（FR-02-04）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>優先</th>
+<th>方式</th>
+<th>やること</th>
+<th>LLM</th>
+<th>コスト・手間</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td><strong>RSS</strong></td>
+<td>配信口の XML をそのまま読む</td>
+<td>不使用</td>
+<td><strong>最も軽い</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>専用パーサー</td>
+<td>HTML を解析してデータを取り出す</td>
+<td>不使用</td>
+<td>中（サイトごとに実装）</td>
+</tr>
+<tr>
+<td>③</td>
+<td>LLM</td>
+<td>本文を Claude API に渡して構造化</td>
+<td>使用</td>
+<td>重い（課金あり）</td>
+</tr>
+</tbody>
+</table></div>
+<p>RSS を最優先にするのは、本要件定義が掲げる制約に直結するため。</p>
+<ol>
+<li><strong>コスト（NFR-06・§9）</strong>: RSS はタイトル・日付・カテゴリが最初から構造化されているため <strong>LLM を呼ぶ必要がない</strong>。LLM は呼ぶたびに課金されるので「RSS で取れるものは RSS で」が AI コスト月500円以内の鍵。</li>
+<li><strong>権利配慮（§9）</strong>: RSS はサイトが自ら公開している正規の配信窓口であり、HTML を力ずくで解析（スクレイピング）するより<strong>規約・権利面で安全</strong>。ポートフォリオ評価にも資する。</li>
+<li><strong>実装の軽さ・安定性</strong>: HTML はサイト改装でレイアウトが変わると壊れるが、RSS は形式が標準で安定。<strong>Phase 1（1テーマを日付順に並べる）を最短で回せる</strong>。第一陣3サイトを全て RSS で選んだのはこの理由。</li>
+</ol>
+<p>RSS で不足する項目（要約・場所・発生日など）がある場合のみ、②専用パーサー → ③LLM の順で補完する。</p>
+<h4 id="java">Java での扱い</h4>
+<p>XML を自力パースはしない。ライブラリ <strong>ROME (rome-tools)</strong> が RSS/Atom の読み取りを担い、<code>SyndFeedInput</code> でパースした <code>SyndFeed</code> から各記事 <code>SyndEntry</code> を <code>.getTitle()</code> / <code>.getLink()</code> / <code>.getPublishedDate()</code> / <code>.getDescription()</code> 等のメソッドで取り出せる。フォーマット解釈はライブラリ任せにできる（「決まった形式のファイルを構造体に読み込む」感覚に近い）。HTTP 取得は Spring <code>RestClient</code>（＋Resilience4j）で行い、取得した本文を必要に応じて <strong>jsoup</strong>（専用パーサー）で解析する。</p>
+<blockquote>
+<p>注記: 第一陣3サイトは「RSS を提供していると見られる」段階であり、<strong>その RSS が実際に生きているかは着手時の実地確認が必要</strong>（本セッションの環境では検証不可）。§7.1 の検証注記を参照。</p>
+</blockquote>
+<h4 id="robotstxt">robots.txt と遵守ゲート（権利配慮を仕組みで守る）</h4>
+<p><strong>robots.txt とは</strong>、サイトが「自動プログラム（ボット）に許可する巡回範囲」を示す取り決めファイル（<code>https://ホスト/robots.txt</code>）。本アプリは複数サイトを自動巡回するボットそのものなので、これを尊重することが Web のマナーであり、規約・権利トラブルを避ける前提になる。技術的な鍵ではないが、無視は権利リスクになるため<strong>設計で守る</strong>。</p>
+<p>例（抜粋）:</p>
+<pre><code>User-agent: *
+Disallow: /admin/      ← ここ以下は取得しない
+Allow:    /news/       ← ここは取得OK
+Crawl-delay: 1         ← アクセスは1秒以上あけて
+</code></pre>
+<p><strong>2段の遵守ゲート</strong>（効くタイミングが違う）:</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ゲート</th>
+<th>種別</th>
+<th>いつ効くか</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>規約ゲート</td>
+<td>人手・情報源単位</td>
+<td>その情報源を<strong>収集対象にするか</strong>（収集開始前）</td>
+<td><code>terms_reviewed=true</code> の情報源だけ収集（未確認は集めない・FR-02-12）</td>
+</tr>
+<tr>
+<td>robots ゲート</td>
+<td>自動・ページ単位</td>
+<td><strong>各URLを取りに行く直前</strong></td>
+<td>robots.txt を判定し Disallow のパスはスキップ（FR-02-05）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>robots ゲートの実装方針</strong>:
+- 取得直前に対象サイトの robots.txt を確認。相手・自分の負担を避けるため<strong>日次キャッシュ</strong>。
+- robots.txt が無い/取得できない場合は慣例どおり許可扱い。ただし<strong>取得エラー（タイムアウト等）は安全側で当日スキップ</strong>。
+- robots.txt のパースは自前実装せず<strong>定番ライブラリ（例: crawler-commons の <code>SimpleRobotRules</code>）</strong>に任せる（RSS を ROME に任せるのと同じ「決まった形式はライブラリ任せ」）。
+- Crawl-delay があれば従う（＋同一ホスト間隔1秒以上・User-Agent にアプリ名＋連絡先）。</p>
+<blockquote>
+<p>規約は機械では判定できないため人手確認（規約ゲート）、robots.txt は機械判定できるため自動（robots ゲート）、という<strong>役割分担</strong>にしている。</p>
+</blockquote>
+<h3 id="71">7.1 収集対象（インバウンド取得）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>情報源</th>
+<th>取得方式</th>
+<th>RSS URL（着手時に実地確認）</th>
+<th>主なカバー範囲・備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MANTANWEB</td>
+<td>RSS</td>
+<td><code>https://mantan-web.jp/rss/mantan.xml</code>（要確認）</td>
+<td>アニメ/漫画/ゲーム/ラノベ。毎日新聞系の一次メディア</td>
+</tr>
+<tr>
+<td>HOBBY Watch</td>
+<td>RSS</td>
+<td>インプレス系（正確なURLを着手時に特定）</td>
+<td>フィギュア/グッズ/<strong>プライズ（メーカー別：タイトー・セガ 等）</strong>。グッズ・ゲームセンターの主軸</td>
+</tr>
+<tr>
+<td>Gamer</td>
+<td>RSS</td>
+<td>着手時に特定（運営イード＝アニメ！アニメ！/インサイドと同基盤）</td>
+<td><strong>アーケード・ゲームセンター</strong>筐体・ロケテ・イベント/ゲーム</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>検証に関する注記</strong>: 本要件定義時点では、実行環境のネットワークポリシーにより外部ホストへの HTTP アクセスが全て 403 で拒否され、上記 RSS の生死・robots.txt・利用規約を実地検証できていない。上記は WebSearch（二次情報）にもとづく暫定であり、<strong>Phase 1 着手時に実地確認する</strong>こと（RSS URL 特定・robots 尊重可否・規約上の可否）。使えない場合は控え候補（電撃ホビーウェブ／アニメージュプラス／アキバ総研 等）へ差し替える。</p>
+</blockquote>
+<p>共通ルール: robots.txt 尊重、同一ホスト間隔1秒以上、User-Agent に連絡先を含める。RSS で不足する項目（要約・場所・発生日）は本文抽出→専用パーサー→LLM の順で補完。</p>
+<p>将来Phase再検討（今回は不採用）:
+- タイトー/セガ/バンダイナムコ等 ゲームセンター公式のプライズ告知（RSS無し＋JS動的描画。一次情報だが専用パーサー＋規約確認前提。当面は HOBBY Watch 経由で代替）
+- コミックナタリー（CDNがbotを遮断の疑い。採用時は規約確認＋許諾前提）
+- アニメイトタイムズ（公式RSS無し。専用パーサー実装＋規約確認前提）</p>
+<h3 id="72-claude-api">7.2 Claude API（構造化・収集時のみ）</h3>
+<ul>
+<li>入力: 本文抽出テキスト（＋ページのタイトル/URL）</li>
+<li>出力（JSON 構造化を要求）:</li>
+<li><code>title</code>（string）</li>
+<li><code>category</code>（Category enum のいずれか）</li>
+<li><code>event_date</code>（date or null）</li>
+<li><code>event_date_text</code>（string or null）</li>
+<li><code>event_date_precision</code>（EventDatePrecision）</li>
+<li><code>location</code>（string or null）</li>
+<li><code>summary</code>（自作要約・本文転載しない）</li>
+<li><strong>モデル: Claude Sonnet</strong>（正確なモデルID・単価・リクエスト形式は実装着手時に公式ドキュメントで確認。単価は <code>application.yml</code> に設定し <code>LlmUsageLogs</code> の概算コスト計算に用いる）。</li>
+<li><strong>コスト記録（案A）</strong>: 各レスポンスの <code>usage</code>（<code>input_tokens</code> / <code>output_tokens</code>）を取得し、<code>単価×トークン数</code> で概算コストを算出して <code>LlmUsageLogs</code> に記録。<strong>呼び出し前に当月累計を確認するハードキャップ（FR-02-11・NFR-06）</strong>。組織のAdmin使用量/コストAPIは実請求との突合（任意）に留める。</li>
+<li>呼び出しは公式 SDK <strong>anthropic-sdk-java</strong> を利用。差し替え可能にするため <code>LlmStructurer</code> インターフェース（Java の interface）を挟み、実装（Claude 版）を Spring の DI で注入する。予算判定は <code>LlmBudgetGuard</code> に集約し、収集サービスは LLM 呼び出し前に残予算を確認する。</li>
+</ul>
+<h3 id="73-line-messaging-api">7.3 LINE Messaging API（通知・アウトバウンド）</h3>
+<ul>
+<li>方式: push（友だち追加済みユーザーへ）、Flex Message カルーセルで複数件を1吹き出しに集約。</li>
+<li>通数カウント: 「送信先ユーザー数 × 吹き出し数」。無料枠（コミュニケーションプラン）は月200通前提。上限接近時は送信停止しアプリ内表示に切替。</li>
+<li>認証: チャネルアクセストークンは <code>application.yml</code> にはプレースホルダのみ置き、実値は環境変数 / <code>.env</code>（直書き禁止）。送信は公式 SDK <strong>line-bot-sdk-java</strong> を利用。</li>
+<li>料金プラン・仕様は改定されるため実装着手時に公式ドキュメントを確認する。LINE Notify は 2025-03-31 終了済みのため Notify 前提記事は参照しない。</li>
+</ul>
+<hr />
+<h2 id="8">8. エラーハンドリング方針</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>場面</th>
+<th>方針</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>情報源単位の失敗</td>
+<td>1情報源で例外が出ても他情報源の収集を継続。失敗は <code>CrawlLogs</code> に記録（status=Failed/PartialError）</td>
+</tr>
+<tr>
+<td>HTTP リトライ</td>
+<td>Resilience4j でリトライ・タイムアウト・サーキットブレーカー。回数/間隔は設定外部化</td>
+</tr>
+<tr>
+<td>LLM 失敗</td>
+<td>構造化失敗時は当該記事をスキップしログに残す（バッチ全体は止めない）</td>
+</tr>
+<tr>
+<td>重複登録</td>
+<td>UNIQUE 制約違反は正常系として扱い、当該記事を新規扱いしない</td>
+</tr>
+<tr>
+<td>通数上限到達</td>
+<td>送信を停止し、アプリ内（ダッシュボード）に未通知として表示。ログに理由を記録</td>
+</tr>
+<tr>
+<td>LINE 通知失敗（分類・再送）</td>
+<td>失敗を <code>NotifyStatus</code> に分類し <code>NotificationLogs</code> に記録、SC-07/SC-08 に<strong>分類別の管理者向けメッセージ</strong>を表示（下表）。<strong>新着は必ずアプリ内に残るためLINE失敗でも情報欠落しない</strong>（受信側の安全網＝FR-04-06）</td>
+</tr>
+<tr>
+<td>ログ方針</td>
+<td>ローカルファイル依存を避け DB（CrawlLogs/NotificationLogs/LlmUsageLogs）＋標準出力に寄せる。UTF-8</td>
+</tr>
+<tr>
+<td>認証失敗（管理者PIN）</td>
+<td>PIN 不一致はログイン画面にエラー表示して留める。<strong>連続失敗（例: 5回）で当該管理者を数分ロック</strong>し総当たりを抑止。一般利用者の選択ログインは失敗の概念なし。VPS移行時に本格認証へ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="81-line">8.1 LINE 通知失敗の分類・対応（送信側）</h3>
+<p>判別は LINE API の HTTP ステータス＋例外種別で行う。常駐しないバッチのため「再送」は原則 <strong>次回PC起動時</strong>（同一実行内は秒単位の短いリトライのみ）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>分類（NotifyStatus）</th>
+<th>判別</th>
+<th>同一実行内リトライ</th>
+<th>未通知を残す＝次回起動で再送</th>
+<th>打ち切り</th>
+<th>管理者向けメッセージ（例）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①TempError</td>
+<td>HTTP 5xx／接続断</td>
+<td>○（秒・指数バックオフ）</td>
+<td>○</td>
+<td>—</td>
+<td>「LINE側の一時障害で送信できませんでした。次回に自動再送します」</td>
+</tr>
+<tr>
+<td>②RateLimited</td>
+<td>HTTP 429</td>
+<td>○（<code>Retry-After</code>が短ければ従う）</td>
+<td>○（長ければ待たず次回）</td>
+<td>—</td>
+<td>「送信が集中し一時的に失敗。次回起動時に再送します」</td>
+</tr>
+<tr>
+<td>③AuthFailed</td>
+<td>HTTP 401</td>
+<td>✗</td>
+<td>○（トークン修正後の次回に届く）</td>
+<td>5日超過で GaveUp</td>
+<td>「<strong>LINEトークンが無効です。設定を確認してください</strong>」</td>
+</tr>
+<tr>
+<td>③Blocked</td>
+<td>push応答では判別困難（webhook要）</td>
+<td>✗</td>
+<td>○（友だち追加後の次回に届く）</td>
+<td>5日超過で GaveUp</td>
+<td>「相手が未追加/ブロックの可能性。届いていません」</td>
+</tr>
+<tr>
+<td>④FormatError</td>
+<td>HTTP 400＋詳細</td>
+<td>✗</td>
+<td>✗</td>
+<td>○ GaveUp（不具合）</td>
+<td>「<strong>メッセージ形式エラー（不具合）。修正が必要です</strong>」</td>
+</tr>
+<tr>
+<td>⑤Timeout</td>
+<td>読み取りタイムアウト</td>
+<td>✗</td>
+<td>○（<strong>冪等キー付き</strong>再送）</td>
+<td>—</td>
+<td>「応答がなく送信状況が不明。冪等キーで二重を防ぎ再送します」</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>再送する＝①②③⑤</strong>（未通知を残す）／<strong>打ち切り＝④、および③の5日超過</strong>（<code>ArticleNotifications</code> に GaveUp 記録）。</li>
+<li>⑤は「届いたか不明」のため冪等キー（FR-03-08）付きで再送し二重配信を防ぐ。</li>
+<li>受信側がアクションを要するのは③のみ → SC-09 の連携ステータス＋友だち追加案内で自己解決。それ以外は管理者/開発者が対処、または自動再送。</li>
+</ul>
+<hr />
+<h2 id="9">9. 制約・遵守事項（全工程で維持）</h2>
+<ul>
+<li><strong>権利</strong>: 記事本文をそのまま保存・表示しない（自作要約＋元URLのみ）。公式画像を自サーバー保存しない。ロゴ/ビジュアルを使わない。<strong>robots.txt を自動ゲートで尊重</strong>（FR-02-05）＋<strong>利用規約は人手確認ゲートで担保</strong>（<code>terms_reviewed</code>・FR-02-12）＝権利配慮を運用任せにせず仕組みで守る。スクレイピング禁止サイトは除外。→ README に明記。</li>
+<li><strong>コスト</strong>: LLM 呼び出しは収集時の構造化に限定。RSS で取れる情報源を優先。AI コストはユーザー数に比例させない。</li>
+<li><strong>移行性</strong>: Windows 固有 API 不使用。パスは <code>Path.of(...)</code>。設定は全外部化。SQLite 不使用。文字コード UTF-8。バッチと Web は別プロセス。</li>
+<li><strong>冪等性・UTC</strong>: §6・NFR-07/08 の通り。</li>
+</ul>
+<hr />
+<h2 id="10">10. トレーサビリティ</h2>
+<ul>
+<li>機能=<code>FR-xx-xx</code>、画面=<code>SC-xx</code>、テーブル=<code>TBL-xxx</code>、非機能=<code>NFR-xx</code>、設計判断=<code>Dx</code>。</li>
+<li>基本設計以降は各成果物にこれらのIDを併記し、要件→設計→実装→テストを追跡可能にする（各工程の skill 参照）。</li>
+</ul>
+<hr />
+<h2 id="11-phase">11. 実装フェーズ対応（要件→Phase）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>対応する主な要件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>基盤（Docker/Spring Boot + JPA 接続・Flyway マイグレーション）</td>
+</tr>
+<tr>
+<td>1</td>
+<td>FR-01, FR-02(RSSのみ), FR-04-01/05</td>
+</tr>
+<tr>
+<td>2</td>
+<td>FR-02(LLM/専用パーサー/重複排除), <strong>FR-04-03(検索)</strong>, 情報源追加</td>
+</tr>
+<tr>
+<td>3</td>
+<td>FR-04-02/04(フィルタ・未読既読), FR-05</td>
+</tr>
+<tr>
+<td>4</td>
+<td>FR-03, 冪等性(NFR-07)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>FR-06, FR-07, タスクスケジューラ, データ保持(NFR-05)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>VPS移行, <strong>アプリのコンテナ化(NFR-12)</strong>, 通知の時刻ベース化, 認証必須化(NFR-02), 死活監視</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12">12. レビュー観点（開発者へ）</h2>
+<p>以下を確認のうえ承認/差戻しをお願いします。承認後に <code>02_基本設計</code> へ進みます。</p>
+<p>確定済み（開発者レビュー済）:
+- [x] カテゴリ8区分（グッズ/アニメ/漫画/イベント/ゲーム/ゲームセンター/カプセルトイ/その他）で確定
+- [x] 日付3カラム方式（代表日/原文/精度）で確定
+- [x] 情報源 第一陣は B案（MANTANWEB / HOBBY Watch / Gamer）で確定。※RSS/robots/規約は着手時に実地確認（本セッションでは環境ポリシーにより検証不可）。タイトー等ゲームセンター公式・ナタリー・アニメイトタイムズは将来Phase送り
+- [x] 認証の段階方針（Phase 5 はローカル・Phase 6 で本格化）で確定 ※具体レベルはレビュー第4回（Q16）で確定</p>
+<p>確定済み（レビュー第2回）:
+- [x] テーブル定義: お気に入りを <code>FavoriteThemes</code>/<code>FavoriteSources</code> に分割（参照整合性を FK で担保）
+- [x] タイムライン整列: <code>event_date</code> NULL は <code>created_at</code> 代理で上位（式インデックス付与）
+- [x] データ保持: 記事2年パージ（対象期間と一致・前年同期比較のため）だが<strong>ブックマーク済みは対象外</strong>
+- [x] 参照アクション（ON DELETE）方針を §6 に明記
+- [x] enum のコード値（smallint＋コメント）方針を承認。将来のカテゴリ増減はアプリ側 enum 追加で対応（スキーマ変更不要）
+- [x] 非機能要件の水準（データ保持/AIコスト/バッチ/一覧応答）を承認</p>
+<p>技術スタックのピボット（レビュー第3回）:
+- [x] <strong>C# / .NET（Blazor Server）→ Java（Spring Boot + Vaadin Flow）</strong> へ変更（ポートフォリオを兼ねた Java 学習）。要件本体（FR/NFR/SC/TBL/外部I/F/エラー方針）は言語非依存で不変。技術構成（D5・§4相当）と実装メモのみ改訂。詳細は回答ログ Q12</p>
+<p>確定済み（レビュー第4回・成功基準照合と非機能の詰め）:
+- [x] 成功基準トップダウン照合で4隙間を補完（Q15）: 定期自動実行＝運用要件／LINE連携設定＝FR-07-03・SC-09／LLMコスト可視化＝FR-06-06・SC-07・TBL-LlmUsageLogs／利用者管理＝FR-07-02
+- [x] 認証・認可を実装レベルで確定（Q16）: 認証＝利用者選択方式（一般=クリック／<strong>管理者のみ4桁PIN</strong>）、認可＝admin/user 2ロールを Spring Security で制御し管理系は admin 限定、VPS で本格認証へ差し替え（authN/authZ 分離）。<code>TBL-Users</code> は <code>login_key</code> 廃止→<code>role</code>・<code>admin_pin_hash</code> 新設、enum <code>UserRole</code> 追加</p>
+<p>確定済み（レビュー第5回・★項目の実装レベル詰め）:
+- [x] 秘密情報の外部化＝環境変数(案A)・12-factor（Q17・NFR-11）。将来余地として暗号化コミット(案C/Jasypt)を記録
+- [x] コンテナ化＝Docker採用。開発は直実行／Phase 6でアプリもDocker化（Q18・NFR-12）
+- [x] 機能の優先順位(MoSCoW)・境界を明示、検索は Phase 2 へ前倒し（Q19・§3.1/3.2）
+- [x] 用語定義（ユビキタス言語）＋ビジネスルールを新設（Q20・§1）
+- [x] LLMコスト＝ハードキャップ＋usage自前計算(案A)、使用モデル Claude Sonnet（Q21・NFR-06・FR-02-11・FR-06-06）</p>
+<p>確定済み（レビュー第6回・外部制約とエラー方針の詰め）:
+- [x] LINE通知失敗を <code>NotifyStatus</code> で分類し再送を出し分け（①②③⑤再送・④/③5日超過は打ち切り、⑤は冪等キー）。受信側はアプリが情報の正＋SC-09連携ステータス（Q22・§8.1・FR-03-07/08・FR-04-06）
+- [x] robots/規約の2段遵守ゲート（規約＝人手 <code>terms_reviewed</code>／robots＝自動・取得直前）。robots概念を§7.0に解説（Q23・FR-02-05/12・TBL-Sources）
+- [x] 通しレビュー実施（v1.3）: ステータス「7区分→8区分」訂正、版数/改訂日更新、FR-04-02に未通知フィルタ追記、CrawlLogs→LlmUsageLogs の ON DELETE SET NULL を追記</p>
+<p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。残るは開発者の最終承認のみ</strong>。承認後に <code>02_基本設計</code> へ進む。</p>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター 要件定義書 — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
+  </main>
+</div>
+</body>
+</html>
