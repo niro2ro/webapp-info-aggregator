@@ -251,6 +251,7 @@ strong{font-weight:700;}
 </table></div>
 <h3 id="01-lumo">0.1 デザイントークン（Lumo カスタムテーマの上書き値・実装時の指針）</h3>
 <p>モックアップ（<code>画面モックアップ.html</code>）で見た目を確定し、実装では下表を <code>styles.css</code> の Lumo プロパティに落とし込む。<strong>値は目安</strong>（実装着手時に微調整）。</p>
+<p><strong>テーマ名: 「和ノスタルジック（水彩・自然/黄昏）」</strong>（Q30）。穏やかで温かい和風の空気感を狙う。<strong>特定の作品のロゴ・キャラクター・公式カラーを流用せず、あくまでムード（配色・質感）としてのオリジナルテーマ</strong>（§9 権利配慮・ロゴ/ビジュアル不使用と整合）。</p>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -264,65 +265,80 @@ strong{font-weight:700;}
 <tr>
 <td>基調背景</td>
 <td><code>--bg</code></td>
-<td><code>#f4f6fb</code></td>
-<td>冷色寄りのごく淡いグレー</td>
+<td><code>#f4efe1</code>（和紙クリーム）</td>
+<td>温かみのある淡いベージュ</td>
 </tr>
 <tr>
 <td>パネル/カード</td>
 <td><code>--lumo-base-color</code></td>
-<td><code>#ffffff</code></td>
-<td></td>
+<td><code>#fffdf6</code></td>
+<td>生成り</td>
 </tr>
 <tr>
 <td>プライマリ</td>
 <td><code>--lumo-primary-color</code></td>
-<td><code>#4f46e5</code>（indigo）</td>
-<td>ボタン/リンク/アクティブ。グラデ <code>#4f46e5→#7c73f0</code> を強調用に</td>
+<td><code>#5f8768</code>（苔・若葉の緑）</td>
+<td>ボタン/リンク/アクティブ。グラデ <code>#5f8768→#8caf76</code> を強調用に</td>
 </tr>
 <tr>
 <td>文字</td>
 <td><code>--lumo-body-text-color</code></td>
-<td><code>#1a2233</code></td>
-<td></td>
+<td><code>#39322a</code>（墨茶）</td>
+<td>温かい焦茶</td>
 </tr>
 <tr>
 <td>補助文字</td>
 <td><code>--lumo-secondary-text-color</code></td>
-<td><code>#667085</code></td>
+<td><code>#8c7f68</code></td>
 <td></td>
+</tr>
+<tr>
+<td>見出し書体</td>
+<td>（独自 <code>--serif</code>）</td>
+<td>明朝系（Hiragino Mincho/Yu Mincho/Noto Serif JP）</td>
+<td>文学的・ノスタルジックな余韻。本文はゴシック</td>
+</tr>
+<tr>
+<td>上部バー</td>
+<td><code>--topbar1/2</code></td>
+<td><code>#3c4a44→#4e4a60</code>（黄昏の緑→藍）</td>
+<td>夕暮れ・自然のグラデ</td>
 </tr>
 <tr>
 <td>角丸</td>
 <td><code>--lumo-border-radius-l/m/s</code></td>
 <td>16 / 12 / 8 px</td>
-<td>カード大きめの角丸で今風に</td>
+<td>大きめの角丸で柔らかく</td>
 </tr>
 <tr>
 <td>影</td>
 <td><code>--lumo-box-shadow-*</code></td>
-<td>2段（近＋遠）の淡い影</td>
+<td>2段の暖色寄りの淡い影</td>
 <td>立体感は控えめ・上品に</td>
 </tr>
 <tr>
 <td>カテゴリ色</td>
 <td>（独自）</td>
-<td>グッズ=青／アニメ=紫／漫画=桃／イベント=橙／ゲーム=緑／ゲーセン=藍／カプセルトイ=赤／その他=灰</td>
+<td>全体を<strong>やや彩度を落とした earthy 系</strong>に統一（青/紫/桃/橙/緑/藍/赤茶/灰）</td>
 <td>chip で色分け（可読性優先）</td>
 </tr>
 <tr>
-<td>フォント</td>
+<td>フォント（本文）</td>
 <td><code>--lumo-font-family</code></td>
-<td>Inter＋Noto Sans JP（self-host）</td>
+<td>Noto Sans JP＋Inter（self-host）</td>
 <td>日本語対応・CDN非依存</td>
 </tr>
 <tr>
 <td>ダーク</td>
 <td><code>Lumo.DARK</code> バリアント</td>
-<td>別トークン一式</td>
+<td>暖色の暗色一式（焦茶ベース）</td>
 <td>OS/切替に追従</td>
 </tr>
 </tbody>
 </table></div>
+<blockquote>
+<p>実装での実現も §BD-SC-00-09 と同じ：Lumo の CSS カスタムプロパティを上書きするだけで全コンポーネントに一貫適用（プラグイン不要）。明朝の見出しは self-host した Noto Serif JP を <code>--serif</code> 相当のクラスに割り当てる。</p>
+</blockquote>
 <h3 id="applayout">共通レイアウト（AppLayout）</h3>
 <pre><code>┌────────────────────────────────────────────────┐
 │ [≡] テーマ別最新情報アグリゲーター     ○○さん [ログアウト] │  ← 上部バー
