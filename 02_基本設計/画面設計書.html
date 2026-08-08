@@ -89,6 +89,7 @@ strong{font-weight:700;}
 <ul>
 <li><a href="#0">0. 全画面に共通する設計方針（★決定事項）</a><ul>
 <li><a href="#01-lumo">0.1 デザイントークン（Lumo カスタムテーマの上書き値・実装時の指針）</a></li>
+<li><a href="#02">0.2 画面イメージ（モックアップ）</a></li>
 <li><a href="#applayout">共通レイアウト（AppLayout）</a></li>
 </ul>
 </li>
@@ -153,32 +154,37 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>版</td>
-<td>1.0（基本設計・初版）</td>
+<td>1.1（画面再編 Q26-28・自己登録 SC-10・UIデザイン方針 Q29/Q30 を反映。モックアップと整合）</td>
 </tr>
 <tr>
-<td>作成日</td>
-<td>2026-08-08</td>
+<td>作成日 / 最終改訂</td>
+<td>2026-08-08 / 2026-08-08</td>
 </tr>
 <tr>
 <td>前工程</td>
-<td><a href="../01_要件定義/要件定義書.md"><code>01_要件定義/要件定義書.md</code></a> §5 画面一覧（承認済み v1.5）</td>
+<td><a href="../01_要件定義/要件定義書.md"><code>01_要件定義/要件定義書.md</code></a> §5 画面一覧（承認済み v1.8）</td>
 </tr>
 <tr>
 <td>関連</td>
 <td><a href="画面遷移図.md"><code>画面遷移図.md</code></a>／<a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a>／<a href="テーブル定義書.md"><code>テーブル定義書.md</code></a></td>
 </tr>
 <tr>
+<td><strong>画面イメージ</strong></td>
+<td><a href="画面モックアップ.html"><code>画面モックアップ.html</code></a>（<strong>本書の視覚的リファレンス</strong>。静的プロトタイプで実装ではない）</td>
+</tr>
+<tr>
 <td>UI基盤</td>
-<td>Spring Boot + Vaadin Flow（サーバー側 Java だけで書くステートフルUI・D5）</td>
+<td>Spring Boot + Vaadin Flow（サーバー側 Java だけで書くステートフルUI・D5）。テーマは Lumo カスタム（§0.1）</td>
 </tr>
 <tr>
 <td>設計ID体系</td>
-<td>画面＝要件の <code>SC-xx</code> を継承。画面内の設計項目＝<code>BD-SC-xx-nn</code></td>
+<td>画面＝要件の <code>SC-xx</code> を継承（SC-01〜10）。画面内の設計項目＝<code>BD-SC-xx-nn</code></td>
 </tr>
 </tbody>
 </table></div>
 <blockquote>
-<p>本書は要件 §5 の9画面（SC-01〜09）の<strong>レイアウト・項目・入出力・操作</strong>を確定する。<strong>内部のクラス構造には踏み込まない</strong>（詳細設計）。</p>
+<p>本書は要件 §5 の10画面（SC-01〜10）の<strong>レイアウト・項目・入出力・操作</strong>を確定する。<strong>内部のクラス構造には踏み込まない</strong>（詳細設計）。
+画面の見た目・配置は <a href="画面モックアップ.html"><code>画面モックアップ.html</code></a> で確定済み（§0.2）。本書の文章と齟齬がある場合は、レイアウト＝モックアップ／要件・IDの正＝本書と要件定義書、を基準に読み合わせる。</p>
 </blockquote>
 <hr />
 <h2 id="0">0. 全画面に共通する設計方針（★決定事項）</h2>
@@ -344,6 +350,53 @@ strong{font-weight:700;}
 </table></div>
 <blockquote>
 <p>実装での実現も §BD-SC-00-09 と同じ：Lumo の CSS カスタムプロパティを上書きするだけで全コンポーネントに一貫適用（プラグイン不要）。明朝の見出しは self-host した Noto Serif JP を <code>--serif</code> 相当のクラスに割り当てる。</p>
+</blockquote>
+<h3 id="02">0.2 画面イメージ（モックアップ）</h3>
+<p>本書の<strong>視覚的リファレンスは <a href="画面モックアップ.html"><code>画面モックアップ.html</code></a></strong>（自己完結の静的HTML）。配色・和柄・余白・カード/チップ/ボタンの質感・遷移の雰囲気はこのモックで確定済みとする。<strong>Vaadin 実装ではなく、見た目合わせのためのプロトタイプ</strong>（データはサンプル）。</p>
+<p>モックが体現している確定事項（本書の各節と対応）:</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>モックでの表現</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ナビゲーション</td>
+<td>上部バー（アプリ名・利用者名・ログアウトのみ／ロール切替UIは無し）＋左ドロワー</td>
+<td>BD-SC-00-01</td>
+</tr>
+<tr>
+<td>ロール出し分け</td>
+<td>管理系（情報源マスタ/ダッシュボード/実行ログ/利用者管理）は admin ログイン時のみドロワー表示、user は非表示＋到達拒否画面</td>
+<td>BD-SC-00-06・SC-06〜09</td>
+</tr>
+<tr>
+<td>一覧</td>
+<td>カード型・種別ラベル付き日付・未読ドット・未通知バッジ・画像非表示枠・並び順/フィルタ/ページャ</td>
+<td>SC-02</td>
+</tr>
+<tr>
+<td>元記事リンク</td>
+<td>「元記事を開く」は<strong>新規タブ</strong>で外部サイトへ（<code>target="_blank" rel="noopener"</code>）。タイトルは記事詳細(SC-03)へ</td>
+<td>BD-SC-02-08・FR-04-05</td>
+</tr>
+<tr>
+<td>ログイン</td>
+<td>利用者一覧クリック＋管理者PINパッド＋「新規登録（誰でも）」導線</td>
+<td>SC-01・SC-10</td>
+</tr>
+<tr>
+<td>デザイン</td>
+<td>和ノスタルジック配色＋七宝の地紋＋明朝見出し＋ダーク対応</td>
+<td>BD-SC-00-09・§0.1</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>モックの操作: ログイン→利用者クリック（管理者はPIN）→アプリ。管理系は「管理者アカウント」でログインすると出る。OSのダーク設定で暖色ダークに追従。</p>
 </blockquote>
 <h3 id="applayout">共通レイアウト（AppLayout）</h3>
 <pre><code>┌────────────────────────────────────────────────┐
@@ -597,7 +650,7 @@ strong{font-weight:700;}
 <li>場所（イベント時のみ・<code>location</code>）</li>
 <li>自作要約（本文・公式画像は無し）</li>
 <li>情報源名 / 収集日時（JST）</li>
-<li>「元記事を開く」外部リンク</li>
+<li>「元記事を開く」外部リンク（<strong>新規タブ</strong>・<code>target="_blank" rel="noopener"</code>）</li>
 <li>☆ブックマークトグル</li>
 </ul>
 <blockquote>
