@@ -55,6 +55,13 @@
 
 工程間トレーサビリティ: 各成果物には ID（例 `FR-001`, `SC-01`, `TBL-Articles`）を付し、後工程は前工程の ID を参照する。要件 → 設計 → 実装 → テストが ID でたどれること。
 
+### 成果物のフォーマット規約（.md 正本＋.html 併産）
+
+- **設計成果物の正本は Markdown（`.md`）**。編集・差分・レビューは常に `.md` に対して行う。
+- **各 `.md` には閲覧用の HTML（同名 `.html`）を併産する。** レビューを読みやすくするため、目次サイドバー・テーマ（ライト/ダーク）対応・表の横スクロール・**Mermaid 図の描画**を備えた HTML を生成する。
+- 生成は変換スクリプト `tools/build_docs_html.py`（python-markdown ベース、`tables`/`fenced_code`/`toc`/`attr_list`/`sane_lists` 拡張、` ```mermaid ` フェンスを `mermaid.js` で描画）で行う。実行は `python3 tools/build_docs_html.py`（全対象を一括生成）または `python3 tools/build_docs_html.py <file.md>`（個別）。新しい成果物は同スクリプトの `TARGETS` に追記する。**`.md` を編集したら必ず対応する `.html` を再生成してからコミットする**（`.md` と `.html` を同一コミットに含める）。
+- HTML はあくまで閲覧用の派生物。矛盾が生じた場合は常に `.md` を正とする。図は別ツールに依存させず Mermaid で `.md` 内に埋め込む。
+
 ---
 
 ## 4. 技術構成（暫定・着手時に最新を確認）

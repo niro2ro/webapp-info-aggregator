@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>未決事項 回答ログ</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#q1">Q1. 日付の表記ゆれの格納方式（最優先）</a></li>
+<li><a href="#q2">Q2. 対象範囲</a></li>
+<li><a href="#q3">Q3. カテゴリ区分</a></li>
+<li><a href="#q4-3">Q4. 最初に実装する情報源3つ</a></li>
+<li><a href="#q5-web">Q5. Web 構成</a></li>
+<li><a href="#q6-llm">Q6. LLM 選定</a></li>
+<li><a href="#q7">Q7. 日本語全文検索</a></li>
+<li><a href="#q8">Q8. お気に入りテーブルの構造</a></li>
+<li><a href="#q9-null">Q9. タイムラインの NULL 日付整列</a></li>
+<li><a href="#q10">Q10. データ保持パージとブックマークの衝突</a></li>
+<li><a href="#q11-enum">Q11. enum のコード値保持方式（確認）</a></li>
+<li><a href="#q12-cnet-java">Q12. 実装言語・技術スタックを C#/.NET から Java へ変更</a></li>
+<li><a href="#q13">Q13. 対象範囲（スコープ）を明文化</a></li>
+<li><a href="#q14">Q14. 目的・成功基準の明文化、およびカプセルトイの独立カテゴリ化</a></li>
+<li><a href="#q15-42026-08-07">Q15. 成功基準→機能のトップダウン照合で見つかった4つの隙間（2026-08-07）</a></li>
+<li><a href="#q16-3-2026-08-07">Q16. 認証・認可の実装レベル（非機能 項目3 の詰め・2026-08-07）</a></li>
+<li><a href="#q17-3-2026-08-07">Q17. 秘密情報・設定の外部化方式（非機能 項目3 の詰め・2026-08-07）</a></li>
+<li><a href="#q18-3-2026-08-07">Q18. アプリのコンテナ化レベル（非機能 項目3 の詰め・2026-08-07）</a></li>
+<li><a href="#q19-moscow2-2026-08-07">Q19. 機能の優先順位(MoSCoW)と機能境界（項目2 の詰め・2026-08-07）</a></li>
+<li><a href="#q20-9-2026-08-07">Q20. 用語定義（ユビキタス言語）の正式化（項目9 の詰め・2026-08-07）</a></li>
+<li><a href="#q21-llmasonnet52026-08-07">Q21. LLMコスト管理（ハードキャップ・案A・Sonnet）（項目5外部制約の詰め・2026-08-07）</a></li>
+<li><a href="#q22-line582026-08-07">Q22. LINE通知失敗の分類・再送方針（項目5外部制約/項目8エラー方針の詰め・2026-08-07）</a></li>
+<li><a href="#q23-robots-572026-08-07">Q23. 情報源の robots/規約 遵守を仕組みで担保（項目5外部制約/項目7権利の詰め・2026-08-07）</a></li>
+<li><a href="#q24-2026-08-07">Q24. 発生日の種別（発売日順ソート・種別表示）（2026-08-07）</a></li>
+<li><a href="#q25-2026-08-07">Q25. カプセルトイの情報源を第一陣に追加（2026-08-07）</a></li>
+<li><a href="#_2">確定済み（質問不要だった事項）</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 01_要件定義/未決事項回答ログ.md（正本は同名 .md）</div>
+    <h1 id="_1">未決事項 回答ログ</h1>
+<p>PROJECT_BRIEF §10 の未決事項について開発者に確認した結果と、その意思決定の根拠を記録する。
+本ログは要件定義書（<code>要件定義書.md</code>）の決定根拠のトレース元となる。</p>
+<p>作成日: 2026-08-05</p>
+<hr />
+<h2 id="q1">Q1. 日付の表記ゆれの格納方式（最優先）</h2>
+<ul>
+<li><strong>決定</strong>: 確定日カラム + 原文カラム + 精度フラグの3カラム構成</li>
+<li><code>EventDate</code>（nullable, date）… 推定代表日。並び替え・期間フィルタに使う</li>
+<li><code>EventDateText</code>（原文, 例「9月上旬」「秋頃」「予約受付中」）… 画面表示に使う</li>
+<li><code>EventDatePrecision</code>（enum: Exact / Month / Season / Ongoing / Unknown）</li>
+<li><strong>根拠</strong>: BRIEF の「日付順タイムライン」を成立させるには並び替え可能な日付が要る。一方で曖昧表現を捨てると表示が痩せる。両立させるため代表日＋原文＋精度の3点持ちとした。後から精度フラグを足すのはマイグレーションが重いため最初から持つ。</li>
+</ul>
+<h2 id="q2">Q2. 対象範囲</h2>
+<ul>
+<li><strong>決定</strong>: アニメ・漫画を中心に据えるが、テーマ・カテゴリ構造は特定ジャンルに依存しない汎用設計にする</li>
+<li><strong>根拠</strong>: ポートフォリオとしての物語（追いにくいアニメ・漫画情報を集約）を明確にしつつ、将来ジャンル拡張してもスキーマ変更が要らないようにする。テーマ＝任意キーワードで既に汎用。</li>
+</ul>
+<h2 id="q3">Q3. カテゴリ区分</h2>
+<ul>
+<li><strong>決定</strong>: 現行5区分に「ゲームセンター」を独立カテゴリとして追加し、「その他」を加えた <strong>7区分</strong>（→ 後日 Q14 で「カプセルトイ」を追加し <strong>8区分</strong>に拡張）</li>
+<li>グッズ / アニメ / 漫画 / イベント / ゲーム / <strong>ゲームセンター（アーケード・プライズ・クレーンゲーム景品等）</strong> / その他</li>
+<li><strong>根拠</strong>: 開発者の指定。ゲームセンターのプライズ/アーケード情報を「グッズ」や「ゲーム」に混ぜず独立で追える方が実利用に合う。分類不能は「その他」に退避。DB は enum で保持し拡張しやすくする。</li>
+</ul>
+<h2 id="q4-3">Q4. 最初に実装する情報源3つ</h2>
+<ul>
+<li>
+<p><strong>決定（改訂）</strong>: 開発者の方針転換により、グッズ・ゲームセンター（プライズ）情報を主軸に据える「B案」で確定。以下3つ。
+  1. <strong>MANTANWEB（まんたんウェブ）</strong> — <code>https://mantan-web.jp/</code>（RSS: <code>https://mantan-web.jp/rss/mantan.xml</code>（着手時要確認））。アニメ/漫画/ゲーム/ラノベを広くカバー
+  2. <strong>HOBBY Watch（インプレス）</strong> — <code>https://hobby.watch.impress.co.jp/</code>（RSS URL は着手時に特定）。フィギュア/グッズ/<strong>プライズ（メーカー別：タイトー・セガ 等）</strong>
+  3. <strong>Gamer</strong> — <code>https://www.gamer.ne.jp/</code>（RSS は着手時要確認）。ゲーム/<strong>アーケード・ゲームセンター</strong>筐体・ロケテ・イベント</p>
+</li>
+<li>
+<p><strong>改訂の経緯</strong>: 当初案（アニメ！アニメ！／マイナビニュース／ASCII.jp）は汎用ニュース寄りだった。開発者から「グッズ・ゲームセンター情報がメインになる情報源」を求められ、7カテゴリ（特にグッズ・ゲームセンター）に情報が乗る構成へ差し替えた。</p>
+</li>
+<li>
+<p><strong>検証状況（重要）</strong>: <strong>本セッションの環境ネットワークポリシーにより、外部ホストへの HTTP アクセスが全て 403（policy denial）で拒否され、RSS 本体・robots.txt・利用規約を実地検証できなかった。</strong> 以下は WebSearch（二次情報）にもとづく確度評価であり、<strong>RSS URL の生死・robots・規約の実地確認は着手時（Phase 1）に必須</strong>とする（CLAUDE.md §0-4 の方針に合致）。</p>
+</li>
+</ul>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>検討サイト</th>
+<th>RSS（二次情報の確度）</th>
+<th>根拠・カバー範囲</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MANTANWEB</td>
+<td>中〜高（<code>/rss/mantan.xml</code> が具体的に報告）</td>
+<td>毎日新聞系の一次メディア。アニメ/漫画/ゲーム全般。権利面が比較的クリーン</td>
+<td>採用</td>
+</tr>
+<tr>
+<td>HOBBY Watch</td>
+<td>中〜高（インプレスは全メディアで RSS 提供の慣行。正確なURLは未特定）</td>
+<td>グッズ/フィギュア/プライズをメーカー別に整理。<strong>ゲームセンター・グッズの主軸</strong></td>
+<td>採用</td>
+</tr>
+<tr>
+<td>Gamer</td>
+<td>中（運営「イード」＝アニメ！アニメ！/インサイドと同社。同社インサイドは公式RSS一覧あり）</td>
+<td>アーケード新作・ゲーセン筐体・ロケテ・イベント</td>
+<td>採用</td>
+</tr>
+<tr>
+<td>タイトー/セガ/バンナム（プライズ公式）</td>
+<td>❌ RSS 見当たらず</td>
+<td>一次情報で権利はクリーンだが、RSS無し＋JS動的描画で静的HTMLパーサー（jsoup）では取りづらい</td>
+<td><strong>将来Phase送り</strong>（専用パーサー＋規約確認）。当面は HOBBY Watch/電撃ホビーウェブ経由で代替</td>
+</tr>
+<tr>
+<td>コミックナタリー(natalie.mu)</td>
+<td>不明</td>
+<td>CDN が bot 遮断の疑い</td>
+<td><strong>将来Phase送り</strong>（規約確認・許諾前提）</td>
+</tr>
+<tr>
+<td>アニメイトタイムズ(animatetimes.com)</td>
+<td>❌ 公式RSS無し</td>
+<td>HTMLスクレイピング必須</td>
+<td><strong>将来Phase送り</strong>（専用パーサー＋規約確認）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>保留事項</strong>: タイトー等ゲームセンター公式・ナタリー・アニメイトタイムズは「将来Phaseで再検討」。採用時は利用規約を人手で確認し、専用パーサーで対応する前提。第一陣3サイトも、着手時の実地確認で RSS が使えないと判明した場合に備え、代替候補（電撃ホビーウェブ、アニメージュプラス、アキバ総研 等）を控えとして記録しておく。</li>
+</ul>
+<h2 id="q5-web">Q5. Web 構成</h2>
+<ul>
+<li><strong>決定</strong>: ASP.NET Core + Blazor Server（BRIEF準拠）　→ <strong>【Q12 で上書き】Spring Boot + Vaadin Flow に変更</strong>（Java ピボット）</li>
+<li><strong>根拠</strong>: 利用者2名・localhost運用に対し単一プロセスで完結でき学習コストが低い。SPA 分離より優先度が低い。※この「ステートフル単一プロセスUI」という選定理由は Vaadin Flow でもそのまま成立する（Q12 参照）。</li>
+</ul>
+<h2 id="q6-llm">Q6. LLM 選定</h2>
+<ul>
+<li><strong>決定</strong>: Claude API（収集時の構造化のみ）</li>
+<li><strong>根拠</strong>: BRIEF準拠。通知時は使わずコストをユーザー数に比例させない。モデルIDは実装着手時に最新を確認。抽象化（インターフェース）して差し替え可能にはしておく。</li>
+</ul>
+<h2 id="q7">Q7. 日本語全文検索</h2>
+<ul>
+<li><strong>決定</strong>: pg_trgm を導入し、タイトル・要約の部分一致に GIN インデックスを張る</li>
+<li><strong>根拠</strong>: 小規模データで導入が軽く、VPS移行時も PostgreSQL 拡張として同様に導入できる。pg_bigm は精度は高いが Docker イメージへの導入がやや重く、現段階では過剰。将来必要なら差し替え可能。</li>
+</ul>
+<hr />
+<h1 id="22026-08-05">追補: レビュー第2回で確定した設計判断（2026-08-05）</h1>
+<p>要件定義書 v1.0 ドラフトのレビューで浮上した論点を開発者と確認し、以下を確定した。</p>
+<h2 id="q8">Q8. お気に入りテーブルの構造</h2>
+<ul>
+<li><strong>決定</strong>: 単一 <code>Favorites</code>（<code>target_type</code>+<code>target_id</code> のポリモーフィックFK）を廃し、<code>FavoriteThemes(user_id, theme_id)</code> と <code>FavoriteSources(user_id, source_id)</code> に<strong>テーブル分割</strong>する。</li>
+<li><strong>根拠</strong>: ポリモーフィックFKは行ごとに参照先が変わるため DB で FK 制約を張れず、削除済みテーマ/ソースを指す孤児レコードを防げない。CLAUDE.md §5「DB制約を最終防衛線に」に反する。分割すれば各テーブルに本物の FK と <code>ON DELETE CASCADE</code> を張れ、整合性を DB が保証する。利用者2名・小規模でテーブル統合の利得は薄く、整合性の利得が勝る。列挙型 <code>FavoriteTargetType</code> は不要となり廃止。</li>
+</ul>
+<h2 id="q9-null">Q9. タイムラインの NULL 日付整列</h2>
+<ul>
+<li><strong>決定</strong>: <code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は <code>created_at</code> を代理キーに整列し、新着として扱う。整列キー = <code>COALESCE(event_date, created_at::date)</code>。式インデックスを張る。</li>
+<li><strong>根拠</strong>: 「日付が確定していない新着（予約受付中・受注開始等）」はユーザーにとって"新しい情報"であり、末尾に沈めるより新着上位に見せる方が体験に合う。DB 依存の NULL 整列でブレないよう式で明示。NFR-04（一覧2秒）担保のため式インデックスを付与。</li>
+</ul>
+<h2 id="q10">Q10. データ保持パージとブックマークの衝突</h2>
+<ul>
+<li><strong>決定</strong>: 記事パージ（NFR-05）の対象から、<strong>いずれかの利用者が Bookmarks に保存済みの記事を除外</strong>する。パージは「Bookmarks に無い・かつ created_at が保持期間超」の記事のみ。付随データ（ReadStates/ArticleThemeMatches/ArticleNotifications）は ON DELETE CASCADE で連動削除。（保持期間は当初6ヶ月だったが Q13 で対象期間に合わせて改訂。最終的に<strong>2年</strong>＝前年同期比較のため。）</li>
+<li><strong>根拠</strong>: ユーザーが「後で見る」で明示保存した記事を自動削除するのは意図に反する。保存の有無をパージ条件に組み込むことで保存性を担保する。</li>
+</ul>
+<h2 id="q11-enum">Q11. enum のコード値保持方式（確認）</h2>
+<ul>
+<li><strong>決定</strong>: PostgreSQL native enum ではなく <code>smallint</code> コード値＋コメントで保持。承認。（Java では JPA の <code>AttributeConverter</code>＋<code>@Convert</code> で enum ↔ コード値を変換。Q12 参照）</li>
+<li><strong>根拠</strong>: native enum は値のリネーム/削除/並べ替えの ALTER が面倒でマイグレーションと噛み合わせづらい。smallint は pg_dump/restore・VPS移行で無難。カテゴリ追加はアプリ側 enum に値を足すだけでスキーマ変更不要。センチネル値（9=その他）で拡張余地も確保。※Hibernate 既定の <code>@Enumerated(ORDINAL)</code> は列挙順に暗黙依存し危険なため使わず、コード値を明示する Converter を挟む。</li>
+</ul>
+<hr />
+<h1 id="2026-08-05">追補: 技術スタックのピボット（2026-08-05）</h1>
+<h2 id="q12-cnet-java">Q12. 実装言語・技術スタックを C#/.NET から Java へ変更</h2>
+<ul>
+<li><strong>決定</strong>: 本プロジェクトを <strong>Java（Spring Boot + Vaadin Flow）学習を兼ねたポートフォリオ</strong>へピボットする。当初の C# / .NET（Blazor Server）想定を全面的に置き換える。</li>
+<li><strong>経緯</strong>: 開発者の判断により、ポートフォリオで示す技術を Java に変更。これに伴い CLAUDE.md（§0-3/§2/§3/§4/§5/§6/§7）と要件定義成果物の技術記述を改訂した。</li>
+<li>
+<p><strong>重要な原則</strong>: <strong>要件そのもの（機能一覧 FR・非機能 NFR・画面 SC・データ設計 TBL/DDL・外部I/F・エラー方針・冪等性/UTC 等の制約）は言語に依存しないため不変。</strong> 変更したのは技術構成（D5 と実装メモ）のみ。ウォーターフォールで要件を先に固めた利点がそのまま活きる形。</p>
+</li>
+<li>
+<p><strong>Web 構成（D5）の選定</strong>: 開発者に3案（Vaadin Flow / Spring Boot+Thymeleaf+htmx / REST API+SPA）を提示し、<strong>Vaadin Flow</strong> を選択。</p>
+</li>
+<li>
+<p><strong>根拠</strong>: Blazor Server と同じ「サーバー側で UI 状態を持つステートフルな単一プロセス UI」を Java で最も近く再現でき、当初 D5 の選定理由（学習コスト低・localhost・別フロント不要）をそのまま引き継げる。別フロント（JS/SPA）の学習を避けられ、Java + Spring の学習に集中できる。</p>
+</li>
+<li>
+<p><strong>技術スタック対応（.NET → Java）</strong>:
+  | 層 | 旧（.NET） | 新（Java） |
+  |---|---|---|
+  | 言語/実行 | C# / .NET 8 | Java 21 (LTS)・仮想スレッド |
+  | 基盤/DI | .NET 組込 DI | Spring Boot 3.x |
+  | ビルド | （MSBuild/sln） | Maven マルチモジュール |
+  | Web | ASP.NET Core + Blazor Server | Spring Boot + <strong>Vaadin Flow</strong> |
+  | バッチ | コンソール(Generic Host) | Spring Boot 別アプリ + CommandLineRunner |
+  | ORM | Entity Framework Core | Spring Data JPA + Hibernate |
+  | マイグレーション | EF Core Migrations | <strong>Flyway（SQLベース）</strong> |
+  | HTTP/回復性 | HttpClientFactory + Polly | RestClient + Resilience4j |
+  | HTML解析 | AngleSharp | jsoup |
+  | RSS | System.ServiceModel.Syndication | ROME (rome-tools) |
+  | LLM | Claude API（自作抽象化） | Claude API（anthropic-sdk-java 公式） |
+  | 通知 | LINE Messaging API（自作） | line-bot-sdk-java（公式） |
+  | 設定/秘密 | appsettings + User Secrets | application.yml + 環境変数/.env |
+  | テスト | xUnit | JUnit 5 + Mockito + Testcontainers |</p>
+</li>
+<li>
+<p><strong>考え方の差分（開発者への説明ポイント）</strong>:</p>
+</li>
+<li><strong>async/await 未経験問題の解消</strong>: Java 21 の仮想スレッドを使えば、通常の逐次（ブロッキング）コードのまま高い並行性が得られ、C# の async/await に相当する学習負荷を避けられる。LINQ に相当するのは Stream API。</li>
+<li><strong>マイグレーション</strong>: EF Core のコードファースト自動生成に代えて <strong>Flyway で DDL(SQL) を手書き</strong>する。DB 設計が得意な開発者（Delphi/ERP 出身）にはむしろ自然で、テーブル定義書がそのまま <code>V1__*.sql</code> になる。</li>
+<li><strong>enum</strong>: Hibernate 既定の <code>@Enumerated(ORDINAL)</code> は列挙順に暗黙依存し危険なため使わず、コード値を明示する <code>AttributeConverter</code>（<code>@Convert</code>）を挟む（smallint コード値方式 Q11 と整合）。</li>
+<li>
+<p><strong>時刻</strong>: Java の <code>ZoneId</code> は IANA tz 名（"Asia/Tokyo"）で全OS共通のため、.NET のような Windows/Linux 識別子差異は無い。UTC 保存/JST 表示の原則（NFR-08）は不変。</p>
+</li>
+<li>
+<p><strong>一次入力 PROJECT_BRIEF.md の扱い</strong>: 当初は原文（.NET 想定）を保持する方針だったが、<strong>開発者の追加指示により Java 前提へ更新済み</strong>（冒頭にピボット追記あり）。確定判断と根拠は本回答ログ（特に Q12）を正とする。</p>
+</li>
+<li><strong>後工程 skill の扱い</strong>: <code>03_詳細設計</code> / <code>04_実装</code> / <code>05_単体テスト</code> の各 skill（<code>.claude/skills/</code>）、および <code>01_要件定義</code> skill の Web 構成の問いを <strong>Java 前提へ改訂済み</strong>（同追加指示による）。<code>02_基本設計</code> / <code>06_結合テスト</code> skill はフレームワーク非依存で .NET 記述が無いため変更不要だった。</li>
+</ul>
+<hr />
+<h1 id="2026-08-05_1">追補: 対象範囲（スコープ）の確定（2026-08-05）</h1>
+<h2 id="q13">Q13. 対象範囲（スコープ）を明文化</h2>
+<p>Q2（対象範囲＝アニメ・漫画中心／汎用構造）を、要件定義書 §1「対象範囲（スコープ）」として具体化し確定した。</p>
+<ul>
+<li><strong>対象ドメイン</strong>: アニメ・漫画の最新情報（カテゴリ8区分で表現。「コラボ」は横断情報でイベント/グッズに分類）。※種別は既存のカテゴリ構造で表現済み（カプセルトイの追加は Q14）。</li>
+<li><strong>スコープ内</strong>: 収集・一覧表示・LINE 通知。</li>
+<li><strong>スコープ外（今回やらない）</strong>: 記事本文/画像の保存・表示、利用者間の共有・コメント、価格比較、在庫連携、購入・予約・SNS 投稿。</li>
+<li><strong>将来の機能追加候補</strong>: 在庫情報、利用者数拡大（3名以上）、汎用アグリゲーター化。</li>
+<li><strong>境界条件</strong>: 日本語・国内サイトのみ／利用者2名固定／対象期間＝直近<strong>2年分</strong>。</li>
+<li>
+<p><strong>拡張方針</strong>: アニメ・漫画に特化して提示。構造は汎用のままとし将来拡張の余地を残す。</p>
+</li>
+<li>
+<p><strong>根拠</strong>: ポートフォリオとして「範囲を切る判断（＝あえてやらないことの明示）」を見せるため、スコープ外と将来候補を分けて記録した。範囲を明示することで Claude Code による実装が意図から逸れないようにする狙いもある。</p>
+</li>
+<li>
+<p><strong>対象期間を2年分とする根拠（ドメイン判断）</strong>: アニメ・漫画では前年と同時期・同種の新作（周年記念グッズ、季節イベント、シリーズ続編・再放送等）が出る傾向がある。前年同期の情報と比較できるよう、直近1年ではなく<strong>2年分</strong>を対象・保持する。</p>
+</li>
+<li>
+<p><strong>NFR-05 との整合</strong>: 「対象期間＝2年分」に合わせ、データ保持期間を当初の<strong>記事6ヶ月 → 2年</strong>へ改訂（Q10 のブックマーク除外ルールはそのまま、閾値のみ2年に変更）。ログは1ヶ月のまま。データ量は利用者2名・小規模のため2年でも問題なし（NFR-04 の一覧2秒に影響しない見込み）。</p>
+</li>
+</ul>
+<h2 id="q14">Q14. 目的・成功基準の明文化、およびカプセルトイの独立カテゴリ化</h2>
+<p>要件定義の項目1「スコープ・目的」を詰める中で、システム化の目的と成功基準を開発者に確認し、要件定義書 §1 に記録した。</p>
+<ul>
+<li><strong>目的</strong>: アニメ・漫画のグッズ、ゲームセンターのプライズ、カプセルトイ（ガチャ）などの最新情報は媒体に分散し追うのが大変で、人気商品はすぐ売り切れる。1か所に自動集約し新着を効率よく把握できるようにする。Java 学習を兼ねた転職用ポートフォリオ。</li>
+<li><strong>正直な線引き</strong>: 収集は「PC 起動時にまとめて取得」方式で即時アラートではない。目的は「集約して探す手間を減らす」こと。即時性は Phase 6（時刻ベース通知）で高める。</li>
+<li><strong>成功基準</strong>: ①テーマ登録→自動収集（RSS 主・必要箇所のみ LLM 構造化）→一覧・検索、②お気に入り新着を LINE に1通通知、③利用者2名のデータが混ざらず一通り不具合なく動作（協力者テストで確認）、④AI 利用は収集時の構造化のみで月500円以内。</li>
+<li>
+<p><strong>成功基準の表現を設計と整合させた点</strong>（重要）: 開発者の当初案は「LLM がグッズ・アニメの最新情報を取得し…」だったが、本設計では <strong>LLM は情報取得ではなく RSS で取れない箇所の構造化のみ</strong>（D6・NFR-06・§7.0）。「AI コストをユーザー数に比例させない」設計判断と矛盾しないよう、「RSS を主とし必要な箇所のみ LLM で構造化」と表現を修正した。また「テーマを検索し」→「テーマを<strong>登録</strong>すると収集される」（検索 FR-04-03 は収集済みからの絞り込みで別機能）に正した。</p>
+</li>
+<li>
+<p><strong>カプセルトイの独立カテゴリ化</strong>: 目的にカプセルトイ（ガチャガチャ）が明記されたため、分類先を確認。「グッズに含める／ゲームセンターに含める／独立追加」の3案から <strong>独立カテゴリを追加</strong>を選択。</p>
+</li>
+<li><strong>決定</strong>: Category enum に <code>7:カプセルトイ(ガチャ)</code> を追加し、カテゴリを <strong>7区分 → 8区分</strong>（グッズ/アニメ/漫画/イベント/ゲーム/ゲームセンター/カプセルトイ/その他）に拡張。</li>
+<li><strong>根拠</strong>: 開発者の主要関心の一つであり、グッズ（一般物販）やゲームセンター（アーケード/プライズ）と混ぜず独立で追えた方が実利用に合う。smallint コード値方式（Q11）のため enum に値を足すだけでスキーマ変更は不要（センチネル 9:その他 の手前 7 に採番、8 は将来余地）。</li>
+</ul>
+<h2 id="q15-42026-08-07">Q15. 成功基準→機能のトップダウン照合で見つかった4つの隙間（2026-08-07）</h2>
+<p>機能一覧（FR）が成功基準①〜④を漏れなく満たすかを、成功基準から必要機能を洗い出して既存 FR に突き合わせる<strong>トップダウン照合</strong>で検証した。骨格は満たしていたが、「成功基準を実際に動かす／検証するのに要るが FR に明示が無い」4つの隙間（G1〜G4）を検出し、方針を確定した。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>隙間</th>
+<th>対応する成功基準</th>
+<th>決定</th>
+<th>反映先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1 収集バッチの定期自動実行</td>
+<td>①自動収集</td>
+<td><strong>運用要件のまま（非FR）</strong></td>
+<td>§3 FR-06 直後の注記。Phase 5＝タスクスケジューラ／Phase 6＝cron。アプリはヘッドレス実行可（NFR-09）で担保、手動起動は FR-06-02</td>
+</tr>
+<tr>
+<td>G2 LINE連携設定（ID登録・通知全体ON/OFF）</td>
+<td>②LINE通知</td>
+<td><strong>FR・画面を追加</strong></td>
+<td>FR-07-03、SC-09。<code>Users.line_user_id</code> / <code>Users.notify_enabled</code> を画面で管理</td>
+</tr>
+<tr>
+<td>G3 LLM利用状況の可視化（回数・コスト）</td>
+<td>④月500円以内</td>
+<td><strong>記録・確認FRを追加</strong></td>
+<td>FR-06-06、SC-07、TBL-LlmUsageLogs、enum LlmCallStatus。LINE 通数管理（FR-06-04）の LLM 版</td>
+</tr>
+<tr>
+<td>G4 利用者2名の登録・管理</td>
+<td>③2名分離</td>
+<td><strong>管理機能を持つ</strong></td>
+<td>FR-07-02、SC-09。初期2名は seed、以降は画面から追加可</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>根拠</strong>:</li>
+<li>G1＝FR は「アプリが何をするか」。定期起動は OS のスケジューラ／cron の仕事でアプリ機能ではないため運用要件に置く。ポートフォリオ観点でも「機能要件と運用要件の切り分け」を示せる。アプリ側は別プロセス・ヘッドレス実行できる設計（NFR-09）で運用要件を成立させる責務だけ負う。</li>
+<li>G2＝②を動かすには送信先 <code>line_user_id</code> と通知の大元スイッチが要る。「手動登録でよい」の当初方針だけでは利用者が自分で連携・停止できず片手落ちのため、上位マスタスイッチとして FR 化（お気に入り単位 ON/OFF＝FR-05-04 の親）。</li>
+<li>G3＝④「月500円以内」は数値目標（NFR-06）だが、測る手段が無ければ検証できない。LINE 通数を DB 記録して残量表示する設計（FR-06-04）と対称に、LLM も回数・トークン・概算コストを記録し可視化する。<strong>上限接近時も収集は止めず可視化のみ</strong>（LINE は通数が有限資源のため送信停止するが、LLM コストは自己負担の目安であり機能停止は過剰）。</li>
+<li>G4＝③の「2名」をどう作るかが未定義だった。認証（FR-07-01）はあるがユーザー生成手段が無い。2名固定でも seed だけだと片方が増員・改名できないため、最小の管理機能（追加・編集）を持たせる。スコープ「利用者2名固定」とは矛盾しない（固定は既定値であり、画面での増減余地を残すのは将来拡張候補 Q13 とも整合）。</li>
+<li><strong>照合結果</strong>: 上記4点の反映により、成功基準①〜④それぞれに対して「実現する機能」と「検証する機能」が FR/画面/データ設計で追える状態になった。</li>
+</ul>
+<h2 id="q16-3-2026-08-07">Q16. 認証・認可の実装レベル（非機能 項目3 の詰め・2026-08-07）</h2>
+<p>非機能要件の★項目「セキュリティ・認証/認可」を実装レベルまで確定した。要件定義書 NFR-02・FR-07・TBL-Users・画面一覧・§8 に反映。</p>
+<ul>
+<li><strong>認証（Authentication）</strong>:</li>
+<li>一般利用者(user): ログイン画面に有効な利用者の [ID＋表示名] 一覧を表示し、<strong>クリックで選択ログイン</strong>。パスワード入力なし。</li>
+<li>管理者(admin): 選択後に <strong>4桁PIN</strong> を入力し <code>Users.admin_pin_hash</code>（BCrypt）と照合。連続失敗で一時ロック。</li>
+<li><strong>認可（Authorization）</strong>: <code>Users.role</code>（enum <code>UserRole</code> 1:User / 9:Admin）で2ロール。管理系画面（SC-06 情報源マスタ／SC-07 管理ダッシュボード＝<strong>LLMコスト含む</strong>／SC-08 実行ログ／SC-09 利用者管理）は <strong>admin 限定</strong>。Spring Security（<code>@PreAuthorize</code> 等）で制御。</li>
+<li><strong>段階化</strong>: ローカル(Phase 5)は上記。<strong>VPS(Phase 6)で全利用者を本格認証（パスワード/OAuth）へ差し替え</strong>、認可(role)層は不変。</li>
+<li>
+<p><strong>データ変更</strong>: <code>TBL-Users</code> の <code>login_key</code>（旧・簡易認証キー）を廃止し、<code>role</code> と <code>admin_pin_hash</code> を新設。enum <code>UserRole</code> を追加。</p>
+</li>
+<li>
+<p><strong>決定の経緯と根拠</strong>:
+  1. 当初提案は「Spring Security＋フォーム認証（ID/パスワード）＋admin/user」だったが、開発者判断で<strong>ログインUIを利用者選択方式（一覧クリック）に変更</strong>。日常利用の手間を最小化する狙い。
+  2. これは厳密には「認証（本人証明）」ではなく「<strong>識別</strong>（誰として使うかの選択）」であり、鍵が無い。自宅PC・信頼できる2名という脅威モデルでは合理的（Windows/Netflix のユーザー選択と同発想）と判断。
+  3. ただし鍵なしだと<strong>管理者ロールが誰でも選べてしまい、admin限定（例: LLMコスト画面）が“画面整理”の意味しか持たない</strong>。この弱点を解消するため、開発者判断で <strong>管理者選択時のみ4桁PIN</strong> を課すことにした。これで管理系は最小の鍵で保護される。
+  4. <strong>authN（ログイン方式）と authZ（ロール制御）を分離</strong>し、認可は Spring Security で本物として効かせる。ローカルは認証を「選択＋PIN」にし、VPSでは<strong>認証方式だけをパスワード/OAuthへ差し替え</strong>て認可層は不変にする。この分離自体が、認証と認可を理解している証明としてポートフォリオの説明ポイントになる（"簡易認証"の曖昧語を廃止できる副次効果も）。
+  5. 4桁PINは低エントロピー（10000通り）で総当たり可能なため、<strong>連続失敗ロック</strong>を補助的に入れ、位置づけを「ローカル向け最小認証・VPSで本格化」と明記した。</p>
+</li>
+</ul>
+<h2 id="q17-3-2026-08-07">Q17. 秘密情報・設定の外部化方式（非機能 項目3 の詰め・2026-08-07）</h2>
+<p>非機能★「拡張性・移行性」のうち秘密情報の管理方式を確定した。要件定義書 NFR-11 に反映。</p>
+<ul>
+<li><strong>決定（案A：環境変数で外部化）</strong>:</li>
+<li><strong>機密</strong>（LINEトークン／Claude APIキー／DBパスワード等）は<strong>環境変数のみで注入</strong>。<code>application.yml</code> はプレースホルダ <code>${...}</code> のみとし、実値をリポジトリに置かない。ローカル＝<code>.env</code>（gitignore）、VPS＝systemd <code>EnvironmentFile</code> 等。</li>
+<li><strong>非機密の環境差分</strong>（DBホスト・ログレベル・User-Agent連絡先等）は <strong>Spring Profiles</strong>（<code>application-{profile}.yml</code>）で切替。</li>
+<li>12-factor 準拠として NFR-11 に明記。</li>
+<li><strong>検討した代替案</strong>（開発者に5案を提示して比較）:</li>
+<li>B. リポジトリ外の設定ファイル（<code>spring.config.additional-location</code>）… 手軽だがファイル配布が手作業で説明価値低め。</li>
+<li>C. 暗号化してリポジトリにコミット（<strong>Jasypt</strong> / SOPS / git-crypt）… 秘密を暗号化した状態でGit管理でき、管理鍵はマスターキー1個。<strong>ポートフォリオで一段深く見せられる</strong>が学習コスト増。</li>
+<li>D. 専用シークレットストア（Vault等）… 企業標準だがサーバー運用が要り、2名・単一VPSには過剰。</li>
+<li>E. OS資格情報ストア（Windows資格情報マネージャ等）… <strong>OS依存でNFR-09に反する</strong>ため不採用。</li>
+<li><strong>根拠</strong>: 自宅PC→単一VPS・2名という規模では、案Aが<strong>手間最小で移行性・安全性を両立</strong>し説明も容易。秘密情報の誤コミットという最大級の減点を、環境変数化＋プレースホルダのみで確実に回避できる。</li>
+<li><strong>将来余地（設計メモに記載）</strong>: 案C（Jasyptで暗号化コミット）は「秘密の履歴管理・より高度な見せ方」として選択肢に残す。必要になれば後日検討してよい（ただし復号マスターキーの環境変数管理は結局A方式と同様に必要で、本質的な追加安全性は限定的）。</li>
+</ul>
+<h2 id="q18-3-2026-08-07">Q18. アプリのコンテナ化レベル（非機能 項目3 の詰め・2026-08-07）</h2>
+<p>非機能★「拡張性・移行性」のうちコンテナ化方針を確定した。要件定義書 NFR-12・§11(Phase 6) に反映。</p>
+<ul>
+<li><strong>決定（Docker 採用・折衷案）</strong>:</li>
+<li><strong>開発中</strong>：アプリ本体（web/batch）は JAR / IDE で直接実行、<strong>PostgreSQL のみ Docker Compose</strong>（Phase 0 で導入済）。</li>
+<li><strong>Phase 6 VPS 移行時</strong>：アプリもコンテナ化（マルチステージ <code>Dockerfile</code>）し、<code>docker compose</code> で web／batch／db を一括起動。</li>
+<li>秘密情報は compose の <code>env_file</code>／環境変数で注入（NFR-11 案A と整合）。</li>
+<li><strong>検討した代替案</strong>:</li>
+<li>(a) 最初から全面 Docker … 環境差異ゼロだが、Vaadin の自動リロードにマウント設定が要り、Java 学習中の開発反復が重くなる。</li>
+<li>(b) Docker 化しない（<code>java -jar</code>＋systemd）… 最小・移行は可能だが、ポートフォリオに Docker スキルを載せられない。</li>
+<li><strong>根拠</strong>:
+  1. <strong>Docker は移行の必須条件ではない</strong>（JAR は元々OS非依存）。採用理由は「①Windows→Linux の環境差異解消による移行の安全化 ②ポートフォリオでの Docker スキル証明」の2点。
+  2. 開発中のコンテナ化は Vaadin の反復速度を落とすため見送り、<strong>成果物として残る Phase 6 で導入</strong>するのが費用対効果に優れる。
+  3. バッチは常駐せずワンショット実行（<code>CommandLineRunner</code>）でWebと起動モデルが異なるため、コンテナ化と定期実行（運用要件・G1）は Phase 6 で併せて設計する。</li>
+<li><strong>補足</strong>: Docker の概念解説（コンテナとは／VMとの違い／image・container・Dockerfile・registry の用語／既に PostgreSQL で使用中）は設計メモ（<code>設計メモ.html</code>）に補足ボックスとして記載した。</li>
+</ul>
+<h2 id="q19-moscow2-2026-08-07">Q19. 機能の優先順位(MoSCoW)と機能境界（項目2 の詰め・2026-08-07）</h2>
+<p>機能一覧(FR-01〜07)に重要度と境界を付与し確定。要件定義書 §3.1・§3.2・§11・FR-03 に反映。</p>
+<ul>
+<li><strong>A. 優先順位（MoSCoW）</strong>: Must＝成功基準の成立に必須の核／Should＝重要だが最初は無くても回る／Could＝あれば快適。重要度と着手順(Phase)は別軸。</li>
+<li>Must: FR-01 テーマ管理／FR-02 収集(RSS・重複排除)／FR-04 一覧・<strong>FR-04-03 検索</strong>／FR-05 お気に入り／FR-03 通知／FR-07 認証・認可</li>
+<li>Should: FR-02-03 LLM構造化・専用パーサー・類似グルーピング／FR-04-02 フィルタ・FR-04-04 未読既読／FR-06 管理機能・FR-06-06 LLMコスト可視化</li>
+<li>Could: FR-05-03 ブックマーク／FR-06-03 収集結果削除 等</li>
+<li><strong>開発者判断による変更</strong>: 提示時 Phase 3 だった <strong>FR-04-03 検索を Phase 2 へ前倒し</strong>（重要度Must維持）。成功基準①に「一覧・検索」と明記されており、早い段階で検索を使えるようにする狙い。他の割り当てはそのまま承認。</li>
+<li><strong>B. 機能の境界（やらないこと）</strong>: §3.2 に機能ごとの境界表を追加。特に<strong>通知</strong>について開発者指示で将来要件を明記——</li>
+<li>ローカルは「PC 起動時に前回以降の新着をまとめて届ける」方式（即時アラートではない）。</li>
+<li><strong>VPS 移行後（Phase 6）は「決まった時間の収集結果通知設定」＝時刻ベースのスケジュール通知</strong>（利用者ごとに通知時刻を設定、例: 毎朝8時に前日分）を提供する。FR-03 に将来要件として追記、§11 Phase 6「通知の時刻ベース化」に対応。設計メモにも記載。</li>
+<li><strong>根拠</strong>: 重要度を明示することで「何を核と判断したか」を示し（ポートフォリオ）、着手順(Phase)と分離して管理する。機能境界の明示はスコープクリープ防止と設計規律の提示。通知は「起動時まとめ→定時通知」と段階的に即時性を高める設計意図を記録した。</li>
+</ul>
+<h2 id="q20-9-2026-08-07">Q20. 用語定義（ユビキタス言語）の正式化（項目9 の詰め・2026-08-07）</h2>
+<p>要件定義書に唯一欠けていた「用語定義」セクションを §1 に新設した（項目9 の★）。</p>
+<ul>
+<li><strong>内容</strong>: 用語19語を「用語｜定義｜対応（テーブル/enum/機能ID）」の表で正式化し、ビジネスルール9件（整列キー・同一判定・取得優先順・収集マナー・通数カウント・同日抑止・LLMコスト集計・データ保持・日時）も明記。</li>
+<li><strong>要注意の区別を明文化</strong>: 「お気に入り（通知する）／ブックマーク（通知しない）」、「テーマ（登録して収集させる）／検索（収集済みからの絞り込み FR-04-03）」を別概念として固定。</li>
+<li><strong>根拠</strong>: 言葉の意味を1つに固定し、要件→設計→実装→DB→画面で同一用語＝同一意味を保証する（ユビキタス言語）。各用語に対応テーブル/enum/IDを併記したことで、トレーサビリティ（§10）が用語レベルでも効く。ポートフォリオでは「ドメイン用語を定義し設計に一貫させた」ことが評価点になる。</li>
+<li>位置づけ: 決定の分岐ではなく既存内容の集約・明文化のため、開発者への質問は要さず（既存の確定事項から機械的に整理）。設計メモ 項目9 も参照を更新。</li>
+</ul>
+<h2 id="q21-llmasonnet52026-08-07">Q21. LLMコスト管理（ハードキャップ・案A・Sonnet）（項目5外部制約の詰め・2026-08-07）</h2>
+<p>非機能★「外部制約への対応」のうち LLM コスト管理を確定。要件定義書 NFR-06・FR-02-11・FR-06-06・D6・§7.2 に反映。</p>
+<ul>
+<li><strong>①コスト上限＝ハードキャップ</strong>: 月次上限（500円）に達したら <strong>LLM 構造化を停止し RSS/専用パーサーで収集継続</strong>（収集・一覧表示は止めない）。安全マージン（例:90%）で手前停止。判定は <code>LlmBudgetGuard</code>（LLM呼び出し前に当月累計を確認）に集約し、取得3段フォールバック（FR-02-04）の LLM 段だけをコストで閉じる。</li>
+<li><strong>コスト算出＝案A（usage自前計算）</strong>: 各APIレスポンスの <code>usage</code>（入出力トークン数）× モデル単価（<code>application.yml</code>）で概算し <code>LlmUsageLogs</code> に記録。当月累計は <code>SUM(est_cost_micro_jpy)</code>（JST月）で算出。組織のAdmin使用量/コストAPIは<strong>実請求との突合（任意）</strong>に位置づけ、ハードキャップの判定には使わない（Adminキー要・集計遅延あり・組織単位のため）。</li>
+<li><strong>使用モデル＝Claude Sonnet</strong>: 標準単価 入力$3/出力$15（100万トークンあたり）。1記事の想定トークン（入力≒2,000/出力≒300）で <strong>≒¥1.6/記事</strong>、月500円で<strong>約300記事/月（≒1日10記事）</strong>。開発者判断で「1日10記事も使わない」見込みのため Sonnet を採用（Haiku なら約3倍こなせるが、品質と余裕を優先）。単価は改定されうるため実装着手時に公式ドキュメントで確認し <code>application.yml</code> に設定。</li>
+<li><strong>根拠</strong>: 「月500円以内」を目標から<strong>守れる設計（ハードキャップ）</strong>に格上げしつつ、前回G3の「収集は止めない」方針と両立（LLM段のみ停止、RSSで継続）。案Aは呼び出し前に当月累計を即時に判定できる唯一現実的な方式（Admin API は用途に不適）。Sonnet 採用は実利用ボリュームが小さいという開発者の見立てに基づく。</li>
+</ul>
+<h2 id="q22-line582026-08-07">Q22. LINE通知失敗の分類・再送方針（項目5外部制約/項目8エラー方針の詰め・2026-08-07）</h2>
+<p>(2)LINE配信失敗時の再送ポリシーを起点に、通知失敗の全分類と受信側の扱いを確定。要件定義書 §8.1・FR-03-07/08・FR-04-06・FR-07-03・NotifyStatus enum・ArticleNotifications に反映。</p>
+<ul>
+<li><strong>分類（NotifyStatus）と再送方針</strong>（判別＝HTTPステータス＋例外種別）:</li>
+<li>①TempError（5xx/接続断）・②RateLimited（429）＝同一実行内で秒単位リトライ→ダメなら未通知を残し<strong>次回PC起動時に再送</strong>。</li>
+<li>③AuthFailed（401）・③Blocked（ブロック/未追加）＝自動リトライせず未通知を残す（原因解消後の次回に届く）が<strong>5日超過で打ち切り（GaveUp）</strong>。</li>
+<li>④FormatError（400）＝<strong>打ち切り</strong>（同形式で必ず失敗＝不具合、スキップしログのみ）。</li>
+<li>⑤Timeout（応答不明）＝<strong>冪等キー（X-Line-Retry-Key 相当）付きで再送</strong>し二重配信を防ぐ。</li>
+<li>まとめ：再送する＝①②③⑤／打ち切り＝④・③の5日超過。</li>
+<li><strong>常駐しないバッチ前提の重要点</strong>: 「再送」は原則<strong>次回PC起動時</strong>。②の「バックオフ」も“1時間後”ではなく次回起動（プロセス内で長時間眠らない）。VPS常駐化（Phase 6）で初めて「N分後に再送」が現実的になる。</li>
+<li><strong>判別可否の正直な整理</strong>: ①(5xx)②③認証④は HTTP で判別可。判別が難しいのは <strong>⑤タイムアウト（届いたか不明）</strong> と <strong>③ブロック（pushでは失敗と分からずwebhook要）</strong> の2つ。⑤を①と分けて冪等キー扱いにする理由がこれ。</li>
+<li><strong>送信側の可視化</strong>: 失敗を分類し <code>NotificationLogs.status</code>(=NotifyStatus) に記録、SC-07/SC-08 に<strong>分類別の管理者向けメッセージ</strong>（次アクションが分かる文面）を表示。開発者判断「分類ごとに“この原因でエラー”と出す」案を採用（管理者向け。一般利用者には詳細を出さない）。</li>
+<li><strong>受信側の扱い（開発者の問い「届く側はどうする」への結論）</strong>: <strong>アプリが情報の正／LINEは補助的プッシュ</strong>。新着は送信の成否に関係なく必ずアプリ内（タイムライン）に入るため、LINE失敗でも受信側は取りこぼさない（FR-04-06 未通知の可視化）。受信側がアクションを要するのは③ブロック/未追加のみで、SC-09 の LINE連携ステータス＋友だち追加案内で自己解決。</li>
+<li><strong>カルーセル上限</strong>: バブル上限（LINE仕様上おおむね12件・着手時確認）超過は<strong>切り詰め</strong>（無料枠を余計に消費する分割送信はしない）。推奨案として採用。</li>
+<li><strong>データ表現</strong>: <code>ArticleNotifications</code> に <code>result</code>(0:Delivered/1:GaveUp) を追加。未通知＝行が無い状態。失敗(①②③⑤)は行を作らず未通知のまま、成功と打ち切りのみ行を作り再送対象から外す。</li>
+<li><strong>打ち切り日数</strong>: ③の未通知は<strong>5日超過で打ち切り</strong>（開発者判断）。</li>
+<li><strong>根拠</strong>: 「再送する失敗／しない失敗の切り分け」を設計で示す（③④は再送しても無駄→停止＋メッセージ、⑤は冪等キーで安全に再送）。LINE仕様（冪等キー・カルーセル上限・ブロック検知）は改定されうるため着手時に公式確認（CLAUDE.md §4）。</li>
+</ul>
+<h2 id="q23-robots-572026-08-07">Q23. 情報源の robots/規約 遵守を仕組みで担保（項目5外部制約/項目7権利の詰め・2026-08-07）</h2>
+<p>(3)「robots/規約の遵守を運用任せにせず設計で担保」を確定。要件定義書 TBL-Sources・FR-02-05/12・FR-06-01・§7.0・§9・用語定義に反映。</p>
+<ul>
+<li><strong>2段の遵守ゲート</strong>:</li>
+<li><strong>規約ゲート（人手・情報源単位）</strong>: <code>Sources.terms_reviewed=true</code>（＋確認日・規約メモ）の情報源だけ収集対象。未確認は登録できても収集しない（未確認は集めない）。第一陣3サイトも規約OKを確認して立てるまで収集されない。</li>
+<li><strong>robots ゲート（自動・ページ単位）</strong>: 各URL取得の直前に robots.txt を判定し Disallow のパスはスキップ→<code>CrawlLogs</code> 記録。日次キャッシュ。パースは crawler-commons 等の定番ライブラリ。<strong>取得エラー時は安全側で当日スキップ</strong>（開発者判断）。robots が無い/取れない通常時は慣例どおり許可扱い。</li>
+<li><strong>役割分担の根拠</strong>: 規約は機械判定不可→人手フラグ、robots は機械判定可→自動。効くタイミングも規約=収集開始前・情報源単位／robots=取得直前・ページ単位、と分離。</li>
+<li><strong>データ変更</strong>: <code>Sources</code> に <code>terms_reviewed</code>(bool)/<code>terms_reviewed_at</code>/<code>terms_note</code>/<code>robots_respect</code>(bool既定true) を追加。FR-02-12（規約遵守ゲート）新設、FR-02-05（robots自動ゲート・エラー時当日スキップ・crawler-commons）を具体化。FR-06-01 に規約確認フラグ登録を追加。</li>
+<li><strong>開発者への説明</strong>: robots.txt の概念（ボット向けの立ち入り可否の取り決め・技術的な鍵ではないがマナー/権利上尊重する）を要件定義書 §7.0 と設計メモに補足として追加（Java学習者向け）。用語定義に robots.txt / 遵守ゲート を追加。</li>
+<li><strong>根拠</strong>: 「権利配慮を運用任せにせず仕組みで守る」はポートフォリオの評価点。RSS優先(§7.0)・本文非保存(§9)と並ぶ権利配慮の柱。robots/規約の具体値は改定されうるため着手時に実地確認（CLAUDE.md §4）。</li>
+</ul>
+<h2 id="q24-2026-08-07">Q24. 発生日の種別（発売日順ソート・種別表示）（2026-08-07）</h2>
+<p>「発生日で見られるが発売日順でも見たい／ソートと表示に発売日を入れたい」という要望を、<strong>案A（発生日に種別を足す）</strong>で確定。要件定義書 Articles・enum・FR-02-06・FR-04-01/02・SC-02/03・§7.2・用語定義・ビジネスルールに反映。</p>
+<ul>
+<li><strong>背景の整理</strong>: これまで日付は「発生日(代表日)」1本で、グッズ発売日/イベント開催日/放送日をまとめて持っていた。発売日順や種別表示を出すには「その日付が何の日か」を持つ必要がある。</li>
+<li><strong>案A採用（種別カラム、独立の発売日カラムは不採用）</strong>: <code>Articles.event_date_kind</code>（enum <code>EventDateKind</code>＝1:発売日/2:開催日/3:放送日/4:受付開始/9:その他）を追加。1記事＝1つの主要日付という実態に合い、独立カラム（案B）で起きる発生日と発売日の値の重複・イベント/放送でのNULLを避けられる。</li>
+<li><strong>種別の決め方（3段・LLM最小化）</strong>: ①カテゴリ既定マッピング（グッズ/カプセルトイ/ゲーム/漫画→発売日、アニメ→放送日、イベント→開催日、ゲームセンター/その他→その他）→②原文キーワード補正（発売→発売日/開催→開催日/放送・配信→放送日/予約・受付→受付開始）→③LLMを呼ぶ記事のみ出力に種別を含める。<strong>種別のために LLM を新規に呼ばない</strong>（§5 コスト原則・D6 と整合）。precision（確度）とは別軸。</li>
+<li><strong>UI/機能</strong>: FR-04-01 の並び順に「発生日順（既定・全種別）／発売日順（種別=発売日を日付順）／収集日順」＋昇順降順。日付は種別ラベル付き表示（例「発売日 9/20」）。FR-04-02 フィルタに種別を追加。</li>
+<li><strong>根拠</strong>: 目的「人気グッズを売り切れ前に把握」に対し、発売日順で近い順に並べられると直結する。ゲームセンター/漫画の既定マッピングは調整余地ありとして記録。</li>
+</ul>
+<h2 id="q25-2026-08-07">Q25. カプセルトイの情報源を第一陣に追加（2026-08-07）</h2>
+<p>「カプセルトイの情報を取得できるサイトは？」の指摘から、カテゴリ「カプセルトイ」に対応する専用情報源が第一陣（MANTANWEB/HOBBY Watch/Gamer）に無い穴を確認し、1つ追加することにした。要件定義書 D4・§7.1・TBL-Sources シードに反映。</p>
+<ul>
+<li><strong>調査</strong>: WebSearch で候補を収集（タカラトミーアーツ公式ガチャ／ガチャパラ／キャラグー／トイサンタ／ガチャガチャアイランド／電撃ホビーウェブ）。外部サイトへの WebFetch は本環境の egress ポリシーで一律遮断され、RSS本体・robots.txt・規約の内容は直接検証不可（第一陣3サイトと同じ制約）。検索で確認できたのは、電撃ホビーウェブが KADOKAWA 運営のホビー総合メディアで利用規約ページ <code>hobby.dengeki.com/terms/</code> が実在し、カプセルトイタグ <code>/tag/gatya/</code> を持つこと。</li>
+<li><strong>決定</strong>: <strong>電撃ホビーウェブを第一陣の4つ目に追加</strong>。RSS がどの候補も未検証の以上、決め手は規約の明確さ・信頼性（＝権利配慮）とし、大手メディア（KADOKAWA・規約明文化）を選定。専門サイト（ガチャパラ/キャラグー等）・メーカー公式（ガシャポン公式/タカラトミーアーツ）は控え（将来Phase／不足時の差し替え）。</li>
+<li><strong>未検証事項（着手時に実地確認）</strong>: RSS URL の特定・生死、robots.txt 尊重可否、利用規約上の可否。規約OKなら <code>terms_reviewed=true</code> を立てて収集対象化（それまで収集されない＝FR-02-12 規約ゲート）。使えなければ控えへ差し替え。</li>
+<li><strong>根拠</strong>: 目的・カテゴリでカプセルトイを主要関心に据えた（Q14で独立カテゴリ化）のに情報源が無いのは対応漏れ。権利配慮の観点で大手メディアが安全。RSS/規約は改定・環境制約で本セッション検証不可のため実地確認を明記（CLAUDE.md §4）。</li>
+</ul>
+<h2 id="_2">確定済み（質問不要だった事項）</h2>
+<ul>
+<li>DB は PostgreSQL（BRIEF §10.3 で確定）。Docker Compose でローカル起動。</li>
+<li>UTC保存/JST表示、冪等性のDB制約担保、収集と通知の分離、通知時にLLM不使用、権利配慮、LINE無料枠対応、VPS移行前提のOS非依存 — すべて BRIEF の確定制約として要件に引き継ぐ。</li>
+</ul>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>01_要件定義/未決事項回答ログ.md</code>）</div>
+  </main>
+</div>
+
+</body>
+</html>
