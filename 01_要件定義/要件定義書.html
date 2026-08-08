@@ -164,7 +164,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>バージョン</td>
-<td>1.3（★項目の実装レベル詰め＝Q16〜Q23 を反映）</td>
+<td>1.4（発生日種別＝発売日順ソート/種別表示を追加＝Q24）</td>
 </tr>
 <tr>
 <td>作成日 / 最終改訂</td>
@@ -302,6 +302,11 @@ strong{font-weight:700;}
 <td>enum EventDatePrecision</td>
 </tr>
 <tr>
+<td>発生日種別（EventDateKind）</td>
+<td>発生日が「何の日か」の種類（発売日/開催日/放送日/受付開始/その他）。表示ラベルと「発売日順」ソートに使う。※precision（確からしさ）とは別軸</td>
+<td>Articles.event_date_kind・enum EventDateKind</td>
+</tr>
+<tr>
 <td>収集（収集フェーズ）</td>
 <td>情報源から記事を取得し DB へ登録するバッチ処理。取得は RSS→専用パーサー→LLM の順</td>
 <td>FR-02・TBL-CrawlLogs</td>
@@ -385,6 +390,16 @@ strong{font-weight:700;}
 <td>取得優先順</td>
 <td>RSS → 専用パーサー → LLM（コスト・権利・安定性の順に有利）</td>
 <td>FR-02-04</td>
+</tr>
+<tr>
+<td>発生日種別の判定</td>
+<td>①カテゴリ既定（グッズ/カプセルトイ/ゲーム/漫画→発売日、アニメ→放送日、イベント→開催日、ゲームセンター/その他→その他）→②原文キーワード補正（発売→発売日/開催→開催日/放送・配信→放送日/予約・受付→受付開始）→③LLMを呼ぶ記事のみ出力に種別を含める。<strong>種別のために LLM を新規に呼ばない</strong></td>
+<td>FR-02-06・EventDateKind</td>
+</tr>
+<tr>
+<td>発売日順ソート</td>
+<td>「発売日順」＝ <code>event_date_kind=発売日(1)</code> の記事を <code>event_date</code> で並べる（昇順で近い発売が上位）。「発生日順」は全種別横断で <code>COALESCE(event_date, created_at::date)</code></td>
+<td>FR-04-01</td>
 </tr>
 <tr>
 <td>収集マナー</td>
@@ -554,7 +569,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-02-06</td>
 <td>抽出項目マッピング</td>
-<td>タイトル/カテゴリ/発生日(3項目)/場所/元URL/要約 を抽出（§7 参照）</td>
+<td>タイトル/カテゴリ/発生日(代表日・原文・精度)/<strong>発生日種別(EventDateKind)</strong>/場所/元URL/要約 を抽出（§7 参照）。種別は「①カテゴリ既定→②原文キーワード補正→③LLM出力（呼ぶ記事のみ）」で決定（ビジネスルール(§1)。種別のためだけに LLM を新規に呼ばない）</td>
 </tr>
 <tr>
 <td>FR-02-07</td>
@@ -653,12 +668,12 @@ strong{font-weight:700;}
 <tr>
 <td>FR-04-01</td>
 <td>日付順タイムライン</td>
-<td>発生日ベースで昇順/降順を切替表示。<code>event_date</code> が NULL（日付不明/受付中等）の記事は収集日時 <code>created_at</code> を代理キーとして整列し、新着として扱う（整列キー = <code>COALESCE(event_date, created_at::date)</code>、詳細は §6 参照）</td>
+<td><strong>並び順を選択</strong>：①発生日順（既定・全種別横断）／②<strong>発売日順</strong>（種別=発売日の記事を日付順）／③収集日順。各々<strong>昇順/降順</strong>を切替。<code>event_date</code> が NULL（日付不明/受付中等）の記事は収集日時 <code>created_at</code> を代理キーとして整列し新着扱い（整列キー = <code>COALESCE(event_date, created_at::date)</code>、詳細は §6 参照）。日付は<strong>種別ラベル付きで表示</strong>（例「発売日 9/20」「開催日 10/1」）</td>
 </tr>
 <tr>
 <td>FR-04-02</td>
 <td>フィルタ</td>
-<td>テーマ / カテゴリ / 期間 / 未読 / <strong>未通知</strong>（FR-04-06）</td>
+<td>テーマ / カテゴリ / 期間 / 未読 / <strong>未通知</strong>（FR-04-06） / <strong>発生日種別</strong>（発売日・開催日・放送日等）</td>
 </tr>
 <tr>
 <td>FR-04-03</td>
@@ -1024,14 +1039,14 @@ strong{font-weight:700;}
 <tr>
 <td>SC-02</td>
 <td>タイムライン（一覧）</td>
-<td>発生日順一覧・フィルタ・検索・未読既読・<strong>未通知の可視化</strong>・元リンク</td>
+<td>一覧・<strong>並び順選択（発生日順/発売日順/収集日順＋昇順降順）</strong>・<strong>日付は種別ラベル付き表示</strong>・フィルタ（種別含む）・検索・未読既読・<strong>未通知の可視化</strong>・元リンク</td>
 <td>共通</td>
 <td>FR-04</td>
 </tr>
 <tr>
 <td>SC-03</td>
 <td>記事詳細</td>
-<td>要約・カテゴリ・発生日（原文表示）・場所・元リンク・ブックマーク</td>
+<td>要約・カテゴリ・<strong>発生日（種別ラベル＋原文表示、例「発売日 9/20（9月中旬）」）</strong>・場所・元リンク・ブックマーク</td>
 <td>共通</td>
 <td>FR-04, FR-05-03</td>
 </tr>
@@ -1104,6 +1119,10 @@ strong{font-weight:700;}
 <tr>
 <td>EventDatePrecision</td>
 <td>0:Exact(確定日) / 1:Month(月まで) / 2:Season(季節・曖昧) / 3:Ongoing(受付中/発売中等の期間) / 9:Unknown</td>
+</tr>
+<tr>
+<td>EventDateKind</td>
+<td>1:発売日 / 2:開催日 / 3:放送日 / 4:受付開始 / 9:その他（発生日が「何の日か」の種別。表示ラベル・発売日順ソートに使う）</td>
 </tr>
 <tr>
 <td>FetchType</td>
@@ -1409,6 +1428,12 @@ strong{font-weight:700;}
 <td>smallint</td>
 <td>NOT NULL DEFAULT 9</td>
 <td>EventDatePrecision enum</td>
+</tr>
+<tr>
+<td>event_date_kind</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 9</td>
+<td>EventDateKind enum（発生日の種別＝発売日/開催日/放送日/受付開始/その他）。表示ラベルと「発売日順」ソートに使う。判定＝カテゴリ既定→原文キーワード→LLM出力（ビジネスルール(§1)）</td>
 </tr>
 <tr>
 <td>location</td>
@@ -2095,6 +2120,7 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 <li><code>event_date</code>（date or null）</li>
 <li><code>event_date_text</code>（string or null）</li>
 <li><code>event_date_precision</code>（EventDatePrecision）</li>
+<li><code>event_date_kind</code>（EventDateKind＝発売日/開催日/放送日/受付開始/その他。カテゴリ既定・原文から判断できる場合はそれを優先し、LLMは補助）</li>
 <li><code>location</code>（string or null）</li>
 <li><code>summary</code>（自作要約・本文転載しない）</li>
 <li><strong>モデル: Claude Sonnet</strong>（正確なモデルID・単価・リクエスト形式は実装着手時に公式ドキュメントで確認。単価は <code>application.yml</code> に設定し <code>LlmUsageLogs</code> の概算コスト計算に用いる）。</li>
@@ -2305,6 +2331,8 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 - [x] LINE通知失敗を <code>NotifyStatus</code> で分類し再送を出し分け（①②③⑤再送・④/③5日超過は打ち切り、⑤は冪等キー）。受信側はアプリが情報の正＋SC-09連携ステータス（Q22・§8.1・FR-03-07/08・FR-04-06）
 - [x] robots/規約の2段遵守ゲート（規約＝人手 <code>terms_reviewed</code>／robots＝自動・取得直前）。robots概念を§7.0に解説（Q23・FR-02-05/12・TBL-Sources）
 - [x] 通しレビュー実施（v1.3）: ステータス「7区分→8区分」訂正、版数/改訂日更新、FR-04-02に未通知フィルタ追記、CrawlLogs→LlmUsageLogs の ON DELETE SET NULL を追記</p>
+<p>確定済み（レビュー第7回・発生日種別）:
+- [x] 発生日に<strong>種別(EventDateKind＝発売日/開催日/放送日/受付開始/その他)</strong>を追加（Q24・案A）。一覧の並び順に「発売日順」を追加、日付は種別ラベル付き表示、フィルタに種別。判定はカテゴリ既定→原文キーワード→LLM出力（種別のためにLLMを新規に呼ばない）。<code>Articles.event_date_kind</code>・enum <code>EventDateKind</code> 新設</p>
 <p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。残るは開発者の最終承認のみ</strong>。承認後に <code>02_基本設計</code> へ進む。</p>
     <div class="doc-foot">テーマ別最新情報アグリゲーター 要件定義書 — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
   </main>
