@@ -163,7 +163,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>バージョン</td>
-<td>1.7（新規アカウント自己登録を開放＝Q27。誰でも User で登録可・Admin昇格は不可。SC-10 新設。基本設計工程での確定）</td>
+<td>1.8（利用者管理 SC-09 をアプリ内ドロワー「管理」へ移設＝Q28。ログイン画面は新規登録のみ。基本設計工程での確定）</td>
 </tr>
 <tr>
 <td>作成日 / 最終改訂</td>
@@ -791,7 +791,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-07-02</td>
 <td>利用者管理（admin）</td>
-<td>利用者の<strong>編集・削除・ロール変更・Admin作成・管理者PIN設定</strong>（表示名・<strong>ロール</strong>・<strong>管理者PIN</strong>・有効フラグ）を <strong>SC-09 利用者登録・管理</strong>で行う（<strong>admin 限定</strong>）。<strong>ログイン画面（SC-01）の「利用者を管理」入口から管理者PIN認証を経て遷移</strong>（「ログインできる利用者」の管理という性質からログイン前段に配置）。初期2名（admin 1・user 1 を想定）は seed 投入。<strong>Admin ロールの付与と管理者PINの設定はこの admin 機能でのみ可能</strong>（自己登録=FR-07-05 では不可）</td>
+<td>利用者の<strong>編集・削除・ロール変更・Admin付与・管理者PIN設定</strong>（表示名・<strong>ロール</strong>・<strong>管理者PIN</strong>・有効フラグ）を <strong>SC-09 利用者登録・管理</strong>で行う（<strong>admin 限定</strong>）。<strong>管理者でログイン後、アプリ本体のドロワー「管理」グループから利用</strong>（SC-06〜08 と同じ admin 画面群）。初期2名（admin 1・user 1 を想定）は seed 投入。<strong>Admin ロールの付与と管理者PINの設定はこの admin 機能でのみ可能</strong>（自己登録=FR-07-05 では不可）</td>
 </tr>
 <tr>
 <td>FR-07-05</td>
@@ -1036,9 +1036,9 @@ strong{font-weight:700;}
 <tr>
 <td>SC-01</td>
 <td>ログイン</td>
-<td>有効な利用者の <strong>[ID＋表示名] 一覧を表示しクリックで選択</strong>。管理者選択時は <strong>4桁PIN入力</strong>（パスワード欄なし）。<strong>「新規登録」入口（誰でも・PIN不要→SC-10）</strong>と、<strong>「利用者を管理」入口（admin・PIN→SC-09）</strong>を持つ</td>
+<td>有効な利用者の <strong>[ID＋表示名] 一覧を表示しクリックで選択</strong>。管理者選択時は <strong>4桁PIN入力</strong>（パスワード欄なし）。<strong>「新規登録」入口（誰でも・PIN不要→SC-10）</strong>を持つ</td>
 <td>未認証</td>
-<td>FR-07-01, FR-07-05, FR-07-02</td>
+<td>FR-07-01, FR-07-05</td>
 </tr>
 <tr>
 <td>SC-02</td>
@@ -1092,7 +1092,7 @@ strong{font-weight:700;}
 <tr>
 <td>SC-09</td>
 <td>利用者登録・管理</td>
-<td><strong>利用者の編集/削除・ロール変更・管理者PIN設定・Admin作成</strong>（表示名・ロール・管理者PIN・有効フラグ）。<strong>ログイン画面（SC-01）の「利用者を管理」入口から管理者PIN認証を経て遷移</strong>する（ドロワーには置かない）</td>
+<td><strong>利用者の編集/削除・ロール変更・Admin付与・管理者PIN設定</strong>（表示名・ロール・管理者PIN・有効フラグ）。<strong>アプリ本体のドロワー「管理」グループ</strong>に配置し、<strong>管理者でログイン後に利用</strong>する（SC-06〜08 と同じ admin 画面群）</td>
 <td><strong>admin</strong></td>
 <td>FR-07-02</td>
 </tr>
@@ -1106,7 +1106,7 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p><strong>画面統合・分離の方針（基本設計・Q26/Q27）</strong>: 通知に関する本人設定（LINE連携＋お気に入り通知ON/OFF）は密接なため <strong>SC-05「LINE通知設定」に統合</strong>（旧「お気に入り管理」を改称）。利用者まわりは権限で2画面に分離する: <strong>新規登録（SC-10）は誰でも可・User固定</strong>（登録の入口を管理者で塞がない）／<strong>編集・削除・ロール変更・Admin作成・PIN設定（SC-09）は admin 限定</strong>。<strong>自己登録で Admin に昇格できない</strong>ことで、管理者PINによる管理系（SC-06〜08）の保護を維持する（open signup／restricted privilege escalation）。どちらもログイン画面（SC-01）を入口とする。</p>
+<p><strong>画面統合・分離の方針（基本設計・Q26/Q27/Q28）</strong>: 通知に関する本人設定（LINE連携＋お気に入り通知ON/OFF）は密接なため <strong>SC-05「LINE通知設定」に統合</strong>（旧「お気に入り管理」を改称）。利用者まわりは権限で2系統に分ける: <strong>新規登録（SC-10）は誰でも可・User固定</strong>でログイン画面（SC-01）を入口とする／<strong>編集・削除・ロール変更・Admin付与・PIN設定（SC-09）は admin 限定</strong>で、<strong>管理者ログイン後のアプリ内ドロワー「管理」グループ</strong>（SC-06〜08 と同列）に置く。<strong>自己登録で Admin に昇格できない</strong>ことで、管理者PINによる管理系（SC-06〜09）の保護を維持する（open signup／restricted privilege escalation）。</p>
 </blockquote>
 <hr />
 <h2 id="6-ddl">6. データ設計（DDL レベル）</h2>
@@ -2358,6 +2358,8 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 - [x] 画面モックアップを踏まえ画面を再編（Q26）。<strong>SC-05 を「LINE通知設定」に改称・統合</strong>（自分のLINE連携＋お気に入り通知ON/OFF＋ブックマークを1画面に）。<strong>SC-09「利用者登録・管理」は admin 専用に純化し、ログイン画面（SC-01）を入口に</strong>（ドロワーから外し PIN 認証を経て遷移）。旧SC-09の混在アクセスを解消し画面単位でアクセス種別が一意に。FR-07-02/03・SC-01/05/09・BD-NAV/BD-SC を更新。データモデルは不変</p>
 <p>確定済み（レビュー第10回・アカウント自己登録の開放）:
 - [x] 新規アカウント登録を非管理者に開放（Q27）。<strong>誰でも（PIN不要）自分を role=User で登録できる SC-10 を新設</strong>し、ログイン画面（SC-01）に「新規登録」入口を追加（FR-07-05）。<strong>Admin 昇格・管理者PIN設定・他人の編集/削除は admin（SC-09・FR-07-02）に限定</strong>し自己昇格を防止（open signup／restricted privilege escalation）。FR-07-02/04・SC-01/09・SC-10 を更新。データモデルは不変</p>
+<p>確定済み（レビュー第11回・利用者管理の配置見直し）:
+- [x] 利用者管理（SC-09）の入口を見直し（Q28）。<strong>ログイン画面（SC-01）の「利用者を管理」入口は廃止</strong>し、SC-01 は「新規登録（誰でも）」のみ。<strong>編集・削除・Admin付与・PIN設定は、管理者ログイン後のアプリ内ドロワー「管理」グループ（SC-06〜08 と同列）に SC-09 を配置</strong>して行う。管理者はログイン時にPINを通すため、管理機能はアプリ内に置くのが自然。FR-07-02・SC-01/09・BD-NAV/BD-SC を更新。データモデルは不変</p>
 <p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。2026-08-08 に開発者承認（「外部設計へ移行します」）を得て要件定義工程をクローズ</strong>。以降は <code>02_基本設計</code>（<code>basic-design</code> skill）で外部設計を行う。</p>
     <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
   </main>

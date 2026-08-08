@@ -207,31 +207,8 @@ tbody tr:hover{background:var(--line2)}
         <span class="ava" style="background:#2f7d4f">＋</span>
         <span><span class="nm">新規登録（誰でも）</span><br><span class="rl">自分を一般利用者で登録 → SC-10（PIN不要）</span></span>
       </button>
-      <button class="user-row" style="border-style:dashed" onclick="manageUsers()">
-        <span class="ava" style="background:#4a5568">⚙</span>
-        <span><span class="nm">利用者を管理（管理者）</span><br><span class="rl">編集・削除・Admin作成 → SC-09（PIN認証）</span></span>
-        <span class="lock">🔒</span>
-      </button>
     </div>
-    <div class="hint">新規登録は誰でも可（User固定・PIN不要）。Admin昇格・PIN設定・他人の編集は管理者のみ＝自己昇格を防止（Q27）。実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え、認可(role)は流用。</div>
-  </div>
-</div>
-
-<!-- ========== 利用者登録・管理（SC-09・ログインから遷移） ========== -->
-<div id="userMgmtView" class="login-view hidden" style="background:linear-gradient(160deg,#2a2140,#3a2f5a)">
-  <div class="login-card" style="width:min(680px,94vw)">
-    <div class="screen-head"><h2 style="margin:0">利用者登録・管理</h2><span class="sc-id">SC-09</span><span class="pill warn">admin</span></div>
-    <p class="lead">ログイン画面の「利用者を管理」からPIN認証を経て遷移。ここで登録した有効な利用者がログイン一覧に並ぶ。</p>
-    <div class="actions"><button class="btn">＋ 利用者を追加</button></div>
-    <div class="tbl-wrap card" style="box-shadow:none"><table>
-      <thead><tr><th>表示名</th><th>ロール</th><th>管理者PIN</th><th>有効</th><th>操作</th></tr></thead>
-      <tbody>
-        <tr><td>管理者アカウント</td><td>Admin</td><td>設定済（****）</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
-        <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
-      </tbody>
-    </table></div>
-    <div class="hint">PINは4桁・BCryptでハッシュ保存（平文保存しない）。ロールは User/Admin。ここでのみ Admin 作成・PIN設定・削除ができる。</div>
-    <div style="margin-top:14px"><button class="btn ghost" onclick="showLogin()">‹ ログイン画面へ戻る</button></div>
+    <div class="hint">新規登録は誰でも可（User固定・PIN不要）。利用者の編集・削除・Admin付与は、管理者でログイン後にメイン画面のドロワー「管理 › 利用者管理」で行う（Q28）。実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え、認可(role)は流用。</div>
   </div>
 </div>
 
@@ -276,6 +253,7 @@ tbody tr:hover{background:var(--line2)}
       <button class="nav-item adminonly" data-screen="sc06" onclick="go('sc06')"><span class="ico">🌐</span>情報源マスタ</button>
       <button class="nav-item adminonly" data-screen="sc07" onclick="go('sc07')"><span class="ico">📊</span>管理ダッシュボード</button>
       <button class="nav-item adminonly" data-screen="sc08" onclick="go('sc08')"><span class="ico">📜</span>実行ログ</button>
+      <button class="nav-item adminonly" data-screen="sc09" onclick="go('sc09')"><span class="ico">👥</span>利用者管理</button>
       <div class="admin-lock adminonly">🔒 user では非表示＋到達拒否</div>
     </nav>
 
@@ -562,6 +540,25 @@ tbody tr:hover{background:var(--line2)}
         </div>
       </section>
 
+      <!-- ===== SC-09 利用者登録・管理（admin・ドロワー） ===== -->
+      <section id="sc09" class="screen hidden adminscreen">
+        <div class="screen-head"><h1>利用者登録・管理</h1><span class="sc-id">SC-09</span><span class="pill warn">admin</span></div>
+        <div class="screen-sub">編集・削除・Admin付与・PIN設定を行う。自己登録(SC-10)された利用者もここで編集できる。</div>
+        <div class="actions"><button class="btn">＋ 利用者を追加</button></div>
+        <div class="tbl-wrap card"><table>
+          <thead><tr><th>表示名</th><th>ロール</th><th>管理者PIN</th><th>有効</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>管理者アカウント</td><td>Admin</td><td>設定済（****）</td><td><span class="pill ok">有効</span></td>
+              <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+            <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td>
+              <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+            <tr><td>ともだちアカウント</td><td>User <span class="pill warn">自己登録</span></td><td>—</td><td><span class="pill ok">有効</span></td>
+              <td><button class="btn ghost sm">編集</button> <button class="btn ghost sm">削除</button></td></tr>
+          </tbody>
+        </table></div>
+        <div class="hint">PINは4桁・BCryptでハッシュ保存（平文保存しない）。ロールを Admin に変更＝Admin付与。ここでのみ Admin 作成・PIN設定・削除ができる（自己登録=SC-10 は User 固定・Q28）。</div>
+      </section>
+
       <!-- 権限拒否（user が admin 画面へ来た場合） -->
       <section id="denied" class="screen hidden">
         <div class="deny"><div class="big">🔒</div>
@@ -577,13 +574,12 @@ tbody tr:hover{background:var(--line2)}
 <script>
 let role = 'user';
 let pinBuf = [];
-let pinTarget = 'app'; // 'app' = 管理者ログイン / 'usermgmt' = 利用者登録・管理(SC-09)
 
 function toggleDrawer(){ document.getElementById('shell').classList.toggle('drawer-closed'); }
 
 function go(id){
   // admin画面のガード
-  const adminScreens = ['sc06','sc07','sc08'];
+  const adminScreens = ['sc06','sc07','sc08','sc09'];
   if(role==='user' && adminScreens.includes(id)){ id='denied'; }
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   const el = document.getElementById(id); if(el) el.classList.remove('hidden');
@@ -602,7 +598,7 @@ function setRole(r){
   document.querySelectorAll('.adminonly').forEach(e=>e.classList.toggle('hidden', !admin));
   // user に戻したとき admin 画面を開いていたら弾く
   const cur = document.querySelector('.screen:not(.hidden)');
-  if(!admin && cur && ['sc06','sc07','sc08'].includes(cur.id)) go('denied');
+  if(!admin && cur && ['sc06','sc07','sc08','sc09'].includes(cur.id)) go('denied');
 }
 
 function tab(btn, paneId){
@@ -617,35 +613,28 @@ function tab(btn, paneId){
 /* ログイン */
 function showLogin(){
   document.getElementById('appView').classList.add('hidden');
-  document.getElementById('userMgmtView').classList.add('hidden');
   document.getElementById('signupView').classList.add('hidden');
   document.getElementById('loginView').classList.remove('hidden');
   document.getElementById('pinBox').classList.add('hidden'); pinBuf=[]; drawPin();
 }
 function logout(){ showLogin(); }
 function pickUser(kind){
-  if(kind==='admin'){ pinTarget='app'; document.getElementById('pinBox').classList.remove('hidden'); }
+  if(kind==='admin'){ document.getElementById('pinBox').classList.remove('hidden'); }
   else { enterApp('user'); }
 }
-function manageUsers(){ pinTarget='usermgmt'; document.getElementById('pinBox').classList.remove('hidden'); }
 function openSignup(){
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('signupView').classList.remove('hidden');
 }
 function enterApp(r){
   document.getElementById('loginView').classList.add('hidden');
-  document.getElementById('userMgmtView').classList.add('hidden');
   document.getElementById('signupView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
   setRole(r); go('sc02');
 }
-function openUserMgmt(){
-  document.getElementById('loginView').classList.add('hidden');
-  document.getElementById('userMgmtView').classList.remove('hidden');
-}
 function pin(n){ if(pinBuf.length<4){ pinBuf.push(n); drawPin(); if(pinBuf.length===4) setTimeout(pinOk,150);} }
 function pinDel(){ pinBuf.pop(); drawPin(); }
-function pinOk(){ pinBuf=[]; drawPin(); if(pinTarget==='usermgmt'){ openUserMgmt(); } else { enterApp('admin'); } }
+function pinOk(){ pinBuf=[]; drawPin(); enterApp('admin'); }
 function drawPin(){ for(let i=0;i<4;i++){ document.getElementById('pd'+i).classList.toggle('f', i<pinBuf.length);} }
 
 /* 初期表示：ログイン画面から */
