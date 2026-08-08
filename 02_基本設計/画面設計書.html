@@ -126,7 +126,7 @@ strong{font-weight:700;}
 <li><a href="#bd-sc-08-01">レイアウト（タブ・BD-SC-08-01）</a></li>
 </ul>
 </li>
-<li><a href="#sc-09-admin">SC-09 利用者登録・管理（admin・ログイン画面から遷移）</a><ul>
+<li><a href="#sc-09-admin">SC-09 利用者登録・管理（admin・ドロワー「管理」グループ）</a><ul>
 <li><a href="#_8">レイアウト・操作</a></li>
 </ul>
 </li>
@@ -255,13 +255,14 @@ strong{font-weight:700;}
 │ ● 情報源マスタ   │                                  │
 │ ● 管理ダッシュ   │                                  │
 │ ● 実行ログ      │                                  │
+│ ● 利用者管理    │                                  │
 └──────────────┴─────────────────────────────────┘
 </code></pre>
 <ul>
 <li>ドロワー上段（共通）: タイムライン(SC-02) / テーマ管理(SC-04) / <strong>LINE通知設定(SC-05)</strong></li>
-<li>ドロワー下段（admin のみ表示）: 情報源マスタ(SC-06) / 管理ダッシュボード(SC-07) / 実行ログ(SC-08)</li>
+<li>ドロワー下段（admin のみ表示）: 情報源マスタ(SC-06) / 管理ダッシュボード(SC-07) / 実行ログ(SC-08) / <strong>利用者登録・管理(SC-09)</strong></li>
 <li>未認証（SC-01）では AppLayout を出さず、ログイン画面のみ表示。</li>
-<li><strong>利用者登録・管理(SC-09)／新規アカウント登録(SC-10)はドロワーに置かない</strong>。いずれもログイン画面(SC-01)を入口とする。SC-09＝admin・PIN認証（Q26）、SC-10＝誰でも・PIN不要（Q27）。</li>
+<li><strong>新規アカウント登録(SC-10)はドロワーに置かない</strong>。ログイン画面(SC-01)の「新規登録」入口から遷移（誰でも・PIN不要・Q27）。<strong>利用者登録・管理(SC-09)は管理者ログイン後にドロワー「管理」グループから利用</strong>（Q28。管理者はログイン時にPINを通すため管理機能はアプリ内に配置）。</li>
 </ul>
 <hr />
 <h2 id="sc-01-pin">SC-01 ログイン（利用者選択＋管理者PIN）</h2>
@@ -292,7 +293,7 @@ strong{font-weight:700;}
 <li>中央にカード。見出し「利用者を選択してください」。</li>
 <li><strong>有効な利用者の一覧</strong>を [表示名（ID）] のクリック可能な行/ボタンで縦に並べる（BD-SC-01-01）。役割アイコンで admin を区別（鍵マーク）。</li>
 <li>パスワード入力欄は<strong>無し</strong>。</li>
-<li>カード下部に2つの導線: <strong>「＋ 新規登録」リンク</strong>（BD-SC-01-07・誰でも・PIN不要→SC-10）と <strong>「⚙ 利用者を管理（管理者）」リンク</strong>（BD-SC-01-06・admin・PIN→SC-09）。</li>
+<li>カード下部に <strong>「＋ 新規登録」リンク</strong>（BD-SC-01-07・誰でも・PIN不要→SC-10）。※利用者の編集・削除・Admin付与は管理者ログイン後のドロワー（SC-09）で行うため、ログイン画面には管理入口を置かない（Q28）。</li>
 </ul>
 <h3 id="_3">操作・入出力</h3>
 <div class="tbl-scroll"><table>
@@ -323,11 +324,6 @@ strong{font-weight:700;}
 <td>BD-SC-01-05</td>
 <td>PIN連続失敗</td>
 <td><strong>5回失敗で当該管理者を数分ロック</strong>（総当たり抑止）。ロック中は選択不可＋残り時間表示</td>
-</tr>
-<tr>
-<td>BD-SC-01-06</td>
-<td>「利用者を管理」を押下</td>
-<td>管理者PIN入力→一致で <strong>利用者登録・管理(SC-09)へ遷移</strong>。「ログインできる利用者は誰か」を管理する導線をログイン前段に置く（Q26）</td>
 </tr>
 <tr>
 <td>BD-SC-01-07</td>
@@ -722,7 +718,7 @@ strong{font-weight:700;}
    - 失敗行は <strong>分類別の管理者向けメッセージ</strong>を表示（§8.1・メッセージ一覧参照）。特に③AuthFailed（トークン無効）・④FormatError（不具合）は強調。</li>
 </ol>
 <hr />
-<h2 id="sc-09-admin">SC-09 利用者登録・管理（admin・ログイン画面から遷移）</h2>
+<h2 id="sc-09-admin">SC-09 利用者登録・管理（admin・ドロワー「管理」グループ）</h2>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -733,7 +729,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>アクセス</td>
-<td><strong>admin のみ</strong>（ログイン画面 SC-01 の「利用者を管理」→管理者PIN認証を経て遷移。ドロワーには置かない）</td>
+<td><strong>admin のみ</strong>（管理者でログイン後、アプリ本体のドロワー「管理」グループから利用。SC-06〜08 と同列）</td>
 </tr>
 <tr>
 <td>関連機能</td>
@@ -748,13 +744,13 @@ strong{font-weight:700;}
 <h3 id="_8">レイアウト・操作</h3>
 <ul>
 <li>見出し「利用者登録・管理」。上部に「＋ 利用者を追加」ボタン→フォーム（BD-SC-09-01）。</li>
-<li>利用者一覧（Grid）: 表示名 / ロール / 管理者PIN設定状況 / 有効フラグ / 操作（BD-SC-09-02）。</li>
-<li>フォーム項目（BD-SC-09-03）: 表示名（必須）／<strong>ロール</strong>（User/Admin）／<strong>管理者PIN</strong>（Admin時のみ・4桁）／有効フラグ。PINは BCrypt でハッシュ保存（平文保存しない）。</li>
-<li>初期2名（admin 1・user 1）は seed 投入。以降は本画面で追加。ここで登録した有効な利用者が SC-01 のログイン一覧に並ぶ。</li>
-<li>完了後は「ログイン画面へ戻る」（BD-SC-09-04）。</li>
+<li>利用者一覧（Grid）: 表示名 / ロール / 管理者PIN設定状況 / 有効フラグ / 操作（<strong>編集・削除</strong>）（BD-SC-09-02）。</li>
+<li>フォーム項目（BD-SC-09-03）: 表示名（必須）／<strong>ロール</strong>（User/Admin＝<strong>Admin付与</strong>）／<strong>管理者PIN</strong>（Admin時のみ・4桁）／有効フラグ。PINは BCrypt でハッシュ保存（平文保存しない）。</li>
+<li>ここで <strong>編集・削除・Admin付与・PIN設定</strong>を行う。SC-10 の自己登録（User固定）に対し、権限を伴う操作は本画面（admin）に集約。</li>
+<li>初期2名（admin 1・user 1）は seed 投入。SC-10 で自己登録された利用者もここで編集・ロール変更できる。</li>
 </ul>
 <blockquote>
-<p><strong>配置の意図（Q26）</strong>: 本画面は「ログインできる利用者は誰か」を決める管理者機能であり、通常のアプリ内設定とは性質が違う。そこでログイン前段（SC-01）を入口とし、管理者PIN認証を挟んで遷移する。本人のLINE・通知設定は SC-05「LINE通知設定」に分離済み。認可は Spring Security でも担保（未認証/非adminの直接到達を拒否・BD-SC-00-06）。</p>
+<p><strong>配置の意図（Q28）</strong>: 管理者はログイン時に4桁PINを通す（SC-01）。その後の利用者管理はアプリ内の管理機能として、他の管理系（SC-06 情報源マスタ／SC-07 ダッシュボード／SC-08 ログ）と同じドロワー「管理」グループに置く。ログイン画面には管理入口を置かない（新規登録=SC-10 のみ）。認可は Spring Security でも担保（非adminのメニュー非表示＋直接到達拒否・BD-SC-00-06）。BD-SC-09-04（ログイン画面へ戻る）は廃止（ドロワー配置のため不要）。</p>
 </blockquote>
 <hr />
 <h2 id="sc-10">SC-10 新規アカウント登録（未認証・誰でも）</h2>
@@ -803,7 +799,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>SC-01</td>
-<td>FR-07-01, FR-07-05（新規登録入口）, FR-07-02（利用者管理入口）</td>
+<td>FR-07-01, FR-07-05（新規登録入口）</td>
 <td>✅</td>
 </tr>
 <tr>
