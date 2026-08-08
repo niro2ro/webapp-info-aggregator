@@ -163,11 +163,11 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>バージョン</td>
-<td>1.5（カプセルトイ情報源＝電撃ホビーウェブを第一陣に追加＝Q25）</td>
+<td>1.6（画面再編：SC-05「LINE通知設定」統合／SC-09 利用者管理をログイン画面から遷移＝Q26。基本設計工程での確定）</td>
 </tr>
 <tr>
 <td>作成日 / 最終改訂</td>
-<td>2026-08-05 / 2026-08-07</td>
+<td>2026-08-05 / 2026-08-08</td>
 </tr>
 <tr>
 <td>入力資料</td>
@@ -791,12 +791,12 @@ strong{font-weight:700;}
 <tr>
 <td>FR-07-02</td>
 <td>利用者登録・編集</td>
-<td>利用者（表示名・<strong>ロール</strong>・<strong>管理者PIN</strong>・有効フラグ）を管理画面で追加・編集（<strong>admin 限定</strong>）。初期2名（admin 1・user 1 を想定）は seed 投入し、以降は画面から追加可能（<code>Users</code> テーブル）</td>
+<td>利用者（表示名・<strong>ロール</strong>・<strong>管理者PIN</strong>・有効フラグ）を追加・編集（<strong>admin 限定</strong>）。画面は <strong>SC-09 利用者登録・管理</strong>で、<strong>ログイン画面（SC-01）の「利用者を管理」入口から管理者PIN認証を経て遷移</strong>する（「ログインできる利用者」の管理という性質からログイン前段に配置）。初期2名（admin 1・user 1 を想定）は seed 投入し、以降は画面から追加可能（<code>Users</code> テーブル）</td>
 </tr>
 <tr>
 <td>FR-07-03</td>
 <td>LINE連携設定</td>
-<td>利用者ごとの <code>line_user_id</code> の登録/更新と、通知の<strong>全体 ON/OFF</strong>（<code>Users.notify_enabled</code>）を設定画面で管理（<strong>本人が自分の分を設定可</strong>）。お気に入り単位の ON/OFF（FR-05-04）より上位のマスタスイッチ。ID 未登録／全体 OFF の利用者には通知しない。<strong>自分の LINE 連携ステータス（連携OK／未追加／直近送信失敗）を表示し、未追加・ブロック時は友だち追加の案内（QR/リンク）を出す</strong>（③ブロック/未追加を受信側が自己解決するため）</td>
+<td>利用者ごとの <code>line_user_id</code> の登録/更新と、通知の<strong>全体 ON/OFF</strong>（<code>Users.notify_enabled</code>）を <strong>SC-05「LINE通知設定」</strong>で管理（<strong>本人が自分の分を設定可</strong>）。同画面のお気に入り通知ON/OFF（FR-05-04）より上位のマスタスイッチ。ID 未登録／全体 OFF の利用者には通知しない。<strong>自分の LINE 連携ステータス（連携OK／未追加／直近送信失敗）を表示し、未追加・ブロック時は友だち追加の案内（QR/リンク）を出す</strong>（③ブロック/未追加を受信側が自己解決するため）</td>
 </tr>
 <tr>
 <td>FR-07-04</td>
@@ -1031,9 +1031,9 @@ strong{font-weight:700;}
 <tr>
 <td>SC-01</td>
 <td>ログイン</td>
-<td>有効な利用者の <strong>[ID＋表示名] 一覧を表示しクリックで選択</strong>。管理者選択時は <strong>4桁PIN入力</strong>（パスワード欄なし）</td>
+<td>有効な利用者の <strong>[ID＋表示名] 一覧を表示しクリックで選択</strong>。管理者選択時は <strong>4桁PIN入力</strong>（パスワード欄なし）。加えて <strong>「利用者を管理」入口</strong>を持ち、管理者PIN認証を経て利用者登録・管理（SC-09）へ遷移する</td>
 <td>未認証</td>
-<td>FR-07-01</td>
+<td>FR-07-01, FR-07-02</td>
 </tr>
 <tr>
 <td>SC-02</td>
@@ -1058,10 +1058,10 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>SC-05</td>
-<td>お気に入り管理</td>
-<td>テーマ/情報源のお気に入りと通知ON/OFF・ブックマーク一覧（各自の分）</td>
+<td><strong>LINE通知設定</strong></td>
+<td><strong>自分のLINE連携</strong>（<code>line_user_id</code> 登録・通知の全体ON/OFF・連携ステータス表示・未追加時の友だち追加案内）と、<strong>お気に入り</strong>（テーマ/情報源のお気に入り＋通知ON/OFF）を1画面に統合。ブックマーク（後で見る）一覧も含む（各自の分）</td>
 <td>共通</td>
-<td>FR-05</td>
+<td>FR-05, FR-07-03</td>
 </tr>
 <tr>
 <td>SC-06</td>
@@ -1086,15 +1086,15 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>SC-09</td>
-<td>利用者・通知設定</td>
-<td><strong>利用者の追加/編集＝admin のみ</strong>。<strong>自分のLINEユーザーID登録・自分の通知の全体ON/OFF・LINE連携ステータス表示・未追加時の友だち追加案内＝本人(共通)</strong></td>
-<td>混在（下記）</td>
-<td>FR-07-02, FR-07-03</td>
+<td>利用者登録・管理</td>
+<td><strong>利用者の追加/編集</strong>（表示名・ロール・管理者PIN・有効フラグ）。<strong>ログイン画面（SC-01）の「利用者を管理」入口から管理者PIN認証を経て遷移</strong>する（ドロワーには置かない）</td>
+<td><strong>admin</strong></td>
+<td>FR-07-02</td>
 </tr>
 </tbody>
 </table></div>
 <blockquote>
-<p>SC-09 はアクセスが混在する。利用者の追加・編集（他人を含む利用者管理）は <strong>admin 限定</strong>。自分の LINE 連携・通知ON/OFF の設定は <strong>本人(共通)</strong> が行える。実装上は同一画面内で管理者専用ブロックをロールで出し分ける。</p>
+<p><strong>画面統合の方針（基本設計・Q26）</strong>: 通知に関する本人設定（LINE連携＋お気に入り通知ON/OFF）は互いに密接なため <strong>SC-05「LINE通知設定」に統合</strong>する（旧「お気に入り管理」を改称）。一方、<strong>利用者登録・管理（SC-09）は管理者機能</strong>であり、「ログインできる利用者は誰か」を管理する性質から <strong>ログイン画面（SC-01）を入口</strong>とし、管理者PIN認証を経て遷移する（アプリ本体のドロワーには置かない）。これにより SC-05＝本人の通知設定・SC-09＝管理者の利用者管理、と役割が明確に分離する。</p>
 </blockquote>
 <hr />
 <h2 id="6-ddl">6. データ設計（DDL レベル）</h2>
@@ -2342,6 +2342,8 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 - [x] 発生日に<strong>種別(EventDateKind＝発売日/開催日/放送日/受付開始/その他)</strong>を追加（Q24・案A）。一覧の並び順に「発売日順」を追加、日付は種別ラベル付き表示、フィルタに種別。判定はカテゴリ既定→原文キーワード→LLM出力（種別のためにLLMを新規に呼ばない）。<code>Articles.event_date_kind</code>・enum <code>EventDateKind</code> 新設</p>
 <p>確定済み（レビュー第8回・カプセルトイ情報源）:
 - [x] カテゴリ「カプセルトイ」に対応する専用情報源が第一陣に無い穴を解消（Q25）。<strong>電撃ホビーウェブ（KADOKAWA・カプセルトイタグ有り・規約ページ実在）を第一陣の4つ目に追加</strong>。カプセルトイ専門サイト（ガチャパラ等）・メーカー公式は控え。RSS/robots/規約は着手時に実地確認（本環境では外部アクセス遮断で未検証）</p>
+<p>確定済み（レビュー第9回・基本設計での画面再編）:
+- [x] 画面モックアップを踏まえ画面を再編（Q26）。<strong>SC-05 を「LINE通知設定」に改称・統合</strong>（自分のLINE連携＋お気に入り通知ON/OFF＋ブックマークを1画面に）。<strong>SC-09「利用者登録・管理」は admin 専用に純化し、ログイン画面（SC-01）を入口に</strong>（ドロワーから外し PIN 認証を経て遷移）。旧SC-09の混在アクセスを解消し画面単位でアクセス種別が一意に。FR-07-02/03・SC-01/05/09・BD-NAV/BD-SC を更新。データモデルは不変</p>
 <p>→ <strong>10項目チェックリストの★はすべて確定。主要レビュー観点はすべて解消。2026-08-08 に開発者承認（「外部設計へ移行します」）を得て要件定義工程をクローズ</strong>。以降は <code>02_基本設計</code>（<code>basic-design</code> skill）で外部設計を行う。</p>
     <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>01_要件定義/要件定義書.md</code>）</div>
   </main>

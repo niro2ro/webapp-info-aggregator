@@ -110,8 +110,8 @@ strong{font-weight:700;}
 <li><a href="#_6">レイアウト・操作</a></li>
 </ul>
 </li>
-<li><a href="#sc-05">SC-05 お気に入り管理</a><ul>
-<li><a href="#bd-sc-05-01">レイアウト（タブ構成・BD-SC-05-01）</a></li>
+<li><a href="#sc-05-line">SC-05 LINE通知設定（旧「お気に入り管理」）</a><ul>
+<li><a href="#line">レイアウト（上段：LINE連携ブロック＋下段：タブ）</a></li>
 </ul>
 </li>
 <li><a href="#sc-06-admin">SC-06 情報源マスタ管理（admin 限定）</a><ul>
@@ -126,8 +126,8 @@ strong{font-weight:700;}
 <li><a href="#bd-sc-08-01">レイアウト（タブ・BD-SC-08-01）</a></li>
 </ul>
 </li>
-<li><a href="#sc-09">SC-09 利用者・通知設定（混在アクセス）</a><ul>
-<li><a href="#_8">ブロック構成（ロールで出し分け）</a></li>
+<li><a href="#sc-09-admin">SC-09 利用者登録・管理（admin・ログイン画面から遷移）</a><ul>
+<li><a href="#_8">レイアウト・操作</a></li>
 </ul>
 </li>
 <li><a href="#_9">画面×機能 カバレッジ（自己点検）</a></li>
@@ -245,8 +245,7 @@ strong{font-weight:700;}
 │ [ドロワー]      │                                  │
 │ ● タイムライン   │      （各画面のコンテンツ）          │
 │ ● テーマ管理    │                                  │
-│ ● お気に入り     │                                  │
-│ ● 設定         │                                  │
+│ ● LINE通知設定  │                                  │
 │ ──────────    │                                  │
 │ 〔管理〕(admin) │                                  │
 │ ● 情報源マスタ   │                                  │
@@ -255,9 +254,10 @@ strong{font-weight:700;}
 └──────────────┴─────────────────────────────────┘
 </code></pre>
 <ul>
-<li>ドロワー上段（共通）: タイムライン(SC-02) / テーマ管理(SC-04) / お気に入り(SC-05) / 設定(SC-09)</li>
+<li>ドロワー上段（共通）: タイムライン(SC-02) / テーマ管理(SC-04) / <strong>LINE通知設定(SC-05)</strong></li>
 <li>ドロワー下段（admin のみ表示）: 情報源マスタ(SC-06) / 管理ダッシュボード(SC-07) / 実行ログ(SC-08)</li>
 <li>未認証（SC-01）では AppLayout を出さず、ログイン画面のみ表示。</li>
+<li><strong>利用者登録・管理(SC-09)はドロワーに置かない</strong>。ログイン画面(SC-01)の「利用者を管理」入口から管理者PIN認証を経て遷移する（Q26）。</li>
 </ul>
 <hr />
 <h2 id="sc-01-pin">SC-01 ログイン（利用者選択＋管理者PIN）</h2>
@@ -275,7 +275,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>関連機能</td>
-<td>FR-07-01</td>
+<td>FR-07-01, FR-07-02</td>
 </tr>
 <tr>
 <td>データ</td>
@@ -288,6 +288,7 @@ strong{font-weight:700;}
 <li>中央にカード。見出し「利用者を選択してください」。</li>
 <li><strong>有効な利用者の一覧</strong>を [表示名（ID）] のクリック可能な行/ボタンで縦に並べる（BD-SC-01-01）。役割アイコンで admin を区別（鍵マーク）。</li>
 <li>パスワード入力欄は<strong>無し</strong>。</li>
+<li>カード下部に <strong>「⚙ 利用者を管理（管理者）」リンク</strong>（BD-SC-01-06）。ログインとは別の管理者導線。</li>
 </ul>
 <h3 id="_3">操作・入出力</h3>
 <div class="tbl-scroll"><table>
@@ -318,6 +319,11 @@ strong{font-weight:700;}
 <td>BD-SC-01-05</td>
 <td>PIN連続失敗</td>
 <td><strong>5回失敗で当該管理者を数分ロック</strong>（総当たり抑止）。ロック中は選択不可＋残り時間表示</td>
+</tr>
+<tr>
+<td>BD-SC-01-06</td>
+<td>「利用者を管理」を押下</td>
+<td>管理者PIN入力→一致で <strong>利用者登録・管理(SC-09)へ遷移</strong>。「ログインできる利用者は誰か」を管理する導線をログイン前段に置く（Q26）</td>
 </tr>
 </tbody>
 </table></div>
@@ -522,7 +528,7 @@ strong{font-weight:700;}
 <li>バリデーション: 同一利用者内キーワード重複不可（<code>uq_themes_user_keyword</code>）→重複時メッセージ表示。</li>
 </ul>
 <hr />
-<h2 id="sc-05">SC-05 お気に入り管理</h2>
+<h2 id="sc-05-line">SC-05 LINE通知設定（旧「お気に入り管理」）</h2>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -537,22 +543,54 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>関連機能</td>
-<td>FR-05-01〜04</td>
+<td>FR-05-01〜04, FR-07-03</td>
 </tr>
 <tr>
 <td>データ</td>
-<td><code>favorite_themes</code> / <code>favorite_sources</code> / <code>bookmarks</code></td>
+<td><code>users</code>(自分の line_user_id / notify_enabled) / <code>favorite_themes</code> / <code>favorite_sources</code> / <code>bookmarks</code></td>
 </tr>
 </tbody>
 </table></div>
-<h3 id="bd-sc-05-01">レイアウト（タブ構成・BD-SC-05-01）</h3>
+<blockquote>
+<p><strong>統合の意図（Q26）</strong>: LINE通知に関わる本人設定を1画面に集約する。①LINEに繋ぐ設定（連携・全体ON/OFF）と、②何を通知するか（お気に入り＋通知ON/OFF）は密接なため、同じ画面で完結させる。旧「お気に入り管理」を改称・拡張した。</p>
+</blockquote>
+<h3 id="line">レイアウト（上段：LINE連携ブロック＋下段：タブ）</h3>
+<p><strong>上段 — 自分のLINE連携（BD-SC-05-05）</strong>（本人が設定）</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-SC-05-06</td>
+<td>LINEユーザーID</td>
+<td><code>line_user_id</code> の登録/更新（手動）</td>
+</tr>
+<tr>
+<td>BD-SC-05-07</td>
+<td>通知の全体ON/OFF</td>
+<td><code>notify_enabled</code>（マスタスイッチ。OFFで自分への通知を全停止）</td>
+</tr>
+<tr>
+<td>BD-SC-05-08</td>
+<td>連携ステータス</td>
+<td>「連携OK／未追加／直近送信失敗」を表示。<strong>未追加・ブロック時は友だち追加案内（QR/リンク）</strong>（③を受信側が自己解決）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>下段 — お気に入り／ブックマーク（タブ構成・BD-SC-05-01）</strong></p>
 <ol>
 <li><strong>テーマお気に入り</strong>: 自分のテーマ一覧に「お気に入り」トグルと「通知ON/OFF」トグル（BD-SC-05-02）。</li>
 <li><strong>情報源お気に入り</strong>: 情報源一覧に同上のトグル（BD-SC-05-03）。</li>
 <li><strong>ブックマーク（後で見る）</strong>: ブックマーク済み記事の一覧（SC-03へ遷移可）。<strong>通知対象外</strong>であることを明示（BD-SC-05-04）。</li>
 </ol>
 <blockquote>
-<p>用語の区別を画面文言でも徹底: 「お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しない）」。</p>
+<p>通知が届く条件（画面上でも明示）: ①お気に入り登録 ②そのお気に入りの通知ON ③全体通知ON（上段） ④LINE ID登録済 ⑤通数枠あり、をすべて満たすと届く。上段②③④が「LINEに繋ぐ」設定、下段の①②が「何を通知するか」。
+用語の区別を画面文言でも徹底: 「お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しない）」。</p>
 </blockquote>
 <hr />
 <h2 id="sc-06-admin">SC-06 情報源マスタ管理（admin 限定）</h2>
@@ -675,7 +713,7 @@ strong{font-weight:700;}
    - 失敗行は <strong>分類別の管理者向けメッセージ</strong>を表示（§8.1・メッセージ一覧参照）。特に③AuthFailed（トークン無効）・④FormatError（不具合）は強調。</li>
 </ol>
 <hr />
-<h2 id="sc-09">SC-09 利用者・通知設定（混在アクセス）</h2>
+<h2 id="sc-09-admin">SC-09 利用者登録・管理（admin・ログイン画面から遷移）</h2>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
@@ -686,11 +724,11 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>アクセス</td>
-<td><strong>混在</strong>（利用者管理=admin／自分のLINE・通知設定=本人・共通）</td>
+<td><strong>admin のみ</strong>（ログイン画面 SC-01 の「利用者を管理」→管理者PIN認証を経て遷移。ドロワーには置かない）</td>
 </tr>
 <tr>
 <td>関連機能</td>
-<td>FR-07-02, FR-07-03</td>
+<td>FR-07-02</td>
 </tr>
 <tr>
 <td>データ</td>
@@ -698,39 +736,16 @@ strong{font-weight:700;}
 </tr>
 </tbody>
 </table></div>
-<h3 id="_8">ブロック構成（ロールで出し分け）</h3>
-<div class="tbl-scroll"><table>
-<thead>
-<tr>
-<th>ID</th>
-<th>ブロック</th>
-<th>アクセス</th>
-<th>内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>BD-SC-09-01</td>
-<td>利用者管理</td>
-<td><strong>admin のみ</strong></td>
-<td>利用者の追加/編集: 表示名／<strong>ロール</strong>／<strong>管理者PIN</strong>（admin時）／有効フラグ。初期2名は seed、以降は本画面で追加（FR-07-02）</td>
-</tr>
-<tr>
-<td>BD-SC-09-02</td>
-<td>自分のLINE連携</td>
-<td><strong>本人（共通）</strong></td>
-<td>自分の <code>line_user_id</code> 登録/更新／通知の<strong>全体ON/OFF</strong>（<code>notify_enabled</code>）（FR-07-03）</td>
-</tr>
-<tr>
-<td>BD-SC-09-03</td>
-<td>LINE連携ステータス</td>
-<td><strong>本人（共通）</strong></td>
-<td>「連携OK／未追加／直近送信失敗」を表示。<strong>未追加・ブロック時は友だち追加の案内（QR/リンク）</strong>を出す（③ブロック/未追加を受信側が自己解決）</td>
-</tr>
-</tbody>
-</table></div>
+<h3 id="_8">レイアウト・操作</h3>
+<ul>
+<li>見出し「利用者登録・管理」。上部に「＋ 利用者を追加」ボタン→フォーム（BD-SC-09-01）。</li>
+<li>利用者一覧（Grid）: 表示名 / ロール / 管理者PIN設定状況 / 有効フラグ / 操作（BD-SC-09-02）。</li>
+<li>フォーム項目（BD-SC-09-03）: 表示名（必須）／<strong>ロール</strong>（User/Admin）／<strong>管理者PIN</strong>（Admin時のみ・4桁）／有効フラグ。PINは BCrypt でハッシュ保存（平文保存しない）。</li>
+<li>初期2名（admin 1・user 1）は seed 投入。以降は本画面で追加。ここで登録した有効な利用者が SC-01 のログイン一覧に並ぶ。</li>
+<li>完了後は「ログイン画面へ戻る」（BD-SC-09-04）。</li>
+</ul>
 <blockquote>
-<p>実装上は同一画面で BD-SC-09-01（admin専用ブロック）をロールで非表示＋サーバー側でも到達拒否（BD-SC-00-06）。自分の設定ブロックは全利用者が操作可。</p>
+<p><strong>配置の意図（Q26）</strong>: 本画面は「ログインできる利用者は誰か」を決める管理者機能であり、通常のアプリ内設定とは性質が違う。そこでログイン前段（SC-01）を入口とし、管理者PIN認証を挟んで遷移する。本人のLINE・通知設定は SC-05「LINE通知設定」に分離済み。認可は Spring Security でも担保（未認証/非adminの直接到達を拒否・BD-SC-00-06）。</p>
 </blockquote>
 <hr />
 <h2 id="_9">画面×機能 カバレッジ（自己点検）</h2>
@@ -745,7 +760,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>SC-01</td>
-<td>FR-07-01</td>
+<td>FR-07-01, FR-07-02（利用者管理入口）</td>
 <td>✅</td>
 </tr>
 <tr>
@@ -765,7 +780,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>SC-05</td>
-<td>FR-05-01〜04</td>
+<td>FR-05-01〜04, FR-07-03（LINE連携・通知設定）</td>
 <td>✅</td>
 </tr>
 <tr>
@@ -785,7 +800,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>SC-09</td>
-<td>FR-07-02, FR-07-03</td>
+<td>FR-07-02（利用者登録・管理）</td>
 <td>✅</td>
 </tr>
 </tbody>

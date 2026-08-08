@@ -199,9 +199,35 @@ tbody tr:hover{background:var(--line2)}
         <button onclick="pin(7)">7</button><button onclick="pin(8)">8</button><button onclick="pin(9)">9</button>
         <button onclick="pinDel()">⌫</button><button onclick="pin(0)">0</button><button onclick="pinOk()">OK</button>
       </div>
-      <div class="note">※連続5回失敗で数分ロック（総当たり抑止）。どれでもOKでログインします（モック）。</div>
+      <div class="note">※連続5回失敗で数分ロック（総当たり抑止）。どれでもOKで進みます（モック）。</div>
     </div>
-    <div class="hint">実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え。認可(role)はそのまま流用。</div>
+
+    <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:14px">
+      <button class="user-row" style="border-style:dashed" onclick="manageUsers()">
+        <span class="ava" style="background:#4a5568">⚙</span>
+        <span><span class="nm">利用者を管理（管理者）</span><br><span class="rl">利用者の追加・編集 → SC-09（PIN認証）</span></span>
+        <span class="lock">🔒</span>
+      </button>
+    </div>
+    <div class="hint">「ログインできる利用者は誰か」を管理する導線をログイン前段に配置（Q26）。実装(Phase 6)ではVPS移行時にパスワード/OAuth認証へ差し替え、認可(role)は流用。</div>
+  </div>
+</div>
+
+<!-- ========== 利用者登録・管理（SC-09・ログインから遷移） ========== -->
+<div id="userMgmtView" class="login-view hidden" style="background:linear-gradient(160deg,#2a2140,#3a2f5a)">
+  <div class="login-card" style="width:min(680px,94vw)">
+    <div class="screen-head"><h2 style="margin:0">利用者登録・管理</h2><span class="sc-id">SC-09</span><span class="pill warn">admin</span></div>
+    <p class="lead">ログイン画面の「利用者を管理」からPIN認証を経て遷移。ここで登録した有効な利用者がログイン一覧に並ぶ。</p>
+    <div class="actions"><button class="btn">＋ 利用者を追加</button></div>
+    <div class="tbl-wrap card" style="box-shadow:none"><table>
+      <thead><tr><th>表示名</th><th>ロール</th><th>管理者PIN</th><th>有効</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>管理者アカウント</td><td>Admin</td><td>設定済（****）</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
+        <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
+      </tbody>
+    </table></div>
+    <div class="hint">PINは4桁・BCryptでハッシュ保存（平文保存しない）。ロールは User/Admin。</div>
+    <div style="margin-top:14px"><button class="btn ghost" onclick="showLogin()">‹ ログイン画面へ戻る</button></div>
   </div>
 </div>
 
@@ -224,8 +250,7 @@ tbody tr:hover{background:var(--line2)}
       <div class="nav-group">共通</div>
       <button class="nav-item active" data-screen="sc02" onclick="go('sc02')"><span class="ico">🗒️</span>タイムライン<span class="badge">5</span></button>
       <button class="nav-item" data-screen="sc04" onclick="go('sc04')"><span class="ico">🏷️</span>テーマ管理</button>
-      <button class="nav-item" data-screen="sc05" onclick="go('sc05')"><span class="ico">⭐</span>お気に入り</button>
-      <button class="nav-item" data-screen="sc09" onclick="go('sc09')"><span class="ico">⚙️</span>設定</button>
+      <button class="nav-item" data-screen="sc05" onclick="go('sc05')"><span class="ico">🔔</span>LINE通知設定</button>
 
       <div class="nav-group adminonly">管理（admin のみ）</div>
       <button class="nav-item adminonly" data-screen="sc06" onclick="go('sc06')"><span class="ico">🌐</span>情報源マスタ</button>
@@ -377,10 +402,24 @@ tbody tr:hover{background:var(--line2)}
         <div class="hint">削除するとテーマに紐づくマッチも整理されます（DBの ON DELETE CASCADE）。同一キーワードの重複は登録できません。</div>
       </section>
 
-      <!-- ===== SC-05 お気に入り ===== -->
+      <!-- ===== SC-05 LINE通知設定（お気に入り＋LINE連携） ===== -->
       <section id="sc05" class="screen hidden">
-        <div class="screen-head"><h1>お気に入り管理</h1><span class="sc-id">SC-05</span></div>
-        <div class="screen-sub">お気に入り＝<b>通知する</b>／ブックマーク＝<b>後で見るだけ（通知しない）</b>。</div>
+        <div class="screen-head"><h1>LINE通知設定</h1><span class="sc-id">SC-05</span></div>
+        <div class="screen-sub">「LINEに繋ぐ設定」と「何を通知するか（お気に入り）」を1画面に統合（旧お気に入り管理）。</div>
+
+        <div class="card" style="padding:18px;margin-bottom:16px;max-width:640px">
+          <div class="section-title" style="margin-top:0">① 自分のLINE連携（本人）</div>
+          <div class="toolbar">
+            <div class="field"><label>LINE ユーザーID</label><input type="text" value="Uxxxxxxxxxxxxxxxx" style="min-width:220px"></div>
+            <div class="field"><label>通知の全体ON/OFF</label><label class="toggle"><input type="checkbox" checked> 通知ON（マスタ）</label></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+            <span class="pill ok">● 連携OK</span><span style="font-size:12px;color:var(--muted)">直近送信：成功（08/08 09:15）</span>
+          </div>
+          <div class="hint">未追加・ブロック時はここに「友だち追加」案内（QR/リンク）が表示されます（③を受信側が自己解決）。全体OFFにすると自分への通知を全停止。</div>
+        </div>
+
+        <div class="section-title">② 何を通知するか（お気に入り）</div>
         <div class="tabs">
           <button class="on" onclick="tab(this,'fav-theme')">テーマお気に入り</button>
           <button onclick="tab(this,'fav-src')">情報源お気に入り</button>
@@ -503,37 +542,6 @@ tbody tr:hover{background:var(--line2)}
         </div>
       </section>
 
-      <!-- ===== SC-09 設定 ===== -->
-      <section id="sc09" class="screen hidden">
-        <div class="screen-head"><h1>利用者・通知設定</h1><span class="sc-id">SC-09</span></div>
-        <div class="screen-sub">自分のLINE連携・通知は本人が設定。利用者の追加/編集は admin のみ。</div>
-
-        <div class="card" style="padding:18px;margin-bottom:16px;max-width:620px">
-          <div class="section-title" style="margin-top:0">自分のLINE連携・通知（本人）</div>
-          <div class="toolbar">
-            <div class="field"><label>LINE ユーザーID</label><input type="text" value="Uxxxxxxxxxxxxxxxx" style="min-width:220px"></div>
-            <div class="field"><label>通知の全体ON/OFF</label><label class="toggle"><input type="checkbox" checked> 通知ON</label></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-            <span class="pill ok">● 連携OK</span><span style="font-size:12px;color:var(--muted)">直近送信：成功（08/08 09:15）</span>
-          </div>
-          <div class="hint">未追加・ブロック時はここに「友だち追加」案内（QR/リンク）が表示されます（③を受信側が自己解決）。</div>
-        </div>
-
-        <div class="card adminonly" style="padding:18px;max-width:820px">
-          <div class="section-title" style="margin-top:0">利用者管理 <span class="pill warn">admin のみ</span></div>
-          <div class="actions"><button class="btn">＋ 利用者を追加</button></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>表示名</th><th>ロール</th><th>管理者PIN</th><th>有効</th><th>操作</th></tr></thead>
-            <tbody>
-              <tr><td>管理者アカウント</td><td>Admin</td><td>設定済（****）</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
-              <tr><td>ひろP</td><td>User</td><td>—</td><td><span class="pill ok">有効</span></td><td><button class="btn ghost sm">編集</button></td></tr>
-            </tbody>
-          </table></div>
-        </div>
-        <div class="userNote hidden deny" style="max-width:820px">利用者管理ブロックは admin のみ表示されます（現在 user）。</div>
-      </section>
-
       <!-- 権限拒否（user が admin 画面へ来た場合） -->
       <section id="denied" class="screen hidden">
         <div class="deny"><div class="big">🔒</div>
@@ -549,6 +557,7 @@ tbody tr:hover{background:var(--line2)}
 <script>
 let role = 'user';
 let pinBuf = [];
+let pinTarget = 'app'; // 'app' = 管理者ログイン / 'usermgmt' = 利用者登録・管理(SC-09)
 
 function toggleDrawer(){ document.getElementById('shell').classList.toggle('drawer-closed'); }
 
@@ -586,20 +595,31 @@ function tab(btn, paneId){
 }
 
 /* ログイン */
-function showLogin(){ document.getElementById('appView').classList.add('hidden'); document.getElementById('loginView').classList.remove('hidden'); document.getElementById('pinBox').classList.add('hidden'); pinBuf=[]; drawPin(); }
+function showLogin(){
+  document.getElementById('appView').classList.add('hidden');
+  document.getElementById('userMgmtView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('pinBox').classList.add('hidden'); pinBuf=[]; drawPin();
+}
 function logout(){ showLogin(); }
 function pickUser(kind){
-  if(kind==='admin'){ document.getElementById('pinBox').classList.remove('hidden'); }
+  if(kind==='admin'){ pinTarget='app'; document.getElementById('pinBox').classList.remove('hidden'); }
   else { enterApp('user'); }
 }
+function manageUsers(){ pinTarget='usermgmt'; document.getElementById('pinBox').classList.remove('hidden'); }
 function enterApp(r){
   document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('userMgmtView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
   setRole(r); go('sc02');
 }
+function openUserMgmt(){
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('userMgmtView').classList.remove('hidden');
+}
 function pin(n){ if(pinBuf.length<4){ pinBuf.push(n); drawPin(); if(pinBuf.length===4) setTimeout(pinOk,150);} }
 function pinDel(){ pinBuf.pop(); drawPin(); }
-function pinOk(){ enterApp('admin'); }
+function pinOk(){ pinBuf=[]; drawPin(); if(pinTarget==='usermgmt'){ openUserMgmt(); } else { enterApp('admin'); } }
 function drawPin(){ for(let i=0;i<4;i++){ document.getElementById('pd'+i).classList.toggle('f', i<pinBuf.length);} }
 
 /* 初期表示：ログイン画面から */
