@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外部インターフェース設計書 — テーマ別最新情報アグリゲーター（基本設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#0-if">0. 秘密情報・設定の外部化（全IF共通）</a></li>
+<li><a href="#1-rss-html">1. インバウンド：収集対象（RSS / HTML）</a><ul>
+<li><a href="#11">1.1 収集方式の優先順位（フォールバック）</a></li>
+<li><a href="#12">1.2 収集対象（第一陣シード）</a></li>
+<li><a href="#13">1.3 収集マナー（遵守事項）</a></li>
+<li><a href="#14">1.4 取得データ → 内部項目マッピング</a></li>
+</ul>
+</li>
+<li><a href="#2-claude-api">2. アウトバウンド：Claude API（収集時の構造化のみ）</a><ul>
+<li><a href="#21">2.1 概要</a></li>
+<li><a href="#22">2.2 入出力スキーマ</a></li>
+<li><a href="#23-nfr-06">2.3 予算ガードとコスト記録（NFR-06 ハードキャップ）</a></li>
+</ul>
+</li>
+<li><a href="#3-line-messaging-api">3. アウトバウンド：LINE Messaging API（通知）</a><ul>
+<li><a href="#31">3.1 概要</a></li>
+<li><a href="#32">3.2 通数カウント（無料枠管理）</a></li>
+<li><a href="#33">3.3 冪等キーと再送（二重配信防止）</a></li>
+<li><a href="#34-notifystatus">3.4 送信結果 → NotifyStatus マッピング</a></li>
+<li><a href="#35">3.5 送信シーケンス（要点）</a></li>
+</ul>
+</li>
+<li><a href="#4">4. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 02_基本設計/外部IF設計書.md（正本は同名 .md）</div>
+    <h1 id="_1">外部インターフェース設計書 — テーマ別最新情報アグリゲーター（基本設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（基本設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../01_要件定義/要件定義書.md"><code>01_要件定義/要件定義書.md</code></a> §7 外部I/F（承認済み v1.8）</td>
+</tr>
+<tr>
+<td>関連</td>
+<td><a href="バッチ設計書.md"><code>バッチ設計書.md</code></a>／<a href="テーブル定義書.md"><code>テーブル定義書.md</code></a>／<a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a></td>
+</tr>
+<tr>
+<td>設計ID体系</td>
+<td><code>BD-IF-nn</code>。要件 <code>FR-02/03</code>・<code>TBL-*</code>・<code>NFR-06/11</code> を参照</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>本書は外部システムとの入出力を確定する。<strong>インバウンド</strong>＝収集対象サイト（RSS/HTML）、<strong>アウトバウンド</strong>＝Claude API（収集時の構造化）・LINE Messaging API（通知）。<strong>通知処理では Claude を呼ばない</strong>（CLAUDE.md §5）。バージョン・料金・仕様は改定されうるため<strong>実装着手時に各公式ドキュメントを確認</strong>する（CLAUDE.md §0-4）。</p>
+</blockquote>
+<hr />
+<h2 id="0-if">0. 秘密情報・設定の外部化（全IF共通）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>方針</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-00-01</td>
+<td>機密の注入</td>
+<td>Claude APIキー／LINE チャネルアクセストークン／DBパスワードは<strong>環境変数のみ</strong>で注入。<code>application.yml</code> はプレースホルダ <code>${...}</code> のみ、実値をリポジトリに置かない（ローカル＝<code>.env</code>（gitignore）、VPS＝systemd <code>EnvironmentFile</code>）</td>
+</tr>
+<tr>
+<td>BD-IF-00-02</td>
+<td>非機密の環境差分</td>
+<td>User-Agent 連絡先・単価・タイムアウト・リトライ回数・上限値等は Spring Profiles / 設定で外部化</td>
+</tr>
+<tr>
+<td>BD-IF-00-03</td>
+<td>差し替え可能性</td>
+<td>LLM は <code>LlmStructurer</code> インターフェースで抽象化し実装をDIで注入（将来のモデル/ベンダ差し替えに備える）</td>
+</tr>
+</tbody>
+</table></div>
+<p>（根拠: NFR-11・§7.2/7.3・§9）</p>
+<hr />
+<h2 id="1-rss-html">1. インバウンド：収集対象（RSS / HTML）</h2>
+<h3 id="11">1.1 収集方式の優先順位（フォールバック）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>優先</th>
+<th>方式</th>
+<th>ライブラリ</th>
+<th>LLM</th>
+<th>使いどころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>RSS/Atom</td>
+<td>ROME（<code>SyndFeedInput</code>→<code>SyndFeed</code>/<code>SyndEntry</code>）</td>
+<td>不使用</td>
+<td>既定。タイトル・日付・カテゴリが構造化済み</td>
+</tr>
+<tr>
+<td>②</td>
+<td>専用パーサー</td>
+<td>jsoup（HTML 構造の安定した主要サイト）</td>
+<td>不使用</td>
+<td>RSS で不足する項目の補完</td>
+</tr>
+<tr>
+<td>③</td>
+<td>LLM 構造化</td>
+<td>anthropic-sdk-java（§2）</td>
+<td>使用</td>
+<td>①②で埋まらない項目のみ・予算内のみ</td>
+</tr>
+</tbody>
+</table></div>
+<p>HTTP 取得は Spring <code>RestClient</code>＋Resilience4j。詳細フローは <a href="バッチ設計書.md"><code>バッチ設計書.md</code></a> §1。</p>
+<h3 id="12">1.2 収集対象（第一陣シード）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>情報源</th>
+<th>取得方式</th>
+<th>RSS URL（着手時に実地確認）</th>
+<th>主なカバー</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MANTANWEB</td>
+<td>RSS</td>
+<td><code>https://mantan-web.jp/rss/mantan.xml</code>（要確認）</td>
+<td>アニメ/漫画/ゲーム/ラノベ</td>
+</tr>
+<tr>
+<td>HOBBY Watch</td>
+<td>RSS</td>
+<td>インプレス系（着手時に特定）</td>
+<td>フィギュア/グッズ/プライズ</td>
+</tr>
+<tr>
+<td>Gamer</td>
+<td>RSS</td>
+<td>着手時に特定（運営イード）</td>
+<td>アーケード/ゲーセン/イベント</td>
+</tr>
+<tr>
+<td>電撃ホビーウェブ</td>
+<td>RSS</td>
+<td><code>hobby.dengeki.com</code>（着手時に特定・<code>/tag/gatya/</code>）</td>
+<td>カプセルトイ/フィギュア</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>検証注記</strong>: 本要件定義時点では環境ポリシーにより RSS の生死・robots.txt・利用規約を実地検証できていない。<strong>Phase 1/2 着手時に実地確認</strong>し、規約OKで <code>Sources.terms_reviewed=true</code> を立てるまで収集されない（規約ゲート・FR-02-12）。</p>
+</blockquote>
+<h3 id="13">1.3 収集マナー（遵守事項）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-01-01</td>
+<td>robots.txt</td>
+<td>取得直前に判定（<strong>日次キャッシュ</strong>）。Disallow はスキップ。取得エラーは安全側で当日スキップ。crawler-commons <code>SimpleRobotRules</code> を使用（自前実装しない）</td>
+</tr>
+<tr>
+<td>BD-IF-01-02</td>
+<td>アクセス間隔</td>
+<td><strong>同一ホストへ1秒以上</strong>間隔。<code>Crawl-delay</code> があれば従う</td>
+</tr>
+<tr>
+<td>BD-IF-01-03</td>
+<td>User-Agent</td>
+<td><strong>アプリ名＋連絡先</strong>（メール等）を明記</td>
+</tr>
+<tr>
+<td>BD-IF-01-04</td>
+<td>権利配慮</td>
+<td>本文・公式画像を保存/表示しない。<strong>自作要約＋メタ＋元URL</strong>のみ。スクレイピング禁止サイトは除外</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="14">1.4 取得データ → 内部項目マッピング</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>内部項目（Articles）</th>
+<th>RSS（SyndEntry）</th>
+<th>補完（パーサー/LLM）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>title</td>
+<td><code>getTitle()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>url</td>
+<td><code>getLink()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td><code>getPublishedDate()</code>（無ければ取得時刻）</td>
+<td>—</td>
+</tr>
+<tr>
+<td>summary</td>
+<td><code>getDescription()</code> を<strong>自作要約</strong>に加工</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td>category</td>
+<td><code>getCategories()</code> があれば参照</td>
+<td>②/③ で分類</td>
+</tr>
+<tr>
+<td>event_date / _text / _precision / _kind</td>
+<td>原文から抽出</td>
+<td>②/③（種別は §BD-BATCH-C-09 の3段判定）</td>
+</tr>
+<tr>
+<td>location</td>
+<td>—</td>
+<td>②/③（イベント時）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-claude-api">2. アウトバウンド：Claude API（収集時の構造化のみ）</h2>
+<h3 id="21">2.1 概要</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>RSS/パーサーで埋まらない項目を構造化（FR-02-03）</td>
+</tr>
+<tr>
+<td>使用モデル</td>
+<td><strong>Claude Sonnet</strong>（正確なモデルID・単価・リクエスト形式は着手時に公式確認）</td>
+</tr>
+<tr>
+<td>SDK</td>
+<td>anthropic-sdk-java（公式）。<code>LlmStructurer</code> I/F でDI注入（BD-IF-00-03）</td>
+</tr>
+<tr>
+<td>呼び出し条件</td>
+<td>①②で不足 <strong>かつ</strong> 予算内（<code>LlmBudgetGuard</code>）。<strong>通知処理では呼ばない</strong></td>
+</tr>
+<tr>
+<td>コスト</td>
+<td>各レスポンスの <code>usage</code>（input/output トークン）× モデル単価で自前計算し <code>LlmUsageLogs</code> に記録（案A）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22">2.2 入出力スキーマ</h3>
+<p><strong>入力</strong>: 本文抽出テキスト（＋ページのタイトル/URL）。JSON 構造化での応答を要求（JSON以外の付随文を出さない指示）。</p>
+<p><strong>出力（JSON）</strong>:</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>フィールド</th>
+<th>型</th>
+<th>対応（Articles）</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td>title</td>
+<td></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>enum(Category)</td>
+<td>category</td>
+<td>1..7,9 のいずれか</td>
+</tr>
+<tr>
+<td><code>event_date</code></td>
+<td>date | null</td>
+<td>event_date</td>
+<td>代表日</td>
+</tr>
+<tr>
+<td><code>event_date_text</code></td>
+<td>string | null</td>
+<td>event_date_text</td>
+<td>原文（「9月上旬」等）</td>
+</tr>
+<tr>
+<td><code>event_date_precision</code></td>
+<td>enum(EventDatePrecision)</td>
+<td>event_date_precision</td>
+<td>Exact/Month/Season/Ongoing/Unknown</td>
+</tr>
+<tr>
+<td><code>event_date_kind</code></td>
+<td>enum(EventDateKind)</td>
+<td>event_date_kind</td>
+<td>カテゴリ既定/原文で決まる場合は<strong>それを優先</strong>しLLMは補助</td>
+</tr>
+<tr>
+<td><code>location</code></td>
+<td>string | null</td>
+<td>location</td>
+<td>イベント時</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>string</td>
+<td>summary</td>
+<td><strong>自作要約</strong>（本文転載しない・§9）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>出力 enum は内部コード値（<code>AttributeConverter</code>）に変換して保存（テーブル定義書 §0）。不正・欠損は当該記事をスキップしログに残す（バッチ全体は止めない・§8）。</p>
+</blockquote>
+<h3 id="23-nfr-06">2.3 予算ガードとコスト記録（NFR-06 ハードキャップ）</h3>
+<pre class="mermaid">sequenceDiagram
+    participant C as 収集サービス
+    participant G as LlmBudgetGuard
+    participant A as Claude API
+    participant DB as LlmUsageLogs
+    C-&gt;&gt;G: 当月残予算を確認
+    alt 上限到達（安全マージン込み）
+        G--&gt;&gt;C: 予算なし
+        C-&gt;&gt;C: LLMを呼ばず RSS・パーサー結果で登録（収集は継続）
+    else 予算あり
+        G--&gt;&gt;C: OK
+        C-&gt;&gt;A: 構造化リクエスト（本文抽出テキスト）
+        A--&gt;&gt;C: JSON（title/category/date/kind/summary）＋usage
+        C-&gt;&gt;DB: input/output トークン×単価で概算コスト記録
+    end
+</pre>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-02-01</td>
+<td>呼び出し<strong>前</strong>に <code>LlmBudgetGuard</code> が当月累計（<code>LlmUsageLogs</code> の JST 月集計）を確認。上限（例: 500円の90%）到達で <strong>LLM を呼ばずスキップ</strong></td>
+</tr>
+<tr>
+<td>BD-IF-02-02</td>
+<td>呼び出し<strong>後</strong>に <code>usage</code> × <strong>記録時点の確定単価</strong>で概算コストを算出し <code>est_cost_micro_jpy</code>（マイクロ円）で保存（後日の単価改定で過去実績がぶれない）</td>
+</tr>
+<tr>
+<td>BD-IF-02-03</td>
+<td>上限到達状態・当月累計・残予算は SC-07 管理ダッシュボードで可視化（FR-06-06）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-line-messaging-api">3. アウトバウンド：LINE Messaging API（通知）</h2>
+<h3 id="31">3.1 概要</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>方式</td>
+<td><strong>push</strong>（友だち追加済みユーザーへ）。複数記事を <strong>Flex Message カルーセル</strong>で1吹き出しに集約</td>
+</tr>
+<tr>
+<td>SDK</td>
+<td>line-bot-sdk-java（公式）</td>
+</tr>
+<tr>
+<td>認証</td>
+<td>チャネルアクセストークンは環境変数で注入（BD-IF-00-01）。<code>application.yml</code> はプレースホルダのみ</td>
+</tr>
+<tr>
+<td>無料枠</td>
+<td>コミュニケーションプラン <strong>月200通</strong>前提。※LINE Notify は 2025-03-31 終了済のため使わない</td>
+</tr>
+<tr>
+<td>制約</td>
+<td><strong>通知では LLM を呼ばない</strong>（要約は収集時に生成済み）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32">3.2 通数カウント（無料枠管理）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-03-01</td>
+<td>通数 ＝ <strong>送信先ユーザー数 × 吹き出し数</strong>。カルーセルで<strong>1通に集約</strong>し吹き出しを1に抑える</td>
+</tr>
+<tr>
+<td>BD-IF-03-02</td>
+<td>カルーセルのバブル<strong>上限（おおむね12件・着手時に公式確認）超過は切り詰め</strong>、残りは「他◯件はアプリで確認」（分割送信しない）</td>
+</tr>
+<tr>
+<td>BD-IF-03-03</td>
+<td>送信ごとに <code>NotificationLogs</code>（<code>message_count</code>）へ記録。当月 <code>SUM</code>（JST月）が上限接近で<strong>送信停止しアプリ内表示へ</strong>（FR-03-05）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="33">3.3 冪等キーと再送（二重配信防止）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-03-04</td>
+<td>push に<strong>冪等キー</strong>（<code>X-Line-Retry-Key</code> 相当・着手時に公式確認）を付与。⑤タイムアウト等「届いたか不明」な再送での二重配信を防ぐ（FR-03-08・NFR-07）</td>
+</tr>
+<tr>
+<td>BD-IF-03-05</td>
+<td>冪等キーは「利用者×通知バッチ実行×対象記事集合」で一意に決まる値にし、同じ通知の再送で同一キーになるようにする</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="34-notifystatus">3.4 送信結果 → NotifyStatus マッピング</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>HTTP / 事象</th>
+<th>NotifyStatus</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2xx</td>
+<td>0:Success</td>
+<td><code>ArticleNotifications=Delivered</code>・通数加算・<code>last_notified_at</code> 更新</td>
+</tr>
+<tr>
+<td>5xx / 接続断</td>
+<td>1:TempError</td>
+<td>同一実行内リトライ→ダメなら未通知のまま次回起動</td>
+</tr>
+<tr>
+<td>429</td>
+<td>2:RateLimited</td>
+<td><code>Retry-After</code> が短ければ従う。長ければ待たず次回</td>
+</tr>
+<tr>
+<td>401</td>
+<td>3:AuthFailed</td>
+<td>自動リトライせず未通知。トークン修正後の次回に届く。<strong>5日超過で GaveUp</strong></td>
+</tr>
+<tr>
+<td>（push で判別困難）</td>
+<td>3:Blocked</td>
+<td>未追加/ブロックの可能性。友だち追加後に届く。<strong>5日超過で GaveUp</strong></td>
+</tr>
+<tr>
+<td>400＋詳細</td>
+<td>5:FormatError</td>
+<td><strong>打ち切り（GaveUp）</strong>。同形式では必ず失敗＝不具合</td>
+</tr>
+<tr>
+<td>読み取りタイムアウト</td>
+<td>6:Timeout</td>
+<td><strong>冪等キー付きで再送</strong>（二重防止）</td>
+</tr>
+<tr>
+<td>打ち切り確定</td>
+<td>9:GaveUp</td>
+<td><code>ArticleNotifications=GaveUp</code>・再送対象外・SC-02 で未通知表示</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>管理者向けの分類別メッセージは <a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a>。受信側がアクションを要するのは③のみで、SC-05 の LINE連携ステータス＋友だち追加案内で自己解決（FR-07-03）。</p>
+</blockquote>
+<h3 id="35">3.5 送信シーケンス（要点）</h3>
+<pre class="mermaid">sequenceDiagram
+    participant N as 通知バッチ
+    participant DB as DB
+    participant L as LINE API
+    N-&gt;&gt;DB: 未通知抽出・お気に入り絞込・通数確認
+    N-&gt;&gt;N: Flexカルーセルに集約（12件上限）
+    N-&gt;&gt;L: push（冪等キー付き）
+    alt 成功(2xx)
+        L--&gt;&gt;N: OK
+        N-&gt;&gt;DB: Delivered 記録・通数加算・last_notified_at 更新
+    else 失敗
+        L--&gt;&gt;N: エラー（分類）
+        N-&gt;&gt;DB: 未通知のまま or GaveUp（分類に従う）
+    end
+</pre>
+<hr />
+<h2 id="4">4. トレーサビリティ</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>要件</th>
+<th>本書</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>§7.1 収集対象・収集マナー</td>
+<td>§1</td>
+</tr>
+<tr>
+<td>§7.2 Claude API（構造化・コスト）</td>
+<td>§2</td>
+</tr>
+<tr>
+<td>§7.3 LINE Messaging API（push/カルーセル/通数）</td>
+<td>§3</td>
+</tr>
+<tr>
+<td>FR-02-03/11・NFR-06（LLM・ハードキャップ）</td>
+<td>§2.1/2.3</td>
+</tr>
+<tr>
+<td>FR-03-03/05/07/08（カルーセル/通数/失敗/冪等キー）</td>
+<td>§3.2/3.3/3.4</td>
+</tr>
+<tr>
+<td>NFR-11（秘密情報の外部化）</td>
+<td>§0</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>収集・通知の内部処理フローは <a href="バッチ設計書.md"><code>バッチ設計書.md</code></a>、DB定義は <a href="テーブル定義書.md"><code>テーブル定義書.md</code></a>、文言は <a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a>。</p>
+</blockquote>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>02_基本設計/外部IF設計書.md</code>）</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  (function(){
+    if (!window.mermaid) return;
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict', flowchart:{useMaxWidth:true}, er:{useMaxWidth:true} });
+  })();
+</script>
+
+</body>
+</html>

@@ -108,11 +108,11 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>版</td>
-<td>0.4（データ基盤＋画面＋バッチを記載・基本設計進行中）</td>
+<td>1.0（基本設計 全7成果物カバー・完了）</td>
 </tr>
 <tr>
-<td>作成日</td>
-<td>2026-08-08</td>
+<td>作成日 / 最終改訂</td>
+<td>2026-08-08 / 2026-08-08</td>
 </tr>
 <tr>
 <td>目的</td>
@@ -125,7 +125,7 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p>本表は基本設計の進行に合わせて追記する。現時点で確定した成果物は <strong>ER図 / テーブル定義書 / 画面設計書 / 画面遷移図 / バッチ設計書</strong>。外部IF設計書・メッセージ一覧は作成次第この表を更新する。</p>
+<p><strong>基本設計の全成果物が揃った</strong>: ER図 / テーブル定義書 / 画面設計書（＋画面モックアップ）/ 画面遷移図 / バッチ設計書 / 外部IF設計書 / メッセージ・エラー一覧。以下の対応表で FR・SC・TBL・NFR の被覆を確認する（未カバーなし）。VPS 移行に伴う NFR-12（コンテナ化）等は Phase 6 のデプロイ設計で扱う。</p>
 </blockquote>
 <hr />
 <h2 id="1-tbl">1. テーブル（TBL）→ 基本設計</h2>
@@ -362,13 +362,13 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>FR-06 管理機能</td>
-<td>画面設計書（SC-06/07/08）／バッチ設計書</td>
-<td>🟡 画面確定・バッチ側⏳</td>
+<td>画面設計書（SC-06/07/08）／バッチ設計書（手動実行・ログ）／外部IF（LLMコスト）</td>
+<td>✅</td>
 </tr>
 <tr>
 <td>FR-07 認証・利用者</td>
-<td>画面設計書（SC-01/09/10）／外部IF・メッセージ一覧</td>
-<td>🟡 画面確定(自己登録FR-07-05含む)・IF/メッセージ⏳</td>
+<td>画面設計書（SC-01/09/10）／外部IF（LINE連携）／メッセージ一覧（AUTH）</td>
+<td>✅</td>
 </tr>
 </tbody>
 </table></div>
@@ -404,8 +404,8 @@ strong{font-weight:700;}
 <tr>
 <td>NFR-06</td>
 <td>AIコスト月500円ハードキャップ</td>
-<td>バッチ設計書（予算ガード BD-BATCH-C-07）／外部IF設計書（Claude usage）</td>
-<td>🟡 バッチ側✅・IF⏳</td>
+<td>バッチ設計書（予算ガード BD-BATCH-C-07）／外部IF設計書 §2.3（usage×単価・上限判定）</td>
+<td>✅</td>
 </tr>
 <tr>
 <td>NFR-07</td>
@@ -428,14 +428,14 @@ strong{font-weight:700;}
 <tr>
 <td>NFR-11</td>
 <td>秘密情報の外部化</td>
-<td>外部IF設計書（トークン注入）／別途デプロイ設計</td>
-<td>⏳</td>
+<td>外部IF設計書 §0（環境変数注入・プレースホルダ）／バッチ設計書 BD-BATCH-00-07</td>
+<td>✅ 方針確定</td>
 </tr>
 <tr>
 <td>NFR-12</td>
 <td>コンテナ化</td>
-<td>（Phase 6・デプロイ設計）</td>
-<td>⏳</td>
+<td>Phase 6 デプロイ設計（基本設計の対象外・要件 NFR-12 に方針記載済）</td>
+<td>⏳ Phase 6</td>
 </tr>
 </tbody>
 </table></div>
