@@ -108,7 +108,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>版</td>
-<td>0.3（データ基盤＋画面設計を記載・基本設計進行中）</td>
+<td>0.4（データ基盤＋画面＋バッチを記載・基本設計進行中）</td>
 </tr>
 <tr>
 <td>作成日</td>
@@ -120,12 +120,12 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>前工程</td>
-<td><a href="../01_要件定義/要件定義書.md"><code>01_要件定義/要件定義書.md</code></a>（承認済み v1.5）</td>
+<td><a href="../01_要件定義/要件定義書.md"><code>01_要件定義/要件定義書.md</code></a>（承認済み v1.8）</td>
 </tr>
 </tbody>
 </table></div>
 <blockquote>
-<p>本表は基本設計の進行に合わせて追記する。現時点で確定した成果物は <strong>ER図 / テーブル定義書 / 画面設計書 / 画面遷移図</strong>。バッチ設計書・外部IF設計書・メッセージ一覧は作成次第この表を更新する。</p>
+<p>本表は基本設計の進行に合わせて追記する。現時点で確定した成果物は <strong>ER図 / テーブル定義書 / 画面設計書 / 画面遷移図 / バッチ設計書</strong>。外部IF設計書・メッセージ一覧は作成次第この表を更新する。</p>
 </blockquote>
 <hr />
 <h2 id="1-tbl">1. テーブル（TBL）→ 基本設計</h2>
@@ -342,13 +342,13 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>FR-02 収集処理</td>
-<td>バッチ設計書（収集バッチ）／外部IF設計書</td>
-<td>⏳</td>
+<td>バッチ設計書（収集バッチ BD-BATCH-C-01〜14）／外部IF設計書</td>
+<td>✅ フロー確定・IF⏳</td>
 </tr>
 <tr>
 <td>FR-03 通知処理</td>
-<td>バッチ設計書（通知バッチ）／外部IF設計書（LINE）</td>
-<td>⏳</td>
+<td>バッチ設計書（通知バッチ BD-BATCH-N-01〜11）／外部IF設計書（LINE）</td>
+<td>✅ フロー確定・IF⏳</td>
 </tr>
 <tr>
 <td>FR-04 一覧表示</td>
@@ -384,6 +384,12 @@ strong{font-weight:700;}
 </thead>
 <tbody>
 <tr>
+<td>NFR-03</td>
+<td>収集15分以内</td>
+<td>バッチ設計書 §0（BD-BATCH-00-08・情報源間の並行化）</td>
+<td>✅ 方針確定</td>
+</tr>
+<tr>
 <td>NFR-04</td>
 <td>一覧応答2秒</td>
 <td>テーブル定義書 §2.1（式インデックス ix_articles_timeline）</td>
@@ -398,26 +404,26 @@ strong{font-weight:700;}
 <tr>
 <td>NFR-06</td>
 <td>AIコスト月500円ハードキャップ</td>
-<td>外部IF設計書（Claude）／バッチ設計書（予算ガード）</td>
-<td>⏳</td>
+<td>バッチ設計書（予算ガード BD-BATCH-C-07）／外部IF設計書（Claude usage）</td>
+<td>🟡 バッチ側✅・IF⏳</td>
 </tr>
 <tr>
 <td>NFR-07</td>
 <td>冪等性</td>
-<td>テーブル定義書（UNIQUE/複合PK）＋バッチ設計書（処理フロー）</td>
-<td>🟡 データ側✅・フロー側⏳</td>
+<td>テーブル定義書（UNIQUE/複合PK）＋バッチ設計書 §3（担保点）</td>
+<td>✅ データ・フロー両側</td>
 </tr>
 <tr>
 <td>NFR-08</td>
 <td>UTC保存/JST表示</td>
-<td>テーブル定義書 §0＋画面設計書（表示仕様）＋バッチ設計書</td>
-<td>🟡</td>
+<td>テーブル定義書 §0＋画面設計書（表示仕様）＋バッチ設計書 §0（BD-BATCH-00-04）</td>
+<td>✅</td>
 </tr>
 <tr>
 <td>NFR-10</td>
 <td>障害分離</td>
-<td>バッチ設計書（情報源単位の失敗分離）</td>
-<td>⏳</td>
+<td>バッチ設計書（BD-BATCH-00-05・C-14・N-11）</td>
+<td>✅</td>
 </tr>
 <tr>
 <td>NFR-11</td>
