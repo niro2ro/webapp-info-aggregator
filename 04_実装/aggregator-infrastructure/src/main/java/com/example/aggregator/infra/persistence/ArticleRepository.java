@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 /**
  * 記事リポジトリ（Spring Data JPA）。interface を宣言するだけで実装が生成される。
  */
-public interface ArticleRepository extends JpaRepository<ArticleEntity, Long> {
+public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, ArticleSearchRepository {
 
     /** 冪等の一次判定（url_hash 既存チェック・FR-02-08）。 */
     boolean existsByUrlHash(String urlHash);
@@ -32,4 +32,13 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long> {
             ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findTimelineByTheme(Long themeId, Pageable pageable);
+
+    /** 指定利用者がブックマークした記事（発生日順）。※ネイティブ結果は本リポジトリの entity(ArticleEntity)へ写像。 */
+    @Query(value = """
+            SELECT a.* FROM articles a
+            JOIN bookmarks b ON b.article_id = a.id
+            WHERE b.user_id = :userId
+            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            """, nativeQuery = true)
+    List<ArticleEntity> findBookmarkedByUser(Long userId);
 }
