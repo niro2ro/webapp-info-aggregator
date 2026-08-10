@@ -1,0 +1,90 @@
+/* 和ノスタルジック（水彩・自然/黄昏）テーマ — Lumo カスタム（BD-SC-00-09 / §0.1）。
+   特定作品のロゴ/キャラ/公式色は使わず、伝統文様（七宝）＋暖色でムードのみ再現。 */
+
+html {
+  /* プライマリ（苔・若葉の緑） */
+  --lumo-primary-color: #5f8768;
+  --lumo-primary-text-color: #4e7d55;
+  --lumo-primary-color-50pct: rgba(95, 135, 104, 0.5);
+  --lumo-primary-color-10pct: rgba(95, 135, 104, 0.12);
+
+  /* 面・文字（和紙クリーム＋墨茶） */
+  --lumo-base-color: #fffdf6;
+  --lumo-body-text-color: #39322a;
+  --lumo-secondary-text-color: #8c7f68;
+  --lumo-tertiary-text-color: #a99e86;
+  --lumo-contrast-5pct: #f4efe1;
+  --lumo-contrast-10pct: #efe7d5;
+  --lumo-contrast-20pct: #e6dcc7;
+
+  /* 角丸・タイポ */
+  --lumo-border-radius-s: 8px;
+  --lumo-border-radius-m: 12px;
+  --lumo-border-radius-l: 16px;
+  --lumo-font-family: "Noto Sans JP", "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+
+  --wa: rgba(95, 135, 104, 0.10);
+}
+
+/* 七宝つなぎ（重ね円）の地紋を全体背景に淡く敷く */
+body,
+vaadin-app-layout {
+  background-color: #f4efe1;
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%),
+    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%);
+  background-size: 38px 38px, 38px 38px;
+  background-position: 0 0, 19px 19px;
+}
+
+/* 上部バー: 黄昏の緑→藍グラデ */
+vaadin-app-layout::part(navbar) {
+  background: linear-gradient(100deg, #3c4a44, #4e4a60);
+  color: #f2ecdd;
+  box-shadow: 0 2px 14px rgba(16, 20, 50, 0.18);
+}
+.app-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-weight: 700;
+  color: #f2ecdd;
+}
+
+/* 記事カード（SC-02） */
+.art-card {
+  background: var(--lumo-base-color);
+  border: 1px solid var(--lumo-contrast-10pct);
+  border-radius: var(--lumo-border-radius-l);
+  box-shadow: 0 1px 2px rgba(84, 68, 38, 0.07), 0 8px 22px rgba(84, 68, 38, 0.10);
+  padding: 14px 16px;
+  transition: box-shadow 0.15s, transform 0.08s;
+}
+.art-card:hover {
+  box-shadow: 0 6px 26px rgba(84, 68, 38, 0.16);
+  transform: translateY(-1px);
+}
+.art-title {
+  font-weight: 700;
+  font-size: var(--lumo-font-size-l);
+  color: var(--lumo-body-text-color);
+}
+.art-date {
+  font-weight: 800;
+  color: #4e7d55;
+}
+.art-noimg {
+  width: 60px;
+  height: 60px;
+  border: 1px dashed var(--lumo-contrast-20pct);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  color: var(--lumo-secondary-text-color);
+  text-align: center;
+  flex: 0 0 auto;
+}
+.view-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-weight: 700;
+}

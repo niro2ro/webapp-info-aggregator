@@ -9,11 +9,17 @@ target/
 *.jar
 !.mvn/wrapper/maven-wrapper.jar
 
-# --- Vaadin / フロント生成物（Phase 1 以降） ---
-node_modules/
-frontend/generated/
-vite.generated.ts
-src/main/bundles/
+# --- Vaadin / フロント生成物（Phase 1 以降。**/ で全モジュール配下に効かせる） ---
+**/node_modules/
+**/frontend/generated/
+**/vite.generated.ts
+**/src/main/bundles/
+# Vaadin が生成するフロント構成（再生成可能なら追跡しない）
+**/package.json
+**/package-lock.json
+**/tsconfig.json
+**/types.d.ts
+**/vite.config.ts
 
 # --- IDE ---
 .idea/
