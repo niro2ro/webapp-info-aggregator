@@ -1,0 +1,25 @@
+# ローカル開発用 PostgreSQL（Phase 0）
+# 起動: docker compose up -d
+# 接続: jdbc:postgresql://localhost:5432/aggregator
+# ※本番(VPS/Phase 6)ではアプリもコンテナ化する。ここでは DB のみ Docker（反復速度優先・NFR-12）。
+services:
+  db:
+    image: postgres:16
+    container_name: aggregator-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aggregator}
+      POSTGRES_USER: ${DB_USER:-aggregator}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aggregator}   # ローカル開発用の既定値。本番は環境変数で注入
+      TZ: UTC                                          # コンテナは UTC（保存は UTC・NFR-08）
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aggregator} -d ${DB_NAME:-aggregator}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  pgdata:

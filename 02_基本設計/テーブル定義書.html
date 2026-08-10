@@ -663,8 +663,8 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>ix_articles_timeline</td>
-<td>((COALESCE(event_date, created_at::date)))</td>
-<td><strong>タイムライン整列キーの式インデックス</strong>（FR-04-01・一覧応答2秒 NFR-04）</td>
+<td>((COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)))</td>
+<td><strong>タイムライン整列キーの式インデックス</strong>（FR-04-01・一覧応答2秒 NFR-04）。※<code>timestamptz::date</code> はセッションTZ依存で index 式に使えないため固定ゾーン(UTC)へ変換してから date 化（実装Phase0で確定）</td>
 </tr>
 <tr>
 <td>gin_articles_title_trgm</td>
@@ -679,7 +679,7 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p>タイムライン整列キー = <code>COALESCE(event_date, created_at::date)</code>。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日で代理整列し、降順では新着として上位に来る。式インデックスで NFR-04 を担保。
+<p>タイムライン整列キー = <code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code>。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日で代理整列し、降順では新着として上位に来る。式インデックスで NFR-04 を担保。<strong>一覧クエリの ORDER BY も同一式を使う</strong>こと（そうしないと index が効かない）。※<code>created_at::date</code> を直接使うと PostgreSQL の「index 式は IMMUTABLE 必須」に反する（timestamptz→date はTZ依存）ため UTC 固定で date 化する（実装Phase0で確定）。
 前提拡張: <code>CREATE EXTENSION IF NOT EXISTS pg_trgm;</code>（Flyway の初期マイグレーションで実行）。</p>
 </blockquote>
 <h3 id="22-article_theme_matchestbl-articlethemematches">2.2 article_theme_matches（TBL-ArticleThemeMatches）— 記事×テーマ マッチ</h3>

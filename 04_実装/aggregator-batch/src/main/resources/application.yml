@@ -1,0 +1,23 @@
+# バッチ共通設定（Phase 0）。収集/通知の2アプリが共有する。
+# Web サーバは持たない（ワンショット実行）。機密は環境変数で注入（NFR-11）。
+spring:
+  main:
+    web-application-type: none          # サーバを起動せず、Runner 実行後に終了する
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aggregator}
+    username: ${DB_USER:aggregator}
+    password: ${DB_PASSWORD:aggregator}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  # スキーマ管理は Web 側 or 手動 migrate に任せ、バッチは検証のみ（二重実行を避ける）
+  flyway:
+    enabled: false
+
+app:
+  user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"

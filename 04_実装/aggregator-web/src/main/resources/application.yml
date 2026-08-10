@@ -1,0 +1,32 @@
+# Web アプリ設定（Phase 0）
+# 機密は環境変数で注入し、ここには実値を書かない（NFR-11 / DD-CFG-02）。
+# ローカル開発では docker-compose の既定値に合わせた default を付ける（${VAR:default}）。
+
+spring:
+  application:
+    name: aggregator-web
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aggregator}
+    username: ${DB_USER:aggregator}
+    password: ${DB_PASSWORD:aggregator}   # ローカル開発用 default。本番は環境変数のみ
+  jpa:
+    hibernate:
+      ddl-auto: validate                  # スキーマは Flyway に一本化（DD-DAO-12）
+    open-in-view: false                   # 遅延ロードは表示層に持ち込まない（DD-DAO-11）
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC                  # 保存は UTC（NFR-08）
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    org.flywaydb: INFO

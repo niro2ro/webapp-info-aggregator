@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.aggregator</groupId>
+        <artifactId>aggregator-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aggregator-web</artifactId>
+    <name>aggregator-web</name>
+    <description>Web アプリ（Phase 0: DB/Flyway 接続確認。Phase 1 で Vaadin Flow UI を追加）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.aggregator</groupId>
+            <artifactId>aggregator-infrastructure</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- Phase 0 は最小構成。Vaadin は Phase 1 で追加する。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 実行可能 jar 化（この module は起動アプリ） -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

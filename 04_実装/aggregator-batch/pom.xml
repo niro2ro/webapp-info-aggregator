@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.aggregator</groupId>
+        <artifactId>aggregator-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aggregator-batch</artifactId>
+    <name>aggregator-batch</name>
+    <description>収集/通知バッチ（別プロセス・CommandLineRunner。Phase 0 は骨格のみ）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.aggregator</groupId>
+            <artifactId>aggregator-infrastructure</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- Web サーバは不要（ワンショット実行） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 収集・通知を「別の実行可能 jar」として2本作る（別プロセス・DD-ARC-08/09） -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <!-- 親POM 既定の repackage（単一メインクラス前提）は2アプリ構成では成立しないため無効化 -->
+                    <execution>
+                        <id>repackage</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>collection</id>
+                        <goals><goal>repackage</goal></goals>
+                        <configuration>
+                            <classifier>collection</classifier>
+                            <mainClass>com.example.aggregator.batch.collection.CollectionBatchApplication</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>notification</id>
+                        <goals><goal>repackage</goal></goals>
+                        <configuration>
+                            <classifier>notification</classifier>
+                            <mainClass>com.example.aggregator.batch.notification.NotificationBatchApplication</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
