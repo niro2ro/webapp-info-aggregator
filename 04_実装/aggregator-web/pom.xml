@@ -21,10 +21,11 @@
             <artifactId>aggregator-infrastructure</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
-        <!-- Phase 0 は最小構成。Vaadin は Phase 1 で追加する。 -->
+        <!-- Vaadin Flow（サーバー側 Java だけで画面を書くステートフルUI・D5）。
+             spring-boot-starter-web も推移的に含む。 -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-spring-boot-starter</artifactId>
         </dependency>
     </dependencies>
 
@@ -35,6 +36,43 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Vaadin フロントエンド準備（dev モードで必要な生成物を作る） -->
+            <plugin>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-maven-plugin</artifactId>
+                <version>${vaadin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-frontend</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- 本番ビルド: フロントエンドを最適化バンドル化（mvn -Pproduction package） -->
+        <profile>
+            <id>production</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.vaadin</groupId>
+                        <artifactId>vaadin-maven-plugin</artifactId>
+                        <version>${vaadin.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-frontend</goal>
+                                    <goal>build-frontend</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
