@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>サンプルフィード（Phase 1 デモ用・実在サイトではありません）</title>
+    <link>https://example.jp/</link>
+    <description>収集→日付順一覧の動作確認用のダミーRSS</description>
+    <item>
+      <title>「呪術廻戦」渋谷事変 新作フィギュア 予約開始</title>
+      <link>https://example.jp/news/1001?utm_source=rss</link>
+      <category>グッズ</category>
+      <pubDate>Fri, 01 Aug 2026 10:00:00 +0900</pubDate>
+      <description>五条悟の新規造形フィギュアが登場。予約は各店で受付開始。</description>
+    </item>
+    <item>
+      <title>「呪術廻戦」カプセルトイ 第3弾 ラインナップ公開</title>
+      <link>https://example.jp/news/1002</link>
+      <category>カプセルトイ</category>
+      <pubDate>Mon, 04 Aug 2026 12:00:00 +0900</pubDate>
+      <description>全6種のラバーマスコットが登場。1回400円。</description>
+    </item>
+    <item>
+      <title>「呪術廻戦」コラボカフェ 秋葉原で開催決定</title>
+      <link>https://example.jp/news/1003</link>
+      <category>イベント</category>
+      <pubDate>Wed, 06 Aug 2026 09:00:00 +0900</pubDate>
+      <description>期間限定コラボカフェが開催。描き下ろしイラストのメニューを展開。</description>
+    </item>
+    <item>
+      <title>「葬送のフリーレン」TVアニメ 新シーズン 放送情報</title>
+      <link>https://example.jp/news/1004</link>
+      <category>アニメ</category>
+      <pubDate>Sun, 03 Aug 2026 18:00:00 +0900</pubDate>
+      <description>新シーズンの放送日が決定。※このテーマは登録外なので突合されない想定。</description>
+    </item>
+  </channel>
+</rss>

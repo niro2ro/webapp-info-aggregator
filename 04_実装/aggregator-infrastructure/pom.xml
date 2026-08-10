@@ -45,5 +45,18 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- RSS/Atom 解析（FR-02-01）。Spring Boot BOM 管理外のためバージョン明示。 -->
+        <dependency>
+            <groupId>com.rometools</groupId>
+            <artifactId>rome</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <!-- HTML 解析（専用パーサー・FR-02-02）。バージョンは Spring Boot BOM 管理。 -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.18.1</version>
+        </dependency>
     </dependencies>
 </project>

@@ -15,5 +15,12 @@
     <name>aggregator-domain</name>
     <description>エンティティ・enum・値オブジェクト・ドメインルール（フレームワーク非依存を基本）</description>
 
-    <!-- Phase 0 ではフレームワーク非依存の純粋な enum のみ。依存は増やさない。 -->
+    <dependencies>
+        <!-- JPA アノテーション（@Entity/@Converter 等）だけを使う。実行時の Hibernate/Spring Data は
+             infrastructure 側が持ち込む。ドメインは「永続化の注釈」までに留め、DB実装には依存しない。 -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+    </dependencies>
 </project>
