@@ -40,7 +40,7 @@ LANG=C.UTF-8 LC_ALL=C.UTF-8 mvn -pl aggregator-web spring-boot:run
 | Phase | 内容 | 状態 |
 |---|---|---|
 | **0** | Docker で PostgreSQL 起動 → Spring Boot + JPA 接続 → **Flyway マイグレーションが通る** | ✅ 完了（下記） |
-| 1 | テーマ登録・RSS 収集・一覧表示（Vaadin） | 未 |
+| **1** | テーマ登録・RSS 収集・一覧表示 | 🟡 収集/冪等/テーマ突合/日付順の**中核を実装・検証**（デモAPI）。正式画面(Vaadin)は次段 |
 | 2 | LLM 構造化・重複排除・情報源追加 | 未 |
 | 3 | お気に入り・未読・フィルタ・検索 | 未 |
 | 4 | LINE 通知・冪等性 | 未 |
@@ -58,6 +58,20 @@ curl -s http://localhost:8080/health/tables   # 14テーブル + flyway_schema_h
 
 - Flyway が **V1（全14テーブル＋制約＋索引）** と **V2（シード：利用者2・情報源4）** を適用。
 - 実装で確定した点: タイムライン整列の式インデックスは `timestamptz::date` が **IMMUTABLE でない**ため、`(created_at AT TIME ZONE 'UTC')::date` を用いる（テーブル定義書 §2.1 に反映済み）。
+
+### Phase 1 の確認方法（デモAPI・ネットワーク不要）
+
+JPAエンティティ／リポジトリ（DB設計反映）と収集パイプライン（RSS解析→URL正規化→ハッシュ→冪等→種別判定→テーマ突合→日付順一覧）を、バンドルしたサンプルRSSで外形確認する。正式なUIは Vaadin（次段）。
+
+```bash
+curl -s -X POST localhost:8080/demo/seed-theme   # テーマ「呪術廻戦」登録
+curl -s -X POST localhost:8080/demo/collect      # {"total":4,"registered":4,"duplicated":0}
+curl -s -X POST localhost:8080/demo/collect      # 2回目 {"registered":0,"duplicated":4} ← 冪等
+curl -s localhost:8080/demo/timeline             # 発生日順（降順）
+curl -s localhost:8080/demo/timeline/theme       # テーマにマッチした記事のみ
+```
+
+実装した中核（詳細設計対応）: `ArticleEntity`ほかエンティティ＋`AttributeConverter`（enumコード値・DD-DAO-09）、Spring Data リポジトリ、`UrlNormalizer`/`UrlHasher`/`EventDateKindResolver`（domain.rule）、`RomeFeedFetcher`（ROME・FR-02-01）、`CollectionService`（冪等・突合・DD-SEQ-01）。式インデックスに一致するネイティブSQLで一覧応答（NFR-04）。
 
 ## 設計上の遵守事項（ポートフォリオの要点・CLAUDE.md §5）
 
