@@ -86,6 +86,11 @@ public class ThemeView extends VerticalLayout {
     }
 
     private String categoryLabel(Category c) {
+        return categoryLabelStatic(c);
+    }
+
+    /** カテゴリの日本語ラベル（他ビューと共有）。 */
+    static String categoryLabelStatic(Category c) {
         return switch (c) {
             case GOODS -> "グッズ";
             case ANIME -> "アニメ";

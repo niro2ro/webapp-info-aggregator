@@ -41,7 +41,8 @@ public class MainLayout extends AppLayout {
         // --- 左ドロワー ---
         VerticalLayout drawer = new VerticalLayout(
                 new RouterLink("🗒  タイムライン", TimelineView.class),
-                new RouterLink("🏷  テーマ管理", ThemeView.class));
+                new RouterLink("🏷  テーマ管理", ThemeView.class),
+                new RouterLink("⭐  お気に入り", FavoritesView.class));
         drawer.setSpacing(true);
         drawer.setPadding(true);
         addToDrawer(drawer);
