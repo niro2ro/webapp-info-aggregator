@@ -140,12 +140,16 @@ strong{font-weight:700;}
 <pre><code class="language-java">public interface ArticleRepository extends JpaRepository&lt;Article, Long&gt; {
     boolean existsByUrlHash(String urlHash);          // SELECT 1 ... WHERE url_hash=?
     // 複雑な整列/検索は JPQL か、必要なら jOOQ を局所併用
-    @Query(&quot;&quot;&quot;
-        select a from Article a
+    // 整列は式インデックス ix_articles_timeline と同一式にする必要がある。
+    // timestamptz::date は TZ 依存で IMMUTABLE でない（index 式に使えない）ため、
+    // UTC 固定で date 化した式 COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date) を用いる。
+    // JPQL では表現しづらいのでネイティブSQLで index 式に一致させる（実装Phase0で確定）。
+    @Query(value = &quot;&quot;&quot;
+        select * from articles a
         where (:category is null or a.category = :category)
-        order by coalesce(a.eventDate, cast(a.createdAt as date)) desc
-    &quot;&quot;&quot;)
-    Page&lt;Article&gt; searchTimeline(@Param(&quot;category&quot;) Category c, Pageable p);
+        order by coalesce(a.event_date, (a.created_at at time zone 'UTC')::date) desc
+    &quot;&quot;&quot;, nativeQuery = true)
+    Page&lt;Article&gt; searchTimeline(@Param(&quot;category&quot;) Short category, Pageable p);
 }
 </code></pre>
 <div class="tbl-scroll"><table>

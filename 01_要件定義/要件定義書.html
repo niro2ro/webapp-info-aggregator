@@ -377,7 +377,7 @@ strong{font-weight:700;}
 <tbody>
 <tr>
 <td>タイムライン整列キー</td>
-<td><code>COALESCE(event_date, created_at::date)</code>（発生日不明は収集日で代理し新着扱い）</td>
+<td><code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code>（発生日不明は収集日で代理し新着扱い）</td>
 <td>FR-04-01</td>
 </tr>
 <tr>
@@ -397,7 +397,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>発売日順ソート</td>
-<td>「発売日順」＝ <code>event_date_kind=発売日(1)</code> の記事を <code>event_date</code> で並べる（昇順で近い発売が上位）。「発生日順」は全種別横断で <code>COALESCE(event_date, created_at::date)</code></td>
+<td>「発売日順」＝ <code>event_date_kind=発売日(1)</code> の記事を <code>event_date</code> で並べる（昇順で近い発売が上位）。「発生日順」は全種別横断で <code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code></td>
 <td>FR-04-01</td>
 </tr>
 <tr>
@@ -667,7 +667,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-04-01</td>
 <td>日付順タイムライン</td>
-<td><strong>並び順を選択</strong>：①発生日順（既定・全種別横断）／②<strong>発売日順</strong>（種別=発売日の記事を日付順）／③収集日順。各々<strong>昇順/降順</strong>を切替。<code>event_date</code> が NULL（日付不明/受付中等）の記事は収集日時 <code>created_at</code> を代理キーとして整列し新着扱い（整列キー = <code>COALESCE(event_date, created_at::date)</code>、詳細は §6 参照）。日付は<strong>種別ラベル付きで表示</strong>（例「発売日 9/20」「開催日 10/1」）</td>
+<td><strong>並び順を選択</strong>：①発生日順（既定・全種別横断）／②<strong>発売日順</strong>（種別=発売日の記事を日付順）／③収集日順。各々<strong>昇順/降順</strong>を切替。<code>event_date</code> が NULL（日付不明/受付中等）の記事は収集日時 <code>created_at</code> を代理キーとして整列し新着扱い（整列キー = <code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code>、詳細は §6 参照）。日付は<strong>種別ラベル付きで表示</strong>（例「発売日 9/20」「開催日 10/1」）</td>
 </tr>
 <tr>
 <td>FR-04-02</td>
@@ -1489,7 +1489,7 @@ strong{font-weight:700;}
 - <code>INDEX(event_date)</code>, <code>INDEX(created_at)</code>, <code>INDEX(source_id)</code>, <code>INDEX(category)</code>
 - <code>GIN(title gin_trgm_ops)</code>, <code>GIN(summary gin_trgm_ops)</code> … pg_trgm 部分一致</p>
 <blockquote>
-<p><strong>タイムライン整列キー（FR-04-01）</strong>: 並び替えは <code>COALESCE(event_date, created_at::date)</code> を基準にする。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日時で代理整列し、降順表示では新着として上位に来る。式インデックス <code>INDEX((COALESCE(event_date, created_at::date)))</code> を張り、一覧応答2秒（NFR-04）を担保する。</p>
+<p><strong>タイムライン整列キー（FR-04-01）</strong>: 並び替えは <code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code> を基準にする。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日時で代理整列し、降順表示では新着として上位に来る。式インデックス <code>INDEX((COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)))</code> を張り、一覧応答2秒（NFR-04）を担保する。</p>
 </blockquote>
 <h3 id="tbl-articlethemematches">TBL-ArticleThemeMatches（記事×テーマ マッチ）</h3>
 <div class="tbl-scroll"><table>

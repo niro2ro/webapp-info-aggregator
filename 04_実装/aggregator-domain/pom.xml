@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.aggregator</groupId>
+        <artifactId>aggregator-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aggregator-domain</artifactId>
+    <name>aggregator-domain</name>
+    <description>エンティティ・enum・値オブジェクト・ドメインルール（フレームワーク非依存を基本）</description>
+
+    <!-- Phase 0 ではフレームワーク非依存の純粋な enum のみ。依存は増やさない。 -->
+</project>

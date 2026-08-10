@@ -1,0 +1,28 @@
+# --- 秘密情報（絶対にコミットしない・NFR-11） ---
+.env
+*.env
+!.env.example
+
+# --- ビルド成果物 ---
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# --- Vaadin / フロント生成物（Phase 1 以降） ---
+node_modules/
+frontend/generated/
+vite.generated.ts
+src/main/bundles/
+
+# --- IDE ---
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# --- OS ---
+.DS_Store
+Thumbs.db
