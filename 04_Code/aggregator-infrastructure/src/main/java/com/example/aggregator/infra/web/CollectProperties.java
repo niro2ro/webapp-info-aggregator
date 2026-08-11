@@ -22,6 +22,13 @@ public class CollectProperties {
     /** 同一ホストへの最小アクセス間隔（ミリ秒・BD-IF-01-02）。 */
     private long minHostIntervalMs = 1000;
 
+    /**
+     * テーマ検索収集で使う「キーワード検索RSS」の URL テンプレート（{q} をURLエンコード済みキーワードに置換）。
+     * 既定は Googleニュースの検索フィード（日本語）。<b>利用規約は各自で確認</b>（別サービスに差し替え可能）。
+     */
+    private String searchFeedUrlTemplate =
+            "https://news.google.com/rss/search?q={q}&hl=ja&gl=JP&ceid=JP:ja";
+
     public int getConnectTimeoutMs() { return connectTimeoutMs; }
     public void setConnectTimeoutMs(int v) { this.connectTimeoutMs = v; }
     public int getReadTimeoutMs() { return readTimeoutMs; }
@@ -32,4 +39,6 @@ public class CollectProperties {
     public void setBackoffMs(long v) { this.backoffMs = v; }
     public long getMinHostIntervalMs() { return minHostIntervalMs; }
     public void setMinHostIntervalMs(long v) { this.minHostIntervalMs = v; }
+    public String getSearchFeedUrlTemplate() { return searchFeedUrlTemplate; }
+    public void setSearchFeedUrlTemplate(String v) { this.searchFeedUrlTemplate = v; }
 }
