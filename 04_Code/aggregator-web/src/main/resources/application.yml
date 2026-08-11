@@ -24,6 +24,13 @@ spring:
 app:
   user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"
 
+  # 収集のHTTPマナー・信頼性（管理ダッシュボードの手動収集でも使用）。
+  collect:
+    connect-timeout-ms: ${COLLECT_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${COLLECT_READ_TIMEOUT_MS:10000}
+    max-attempts: ${COLLECT_MAX_ATTEMPTS:3}
+    min-host-interval-ms: ${COLLECT_MIN_HOST_INTERVAL_MS:1000}
+
   # LLM/LINE は既定で無効（NoOp）。Web は収集/通知を実行しないが、共有 Bean のため設定を持つ。
   # 実値（APIキー/トークン）は環境変数で注入し、ここには書かない（NFR-11・BD-IF-00-01）。
   llm:

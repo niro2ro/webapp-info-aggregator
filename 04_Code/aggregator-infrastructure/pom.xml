@@ -82,6 +82,20 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
+        <!-- robots.txt 解析（収集マナー・FR-02-05）。自前実装せず crawler-commons を使う（BD-IF-01-01）。 -->
+        <dependency>
+            <groupId>com.github.crawler-commons</groupId>
+            <artifactId>crawler-commons</artifactId>
+            <version>1.6</version>
+        </dependency>
+
+        <!-- リトライ（一時障害に指数バックオフ・BD-BATCH-C-04）。Resilience4j のプログラム API を局所利用。 -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-retry</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
         <!-- 単体テスト（JUnit 5 + Mockito + AssertJ）。バージョンは Spring Boot BOM 管理。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
