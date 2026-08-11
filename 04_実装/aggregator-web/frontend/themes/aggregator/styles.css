@@ -88,3 +88,19 @@ vaadin-app-layout::part(navbar) {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   font-weight: 700;
 }
+
+/* --- ログイン/新規登録（SC-01/10）。和紙×七宝の落ち着いた中央カード --- */
+.login-view {
+  background:
+    radial-gradient(circle at 10px 10px, rgba(95,135,104,0.10) 2px, transparent 3px) 0 0 / 20px 20px,
+    var(--lumo-base-color);
+}
+.login-card {
+  background: var(--lumo-base-color);
+  border: 1px solid var(--lumo-contrast-10pct);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(57,50,42,0.12);
+}
+.login-card h1 {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+}

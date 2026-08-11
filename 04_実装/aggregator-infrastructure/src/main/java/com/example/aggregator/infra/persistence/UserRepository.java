@@ -9,4 +9,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     /** 通知対象の利用者＝通知ON かつ LINE 連携済み（line_user_id あり）。 */
     List<UserEntity> findByNotifyEnabledTrueAndLineUserIdNotNull();
+
+    /** ログイン画面の一覧＝有効な利用者（表示名順）。 */
+    List<UserEntity> findByActiveTrueOrderByDisplayName();
+
+    /** 同名の重複チェック（自己登録・SC-10）。 */
+    boolean existsByDisplayName(String displayName);
 }

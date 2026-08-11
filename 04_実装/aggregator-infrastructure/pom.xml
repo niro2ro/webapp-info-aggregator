@@ -75,6 +75,13 @@
             <version>10.1.0</version>
         </dependency>
 
+        <!-- BCrypt（管理者PINのハッシュ・SC-01/09）。フル Spring Security ではなく暗号ユーティリティのみを
+             使う（Phase 5 は軽量認証。Phase 6 で本格認証へ差し替え）。バージョンは Spring Boot BOM 管理。 -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- 単体テスト（JUnit 5 + Mockito + AssertJ）。バージョンは Spring Boot BOM 管理。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

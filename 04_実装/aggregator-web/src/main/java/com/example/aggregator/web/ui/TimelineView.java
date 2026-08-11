@@ -6,6 +6,7 @@ import com.example.aggregator.infra.persistence.ArticleQuery;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
 import com.example.aggregator.web.SampleIngestService;
+import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -35,7 +36,8 @@ import java.util.Set;
 @PageTitle("タイムライン | アグリゲーター")
 public class TimelineView extends VerticalLayout {
 
-    private static final Long USER_ID = 2L; // 認証は Phase 5。暫定で固定利用者
+    // ログイン中の利用者（Phase 5・認証導入）。ガード未通過の一時生成に備え、未ログイン時は -1（該当データ無し）。
+    private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
     private final ArticleRepository articles;
     private final SampleIngestService sampleIngest;

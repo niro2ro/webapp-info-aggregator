@@ -3,6 +3,7 @@ package com.example.aggregator.web.ui;
 import com.example.aggregator.domain.model.Category;
 import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.infra.persistence.ThemeRepository;
+import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 @PageTitle("テーマ管理 | アグリゲーター")
 public class ThemeView extends VerticalLayout {
 
-    private static final Long USER_ID = 2L;
+    private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
     private final ThemeRepository themes;
     private final Grid<ThemeEntity> grid = new Grid<>(ThemeEntity.class, false);

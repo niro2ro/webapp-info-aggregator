@@ -8,6 +8,7 @@ import com.example.aggregator.infra.persistence.SourceRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
 import com.example.aggregator.infra.service.FavoriteService;
+import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -28,7 +29,7 @@ import java.util.Map;
 @PageTitle("お気に入り | アグリゲーター")
 public class FavoritesView extends VerticalLayout {
 
-    private static final Long USER_ID = 2L;
+    private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
     private final ThemeRepository themes;
     private final SourceRepository sources;

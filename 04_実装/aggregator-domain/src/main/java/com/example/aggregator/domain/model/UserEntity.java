@@ -35,6 +35,9 @@ public class UserEntity {
     @Column(name = "notify_enabled", nullable = false)
     private boolean notifyEnabled = true;
 
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     @Column(name = "last_notified_at")
     private Instant lastNotifiedAt;
 
@@ -47,15 +50,28 @@ public class UserEntity {
         this.displayName = displayName;
     }
 
+    public UserEntity(String displayName, UserRole role) {
+        this.displayName = displayName;
+        this.role = role;
+    }
+
     /** 通知バッチが送信成功時に呼ぶ。最終通知時刻を UTC で更新（NFR-08）。 */
     public void markNotified(Instant at) { this.lastNotifiedAt = at; }
 
     public Long getId() { return id; }
     public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
     public UserRole getRole() { return role; }
+    public void setRole(UserRole role) { this.role = role; }
+    public String getAdminPinHash() { return adminPinHash; }
+    public void setAdminPinHash(String adminPinHash) { this.adminPinHash = adminPinHash; }
+    /** 管理者PINが設定済みか（未設定=初回はPINなしでログインを許す・SC-01 ブートストラップ）。 */
+    public boolean hasAdminPin() { return adminPinHash != null && !adminPinHash.isBlank(); }
     public String getLineUserId() { return lineUserId; }
     public void setLineUserId(String lineUserId) { this.lineUserId = lineUserId; }
     public boolean isNotifyEnabled() { return notifyEnabled; }
     public void setNotifyEnabled(boolean notifyEnabled) { this.notifyEnabled = notifyEnabled; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public Instant getLastNotifiedAt() { return lastNotifiedAt; }
 }
