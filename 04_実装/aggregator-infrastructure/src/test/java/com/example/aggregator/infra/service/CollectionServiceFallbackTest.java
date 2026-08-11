@@ -1,0 +1,111 @@
+package com.example.aggregator.infra.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.example.aggregator.domain.collect.RawItem;
+import com.example.aggregator.domain.llm.LlmStructurer;
+import com.example.aggregator.domain.llm.StructuredArticle;
+import com.example.aggregator.domain.model.ArticleEntity;
+import com.example.aggregator.domain.model.Category;
+import com.example.aggregator.domain.model.EventDateKind;
+import com.example.aggregator.domain.model.EventDatePrecision;
+import com.example.aggregator.domain.model.SourceEntity;
+import com.example.aggregator.domain.rule.EventDateKindResolver;
+import com.example.aggregator.domain.rule.UrlHasher;
+import com.example.aggregator.domain.rule.UrlNormalizer;
+import com.example.aggregator.infra.persistence.ArticleRepository;
+import com.example.aggregator.infra.persistence.ArticleThemeMatchRepository;
+import com.example.aggregator.infra.persistence.ThemeRepository;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+/**
+ * 収集の「RSS→LLM フォールバック」を検証する（外部IF §1.1）。ドメインルールは本物、リポジトリと
+ * LlmStructurer はダブルを使う。<b>NoOp（空）なら RSS 値のまま／構造化できたら不足項目だけ上書き</b>。
+ */
+class CollectionServiceFallbackTest {
+
+    private final ArticleRepository articles = mock(ArticleRepository.class);
+    private final ArticleThemeMatchRepository matches = mock(ArticleThemeMatchRepository.class);
+    private final ThemeRepository themes = mock(ThemeRepository.class);
+
+    private CollectionService service(LlmStructurer structurer) {
+        return new CollectionService(articles, matches, themes,
+                new UrlNormalizer(), new UrlHasher(), new EventDateKindResolver(), structurer);
+    }
+
+    private SourceEntity source() {
+        SourceEntity s = mock(SourceEntity.class);
+        when(s.getId()).thenReturn(1L);
+        return s;
+    }
+
+    private ArticleEntity captureSaved() {
+        ArgumentCaptor<ArticleEntity> captor = ArgumentCaptor.forClass(ArticleEntity.class);
+        org.mockito.Mockito.verify(articles).saveAndFlush(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    @DisplayName("LLM が空（NoOp）のときは RSS 由来の値のまま登録される（Phase 1 と同一挙動）")
+    void noOpKeepsRssValues() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        LlmStructurer noop = input -> Optional.empty();
+
+        // publishedAt=null → precision UNKNOWN、categoryHint=null → OTHER（LLM 分岐に入るが空なので不変）
+        RawItem item = new RawItem("新商品の予約開始", "https://example.com/a", null, "本文の説明", null);
+        boolean added = service(noop).ingestOne(source(), item, List.of());
+
+        assertThat(added).isTrue();
+        ArticleEntity saved = captureSaved();
+        assertThat(saved.getCategory()).isEqualTo(Category.OTHER);
+        assertThat(saved.getEventDate()).isNull();
+        assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.UNKNOWN);
+        assertThat(saved.getSummary()).isEqualTo("本文の説明");
+    }
+
+    @Test
+    @DisplayName("LLM が構造化できたら、不足していた発生日・分類・要約を上書きする")
+    void llmOverlaysMissingFields() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        StructuredArticle sa = new StructuredArticle(
+                "無視されるタイトル", Category.ANIME, LocalDate.of(2026, 9, 1), "9月1日",
+                EventDatePrecision.EXACT, EventDateKind.BROADCAST, "東京", "LLMの自作要約");
+        LlmStructurer stub = input -> Optional.of(sa);
+
+        RawItem item = new RawItem("アニメ放送日決定", "https://example.com/b", null, "元の説明", null);
+        boolean added = service(stub).ingestOne(source(), item, List.of());
+
+        assertThat(added).isTrue();
+        ArticleEntity saved = captureSaved();
+        assertThat(saved.getCategory()).isEqualTo(Category.ANIME);            // OTHER → ANIME
+        assertThat(saved.getEventDate()).isEqualTo(LocalDate.of(2026, 9, 1)); // 補完
+        assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.EXACT);
+        assertThat(saved.getEventDateText()).isEqualTo("9月1日");
+        assertThat(saved.getLocation()).isEqualTo("東京");
+        assertThat(saved.getSummary()).isEqualTo("LLMの自作要約");            // 要約差し替え
+        assertThat(saved.getTitle()).isEqualTo("アニメ放送日決定");          // タイトルは RSS 由来を維持
+    }
+
+    @Test
+    @DisplayName("url_hash 既存なら重複としてスキップ（冪等の一次判定）")
+    void duplicateSkipped() {
+        when(articles.existsByUrlHash(any())).thenReturn(true);
+        LlmStructurer noop = input -> Optional.empty();
+
+        RawItem item = new RawItem("既出", "https://example.com/a", null, "x", null);
+        boolean added = service(noop).ingestOne(source(), item, List.of());
+
+        assertThat(added).isFalse();
+        org.mockito.Mockito.verify(articles, org.mockito.Mockito.never()).saveAndFlush(any());
+    }
+}

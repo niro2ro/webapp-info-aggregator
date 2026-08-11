@@ -1,9 +1,13 @@
 package com.example.aggregator.infra.service;
 
 import com.example.aggregator.domain.collect.RawItem;
+import com.example.aggregator.domain.llm.ExtractedText;
+import com.example.aggregator.domain.llm.LlmStructurer;
+import com.example.aggregator.domain.llm.StructuredArticle;
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.ArticleThemeMatchEntity;
 import com.example.aggregator.domain.model.Category;
+import com.example.aggregator.domain.model.EventDateKind;
 import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
@@ -12,6 +16,7 @@ import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
 import java.time.LocalDate;
+import java.util.Optional;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.persistence.ArticleThemeMatchRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
@@ -40,19 +45,22 @@ public class CollectionService {
     private final UrlNormalizer urlNormalizer;
     private final UrlHasher urlHasher;
     private final EventDateKindResolver kindResolver;
+    private final LlmStructurer llmStructurer;
 
     public CollectionService(ArticleRepository articles,
                              ArticleThemeMatchRepository matches,
                              ThemeRepository themes,
                              UrlNormalizer urlNormalizer,
                              UrlHasher urlHasher,
-                             EventDateKindResolver kindResolver) {
+                             EventDateKindResolver kindResolver,
+                             LlmStructurer llmStructurer) {
         this.articles = articles;
         this.matches = matches;
         this.themes = themes;
         this.urlNormalizer = urlNormalizer;
         this.urlHasher = urlHasher;
         this.kindResolver = kindResolver;
+        this.llmStructurer = llmStructurer;
     }
 
     public record IngestResult(int total, int registered, int duplicated) {}
@@ -85,24 +93,55 @@ public class CollectionService {
             return false;
         }
 
+        // --- ① RSS 由来の値（既定・LLM を使わない一次情報） ---
         Category category = guessCategory(item.categoryHint());
         String summary = toSummary(item.description());
         String textForKind = item.title() + " " + (item.description() == null ? "" : item.description());
+        EventDateKind kind = kindResolver.resolve(category, textForKind);
+        String eventDateText = null;
+        String location = null;
 
-        // Phase 1 暫定: RSS の配信日時を代表日として扱う（JST 日付）。Phase 2 で本文抽出/LLM により
-        // 「発売日/開催日」等の実際の発生日へ置き換える。
+        // Phase 1 暫定: RSS の配信日時を代表日として扱う（JST 日付）。
         LocalDate eventDate = item.publishedAt() != null
                 ? item.publishedAt().atZone(TimeZones.JST).toLocalDate() : null;
         EventDatePrecision precision = eventDate != null
                 ? EventDatePrecision.EXACT : EventDatePrecision.UNKNOWN;
+
+        // --- ② LLM フォールバック（外部IF §1.1 ③）: RSS で「発生日不明」または「分類不明」のときだけ ---
+        // 呼ぶ。既定の NoOp 実装（キー未設定）では常に空が返り、①の値のまま進む＝Phase 1 と同一挙動。
+        // 予算判定・使用量記録は実装側（LLM 境界）に閉じている（NFR-06）。
+        if (precision == EventDatePrecision.UNKNOWN || category == Category.OTHER) {
+            // Phase 2 暫定: 抽出テキストは RSS 説明文を用いる（本文の完全取得は後続の
+            // HttpContentFetcher/robots ゲート導入で置き換える）。本文は保存しない（§9）。
+            String extractText = item.description() == null ? item.title() : item.description();
+            Optional<StructuredArticle> enriched =
+                    llmStructurer.structure(new ExtractedText(item.title(), item.url(), extractText));
+            if (enriched.isPresent()) {
+                StructuredArticle sa = enriched.get();
+                if (category == Category.OTHER && sa.category() != null) category = sa.category();
+                if (sa.eventDate() != null) {
+                    eventDate = sa.eventDate();
+                    precision = sa.eventDatePrecision() != null ? sa.eventDatePrecision() : EventDatePrecision.EXACT;
+                } else if (sa.eventDatePrecision() != null) {
+                    precision = sa.eventDatePrecision();
+                }
+                if (sa.eventDateText() != null) eventDateText = sa.eventDateText();
+                // 種別はカテゴリ/原文ルールを優先し、ルールで OTHER のときだけ LLM 出力を採用（外部IF §2.2）。
+                if (kind == EventDateKind.OTHER && sa.eventDateKind() != null) kind = sa.eventDateKind();
+                if (sa.location() != null) location = sa.location();
+                if (sa.summary() != null && !sa.summary().isBlank()) summary = sa.summary();
+            }
+        }
 
         ArticleEntity article = ArticleEntity.builder()
                 .sourceId(source.getId())
                 .title(item.title())
                 .category(category)
                 .eventDate(eventDate)
+                .eventDateText(eventDateText)
                 .eventDatePrecision(precision)
-                .eventDateKind(kindResolver.resolve(category, textForKind))
+                .eventDateKind(kind)
+                .location(location)
                 .url(item.url())
                 .urlHash(hash)
                 .summary(summary)

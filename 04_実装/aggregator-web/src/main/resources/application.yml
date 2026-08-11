@@ -24,6 +24,17 @@ spring:
 app:
   user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"
 
+  # LLM/LINE は既定で無効（NoOp）。Web は収集/通知を実行しないが、共有 Bean のため設定を持つ。
+  # 実値（APIキー/トークン）は環境変数で注入し、ここには書かない（NFR-11・BD-IF-00-01）。
+  llm:
+    enabled: ${LLM_ENABLED:false}
+    model: ${LLM_MODEL:claude-sonnet-5}
+    monthly-budget-jpy: ${LLM_MONTHLY_BUDGET_JPY:500}
+  line:
+    enabled: ${LINE_ENABLED:false}
+    channel-token: ${LINE_CHANNEL_TOKEN:}
+    monthly-free-limit: ${LINE_MONTHLY_FREE_LIMIT:200}
+
 server:
   port: ${SERVER_PORT:8080}
 

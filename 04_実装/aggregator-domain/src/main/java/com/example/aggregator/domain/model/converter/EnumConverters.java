@@ -5,6 +5,10 @@ import com.example.aggregator.domain.model.CrawlStatus;
 import com.example.aggregator.domain.model.EventDateKind;
 import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.FetchType;
+import com.example.aggregator.domain.model.LlmCallStatus;
+import com.example.aggregator.domain.model.NotifyResult;
+import com.example.aggregator.domain.model.NotifyStatus;
+import com.example.aggregator.domain.model.UserRole;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -48,5 +52,29 @@ public final class EnumConverters {
     public static class CrawlStatusConverter implements AttributeConverter<CrawlStatus, Short> {
         public Short convertToDatabaseColumn(CrawlStatus a) { return a == null ? null : a.code(); }
         public CrawlStatus convertToEntityAttribute(Short db) { return db == null ? null : CrawlStatus.fromCode(db); }
+    }
+
+    @Converter(autoApply = true)
+    public static class LlmCallStatusConverter implements AttributeConverter<LlmCallStatus, Short> {
+        public Short convertToDatabaseColumn(LlmCallStatus a) { return a == null ? null : a.code(); }
+        public LlmCallStatus convertToEntityAttribute(Short db) { return db == null ? null : LlmCallStatus.fromCode(db); }
+    }
+
+    @Converter(autoApply = true)
+    public static class UserRoleConverter implements AttributeConverter<UserRole, Short> {
+        public Short convertToDatabaseColumn(UserRole a) { return a == null ? null : a.code(); }
+        public UserRole convertToEntityAttribute(Short db) { return db == null ? null : UserRole.fromCode(db); }
+    }
+
+    @Converter(autoApply = true)
+    public static class NotifyStatusConverter implements AttributeConverter<NotifyStatus, Short> {
+        public Short convertToDatabaseColumn(NotifyStatus a) { return a == null ? null : a.code(); }
+        public NotifyStatus convertToEntityAttribute(Short db) { return db == null ? null : NotifyStatus.fromCode(db); }
+    }
+
+    @Converter(autoApply = true)
+    public static class NotifyResultConverter implements AttributeConverter<NotifyResult, Short> {
+        public Short convertToDatabaseColumn(NotifyResult a) { return a == null ? null : a.code(); }
+        public NotifyResult convertToEntityAttribute(Short db) { return db == null ? null : NotifyResult.fromCode(db); }
     }
 }
