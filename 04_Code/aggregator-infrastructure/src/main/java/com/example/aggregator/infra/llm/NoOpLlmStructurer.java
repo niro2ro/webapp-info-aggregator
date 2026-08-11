@@ -22,4 +22,8 @@ public class NoOpLlmStructurer implements LlmStructurer {
     public Optional<StructuredArticle> structure(ExtractedText input) {
         return Optional.empty();
     }
+
+    /** LLM 無効。呼び出し側はこれを見て記事本文の取得を省く。 */
+    @Override
+    public boolean isEnabled() { return false; }
 }

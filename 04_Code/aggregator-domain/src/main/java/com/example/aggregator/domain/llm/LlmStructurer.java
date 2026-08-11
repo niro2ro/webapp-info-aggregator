@@ -14,4 +14,11 @@ public interface LlmStructurer {
 
     /** 構造化できたら結果を返す。予算切れ・失敗・未設定なら {@link Optional#empty()}。 */
     Optional<StructuredArticle> structure(ExtractedText input);
+
+    /**
+     * LLM が実際に利用可能か（APIキー設定済みで呼び出す構成か）。既定 true。
+     * 呼び出し側は、これが false のときは<b>記事本文の取得（重い処理）を省く</b>ために使う。
+     * NoOp 実装は false を返す。
+     */
+    default boolean isEnabled() { return true; }
 }
