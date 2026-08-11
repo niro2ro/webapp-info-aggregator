@@ -41,9 +41,18 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
             binds.add(new Object[]{"kind", q.kind().code()});
         }
         if (q.themeId() != null) {
+            // 特定テーマを選択: そのテーマにマッチした記事のみ。
             sql.append("AND EXISTS (SELECT 1 FROM article_theme_matches m "
                     + "WHERE m.article_id = a.id AND m.theme_id = :themeId) ");
             binds.add(new Object[]{"themeId", q.themeId()});
+        } else if (q.userId() != null) {
+            // テーマ未指定: タイムラインは「ログイン利用者の有効テーマにマッチした記事のみ」に絞る（SC-02）。
+            // テーマを削除すると article_theme_matches も連動削除（ON DELETE CASCADE）されるため、
+            // そのテーマ由来の記事は自動的に一覧から消える。有効テーマが0件なら何も表示されない。
+            sql.append("AND EXISTS (SELECT 1 FROM article_theme_matches m "
+                    + "JOIN themes t ON t.id = m.theme_id "
+                    + "WHERE m.article_id = a.id AND t.user_id = :uid AND t.is_active = true) ");
+            binds.add(new Object[]{"uid", q.userId()});
         }
         if (q.unreadOnly() && q.userId() != null) {
             sql.append("AND NOT EXISTS (SELECT 1 FROM read_states r "
