@@ -21,3 +21,18 @@ spring:
 
 app:
   user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"
+
+  # LLM（収集時の構造化のみ）。既定 enabled=false → NoOp 実装でキー無しでも起動（開発/CI）。
+  # 本番は enabled=true にし ANTHROPIC_API_KEY を環境変数で注入（application.yml に実値を書かない）。
+  llm:
+    enabled: ${LLM_ENABLED:false}
+    model: ${LLM_MODEL:claude-sonnet-5}
+    monthly-budget-jpy: ${LLM_MONTHLY_BUDGET_JPY:500}
+    # ANTHROPIC_API_KEY は SDK が環境変数から直接読む（ここには書かない）
+
+  # LINE 通知。既定 enabled=false → NoOp 実装でトークン無しでも通知フローを通しで検証できる。
+  # 本番は enabled=true にし LINE_CHANNEL_TOKEN を環境変数で注入。
+  line:
+    enabled: ${LINE_ENABLED:false}
+    channel-token: ${LINE_CHANNEL_TOKEN:}
+    monthly-free-limit: ${LINE_MONTHLY_FREE_LIMIT:200}

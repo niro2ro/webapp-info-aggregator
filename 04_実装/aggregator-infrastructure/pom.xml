@@ -58,5 +58,28 @@
             <artifactId>jsoup</artifactId>
             <version>1.18.1</version>
         </dependency>
+
+        <!-- Claude API（収集時の構造化のみ・FR-02-03）。公式 anthropic-java。
+             BOM 管理外のためバージョン明示。実装着手時に Maven Central の最新を確認（CLAUDE.md §0-4）。 -->
+        <dependency>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>2.53.0</version>
+        </dependency>
+
+        <!-- LINE Messaging API（通知・FR-03）。公式 line-bot-sdk-java の messaging クライアント。
+             push のみ使用（webhook 受信は Phase 5 以降）。バージョンは着手時に公式確認。 -->
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-messaging-api-client</artifactId>
+            <version>10.1.0</version>
+        </dependency>
+
+        <!-- 単体テスト（JUnit 5 + Mockito + AssertJ）。バージョンは Spring Boot BOM 管理。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -41,4 +41,31 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
             ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findBookmarkedByUser(Long userId);
+
+    /**
+     * 通知バッチの抽出（BD-BATCH-N）: 指定利用者にとって<b>未通知</b>かつ<b>お気に入り対象</b>の新着記事。
+     *
+     * <ul>
+     *   <li>未通知 … article_notifications に (user, article) 行が無い（＝二重通知防止・§5）</li>
+     *   <li>お気に入り対象 … お気に入りテーマにマッチ（notify_enabled）<b>または</b>お気に入り情報源から（notify_enabled）</li>
+     * </ul>
+     * 発生日の新しい順。カルーセルの上限件数に切り詰めるため件数を絞る（Pageable）。
+     */
+    @Query(value = """
+            SELECT a.* FROM articles a
+            WHERE NOT EXISTS (
+                    SELECT 1 FROM article_notifications an
+                    WHERE an.user_id = :userId AND an.article_id = a.id)
+              AND (
+                    EXISTS (
+                        SELECT 1 FROM article_theme_matches m
+                        JOIN favorite_themes ft ON ft.theme_id = m.theme_id
+                        WHERE m.article_id = a.id AND ft.user_id = :userId AND ft.notify_enabled = true)
+                 OR EXISTS (
+                        SELECT 1 FROM favorite_sources fs
+                        WHERE fs.source_id = a.source_id AND fs.user_id = :userId AND fs.notify_enabled = true)
+                  )
+            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            """, nativeQuery = true)
+    List<ArticleEntity> findUnnotifiedFavorited(Long userId, Pageable pageable);
 }
