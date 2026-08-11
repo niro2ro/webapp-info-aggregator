@@ -58,6 +58,7 @@ public class ClaudeLlmStructurer implements LlmStructurer {
     private final LlmBudgetGuard budgetGuard;
     private final ObjectMapper objectMapper;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public ClaudeLlmStructurer(LlmProperties props, LlmBudgetGuard budgetGuard, ObjectMapper objectMapper) {
         // fromEnv(): 環境変数 ANTHROPIC_API_KEY を読む。enabled=true なのにキー未設定なら起動時に失敗させる
         //（設定ミスは早期に気づく＝fail-fast）。
