@@ -83,7 +83,8 @@ public class ThemeView extends VerticalLayout {
     }
 
     private void refresh() {
-        grid.setItems(themes.findByActiveTrue());
+        // 自分のテーマだけを表示（テーマはアカウントごと・他人の分は出さない/消せない）
+        grid.setItems(themes.findByUserIdAndActiveTrueOrderByKeyword(USER_ID));
     }
 
     private String categoryLabel(Category c) {

@@ -218,8 +218,9 @@ public class NotificationSettingsView extends VerticalLayout {
     }
 
     private void refresh() {
-        themeGrid.setItems(themes.findByActiveTrue());
-        sourceGrid.setItems(sources.findAll());
+        // テーマは自分の分だけ（アカウントごと）。情報源は共有だが内部の検索用ソース(active=false)は隠す。
+        themeGrid.setItems(themes.findByUserIdAndActiveTrueOrderByKeyword(userId));
+        sourceGrid.setItems(sources.findAll().stream().filter(SourceEntity::isActive).toList());
         bookmarkGrid.setItems(articles.findBookmarkedByUser(userId));
     }
 }
