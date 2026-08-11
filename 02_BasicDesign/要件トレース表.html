@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>要件トレース表 — 要件 → 基本設計</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#1-tbl">1. テーブル（TBL）→ 基本設計</a></li>
+<li><a href="#2-sc">2. 画面（SC）→ 基本設計</a></li>
+<li><a href="#3-fr">3. 機能（FR）→ 基本設計</a></li>
+<li><a href="#4-nfr">4. 非機能（NFR）→ 基本設計での担保箇所</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 02_BasicDesign/要件トレース表.md（正本は同名 .md）</div>
+    <h1 id="_1">要件トレース表 — 要件 → 基本設計</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（基本設計 全7成果物カバー・完了）</td>
+</tr>
+<tr>
+<td>作成日 / 最終改訂</td>
+<td>2026-08-08 / 2026-08-08</td>
+</tr>
+<tr>
+<td>目的</td>
+<td>要件定義の全ID（FR / SC / TBL / NFR / D）が基本設計のどの成果物でカバーされるかを一覧化し、<strong>漏れを検出</strong>する</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../01_Requirements/要件定義書.md"><code>01_Requirements/要件定義書.md</code></a>（承認済み v1.8）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>基本設計の全成果物が揃った</strong>: ER図 / テーブル定義書 / 画面設計書（＋画面モックアップ）/ 画面遷移図 / バッチ設計書 / 外部IF設計書 / メッセージ・エラー一覧。以下の対応表で FR・SC・TBL・NFR の被覆を確認する（未カバーなし）。VPS 移行に伴う NFR-12（コンテナ化）等は Phase 6 のデプロイ設計で扱う。</p>
+</blockquote>
+<hr />
+<h2 id="1-tbl">1. テーブル（TBL）→ 基本設計</h2>
+<p>全14テーブルがカバー済み（過不足なし）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>要件 TBL-ID</th>
+<th>物理テーブル</th>
+<th>ER図</th>
+<th>テーブル定義書</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TBL-Users</td>
+<td>users</td>
+<td>BD-ER-01〜07</td>
+<td>§1.1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-Themes</td>
+<td>themes</td>
+<td>BD-ER-08〜10</td>
+<td>§1.2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-ThemeCategories</td>
+<td>theme_categories</td>
+<td>BD-ER-08</td>
+<td>§1.3</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-Sources</td>
+<td>sources</td>
+<td>BD-ER-11〜13</td>
+<td>§1.4</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-Articles</td>
+<td>articles</td>
+<td>BD-ER-14〜17</td>
+<td>§2.1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-ArticleThemeMatches</td>
+<td>article_theme_matches</td>
+<td>BD-ER-09,14</td>
+<td>§2.2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-FavoriteThemes</td>
+<td>favorite_themes</td>
+<td>BD-ER-02,10</td>
+<td>§3.1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-FavoriteSources</td>
+<td>favorite_sources</td>
+<td>BD-ER-03,12</td>
+<td>§3.2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-Bookmarks</td>
+<td>bookmarks</td>
+<td>BD-ER-04,15</td>
+<td>§3.3</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-ReadStates</td>
+<td>read_states</td>
+<td>BD-ER-05,16</td>
+<td>§3.4</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-ArticleNotifications</td>
+<td>article_notifications</td>
+<td>BD-ER-06,17</td>
+<td>§3.5</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-NotificationLogs</td>
+<td>notification_logs</td>
+<td>BD-ER-07</td>
+<td>§4.1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-CrawlLogs</td>
+<td>crawl_logs</td>
+<td>BD-ER-13,18</td>
+<td>§4.2</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>TBL-LlmUsageLogs</td>
+<td>llm_usage_logs</td>
+<td>BD-ER-18</td>
+<td>§4.3</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="2-sc">2. 画面（SC）→ 基本設計</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>要件 SC-ID</th>
+<th>画面</th>
+<th>画面設計書</th>
+<th>画面遷移図</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SC-01</td>
+<td>ログイン</td>
+<td>§SC-01（BD-SC-01-01〜05）</td>
+<td>BD-NAV-01〜03</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-02</td>
+<td>タイムライン（一覧）</td>
+<td>§SC-02（BD-SC-02-01〜13）</td>
+<td>BD-NAV-04〜08</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-03</td>
+<td>記事詳細</td>
+<td>§SC-03（BD-SC-03-01）</td>
+<td>BD-NAV-04〜06,09</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-04</td>
+<td>テーマ管理</td>
+<td>§SC-04（BD-SC-04-01〜02）</td>
+<td>BD-NAV-07</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-05</td>
+<td>LINE通知設定（旧お気に入り管理）</td>
+<td>§SC-05（BD-SC-05-01〜08）</td>
+<td>BD-NAV-08〜09</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-06</td>
+<td>情報源マスタ管理</td>
+<td>§SC-06（BD-SC-06-01〜03）</td>
+<td>BD-NAV-11</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-07</td>
+<td>管理ダッシュボード</td>
+<td>§SC-07（BD-SC-07-01〜04）</td>
+<td>BD-NAV-12</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-08</td>
+<td>実行ログ</td>
+<td>§SC-08（BD-SC-08-01）</td>
+<td>BD-NAV-13</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-09</td>
+<td>利用者登録・管理（admin・ドロワー「管理」）</td>
+<td>§SC-09（BD-SC-09-01〜03）</td>
+<td>BD-NAV-10</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SC-10</td>
+<td>新規アカウント登録（誰でも・User固定）</td>
+<td>§SC-10（BD-SC-10-01〜03）</td>
+<td>BD-NAV-16,17</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-fr">3. 機能（FR）→ 基本設計</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>要件 FR群</th>
+<th>主担当の基本設計成果物</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-01 テーマ管理</td>
+<td>画面設計書（SC-04）</td>
+<td>✅ 画面確定</td>
+</tr>
+<tr>
+<td>FR-02 収集処理</td>
+<td>バッチ設計書（収集バッチ BD-BATCH-C-01〜14）／外部IF設計書</td>
+<td>✅ フロー確定・IF⏳</td>
+</tr>
+<tr>
+<td>FR-03 通知処理</td>
+<td>バッチ設計書（通知バッチ BD-BATCH-N-01〜11）／外部IF設計書（LINE）</td>
+<td>✅ フロー確定・IF⏳</td>
+</tr>
+<tr>
+<td>FR-04 一覧表示</td>
+<td>画面設計書（SC-02/03）</td>
+<td>✅ 画面確定</td>
+</tr>
+<tr>
+<td>FR-05 お気に入り</td>
+<td>画面設計書（SC-05）</td>
+<td>✅ 画面確定</td>
+</tr>
+<tr>
+<td>FR-06 管理機能</td>
+<td>画面設計書（SC-06/07/08）／バッチ設計書（手動実行・ログ）／外部IF（LLMコスト）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>FR-07 認証・利用者</td>
+<td>画面設計書（SC-01/09/10）／外部IF（LINE連携）／メッセージ一覧（AUTH）</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-nfr">4. 非機能（NFR）→ 基本設計での担保箇所</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>内容</th>
+<th>担保する基本設計</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NFR-03</td>
+<td>収集15分以内</td>
+<td>バッチ設計書 §0（BD-BATCH-00-08・情報源間の並行化）</td>
+<td>✅ 方針確定</td>
+</tr>
+<tr>
+<td>NFR-04</td>
+<td>一覧応答2秒</td>
+<td>テーブル定義書 §2.1（式インデックス ix_articles_timeline）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>NFR-05</td>
+<td>データ保持</td>
+<td>テーブル定義書 §5（パージ方針）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>NFR-06</td>
+<td>AIコスト月500円ハードキャップ</td>
+<td>バッチ設計書（予算ガード BD-BATCH-C-07）／外部IF設計書 §2.3（usage×単価・上限判定）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>NFR-07</td>
+<td>冪等性</td>
+<td>テーブル定義書（UNIQUE/複合PK）＋バッチ設計書 §3（担保点）</td>
+<td>✅ データ・フロー両側</td>
+</tr>
+<tr>
+<td>NFR-08</td>
+<td>UTC保存/JST表示</td>
+<td>テーブル定義書 §0＋画面設計書（表示仕様）＋バッチ設計書 §0（BD-BATCH-00-04）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>NFR-10</td>
+<td>障害分離</td>
+<td>バッチ設計書（BD-BATCH-00-05・C-14・N-11）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>NFR-11</td>
+<td>秘密情報の外部化</td>
+<td>外部IF設計書 §0（環境変数注入・プレースホルダ）／バッチ設計書 BD-BATCH-00-07</td>
+<td>✅ 方針確定</td>
+</tr>
+<tr>
+<td>NFR-12</td>
+<td>コンテナ化</td>
+<td>Phase 6 デプロイ設計（基本設計の対象外・要件 NFR-12 に方針記載済）</td>
+<td>⏳ Phase 6</td>
+</tr>
+</tbody>
+</table></div>
+<p>凡例: ✅ 完了 ／ 🟡 一部 ／ ⏳ 未着手（後続成果物で対応）</p>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>02_BasicDesign/要件トレース表.md</code>）</div>
+  </main>
+</div>
+
+</body>
+</html>

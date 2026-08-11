@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テーブル定義書 — テーマ別最新情報アグリゲーター（基本設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#0">0. 共通方針</a><ul>
+<li><a href="#_2">列挙値の定義（コード値）</a></li>
+</ul>
+</li>
+<li><a href="#1">1. マスタ／利用者データ</a><ul>
+<li><a href="#11-userstbl-users">1.1 users（TBL-Users）— 利用者</a></li>
+<li><a href="#12-themestbl-themes">1.2 themes（TBL-Themes）— テーマ</a></li>
+<li><a href="#13-theme_categoriestbl-themecategories">1.3 theme_categories（TBL-ThemeCategories）— テーマ別 収集対象カテゴリ</a></li>
+<li><a href="#14-sourcestbl-sources">1.4 sources（TBL-Sources）— 情報源マスタ</a></li>
+</ul>
+</li>
+<li><a href="#2">2. 収集データ（本体）</a><ul>
+<li><a href="#21-articlestbl-articles">2.1 articles（TBL-Articles）— 記事</a></li>
+<li><a href="#22-article_theme_matchestbl-articlethemematches">2.2 article_theme_matches（TBL-ArticleThemeMatches）— 記事×テーマ マッチ</a></li>
+</ul>
+</li>
+<li><a href="#3">3. 利用者×記事／対象 の関連</a><ul>
+<li><a href="#31-favorite_themestbl-favoritethemes">3.1 favorite_themes（TBL-FavoriteThemes）— テーマお気に入り</a></li>
+<li><a href="#32-favorite_sourcestbl-favoritesources">3.2 favorite_sources（TBL-FavoriteSources）— 情報源お気に入り</a></li>
+<li><a href="#33-bookmarkstbl-bookmarks">3.3 bookmarks（TBL-Bookmarks）— 記事ブックマーク（後で見る）</a></li>
+<li><a href="#34-read_statestbl-readstates">3.4 read_states（TBL-ReadStates）— 既読状態</a></li>
+<li><a href="#35-article_notificationstbl-articlenotifications">3.5 article_notifications（TBL-ArticleNotifications）— 記事別通知履歴（再送防止）</a></li>
+</ul>
+</li>
+<li><a href="#4">4. ログ／実績</a><ul>
+<li><a href="#41-notification_logstbl-notificationlogs">4.1 notification_logs（TBL-NotificationLogs）— 通知ログ・通数カウント</a></li>
+<li><a href="#42-crawl_logstbl-crawllogs">4.2 crawl_logs（TBL-CrawlLogs）— 収集ログ</a></li>
+<li><a href="#43-llm_usage_logstbl-llmusagelogs-llm">4.3 llm_usage_logs（TBL-LlmUsageLogs）— LLM利用ログ・コストカウント</a></li>
+</ul>
+</li>
+<li><a href="#5-nfr-05">5. データ保持・パージ方針（NFR-05）</a></li>
+<li><a href="#6">6. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 02_BasicDesign/テーブル定義書.md（正本は同名 .md）</div>
+    <h1 id="_1">テーブル定義書 — テーマ別最新情報アグリゲーター（基本設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（基本設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../01_Requirements/要件定義書.md"><code>01_Requirements/要件定義書.md</code></a> §6 データ設計（承認済み v1.5）</td>
+</tr>
+<tr>
+<td>関連</td>
+<td><a href="ER図.md"><code>ER図.md</code></a>（関連構造）／<a href="要件トレース表.md"><code>要件トレース表.md</code></a>（要件対応）</td>
+</tr>
+<tr>
+<td>DBMS</td>
+<td>PostgreSQL（Docker Compose でローカル起動・D8）</td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>Flyway（<code>V1__init.sql</code> に本書の DDL を反映。SQL ベース管理）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>本書は要件定義 §6 の論理DDLを<strong>物理テーブル定義</strong>として正式化する。物理テーブル名・カラム名は PostgreSQL 慣習の <strong>snake_case</strong>、JPA エンティティ側は camelCase（<code>@Column</code>/命名戦略でマッピング）。列挙型は <code>smallint</code>（コード値）で保持し、Hibernate 既定の <code>@Enumerated(ORDINAL)</code> は使わず <code>AttributeConverter</code>（<code>@Convert</code>）でコード値を明示変換する（列挙順への暗黙依存を避ける）。</p>
+</blockquote>
+<hr />
+<h2 id="0">0. 共通方針</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>事項</th>
+<th>方針</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主キー</td>
+<td>サロゲート <code>id bigint</code>（<code>GENERATED BY DEFAULT AS IDENTITY</code>）。中間テーブルは自然キーの複合PK</td>
+<td>—</td>
+</tr>
+<tr>
+<td>日時</td>
+<td>すべて <code>timestamptz</code>（UTC保存）。表示直前に JST 変換。<code>event_date</code> のみ <code>date</code>（時刻を持たない代表日）</td>
+<td>NFR-08</td>
+</tr>
+<tr>
+<td>列挙型</td>
+<td><code>smallint</code> コード値＋COMMENT。アプリ enum と <code>AttributeConverter</code> で相互変換</td>
+<td>§6</td>
+</tr>
+<tr>
+<td>文字列</td>
+<td>原則 <code>text</code>（PostgreSQL では <code>varchar(n)</code> と性能差なし）。モデル名のみ <code>varchar(100)</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>命名</td>
+<td>テーブル＝複数形 snake_case（例 <code>article_theme_matches</code>）、カラム＝snake_case</td>
+<td>—</td>
+</tr>
+<tr>
+<td>制約名</td>
+<td><code>pk_</code> / <code>fk_</code> / <code>uq_</code> / <code>ix_</code> 接頭辞で明示（物理名は詳細設計で最終確定）</td>
+<td>—</td>
+</tr>
+<tr>
+<td>文字コード</td>
+<td>データベース／接続とも UTF-8</td>
+<td>§9</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_2">列挙値の定義（コード値）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>enum</th>
+<th>コード: 意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Category</td>
+<td>1:グッズ / 2:アニメ / 3:漫画 / 4:イベント / 5:ゲーム / 6:ゲームセンター / 7:カプセルトイ(ガチャ) / 9:その他</td>
+</tr>
+<tr>
+<td>EventDatePrecision</td>
+<td>0:Exact(確定日) / 1:Month(月まで) / 2:Season(季節・曖昧) / 3:Ongoing(受付中/発売中等) / 9:Unknown</td>
+</tr>
+<tr>
+<td>EventDateKind</td>
+<td>1:発売日 / 2:開催日 / 3:放送日 / 4:受付開始 / 9:その他</td>
+</tr>
+<tr>
+<td>FetchType</td>
+<td>1:Rss / 2:HtmlParser / 3:Llm</td>
+</tr>
+<tr>
+<td>CrawlStatus</td>
+<td>0:Success / 1:PartialError / 2:Failed</td>
+</tr>
+<tr>
+<td>LlmCallStatus</td>
+<td>0:Success / 1:Failed / 2:FormatError（応答JSON不正・当該記事のみスキップ）</td>
+</tr>
+<tr>
+<td>UserRole</td>
+<td>1:User(一般) / 9:Admin(管理者)</td>
+</tr>
+<tr>
+<td>NotifyStatus</td>
+<td>0:Success / 1:TempError / 2:RateLimited / 3:AuthFailed / 4:Blocked / 5:FormatError / 6:Timeout / 9:GaveUp</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>将来カテゴリ等が増える場合はアプリ側 enum にコードを追加するだけでよく、スキーマ変更は不要（要件レビュー第2回で承認済みの方針）。</p>
+</blockquote>
+<hr />
+<h2 id="1">1. マスタ／利用者データ</h2>
+<h3 id="11-userstbl-users">1.1 users（TBL-Users）— 利用者</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td>ログイン画面の利用者一覧に表示</td>
+</tr>
+<tr>
+<td>表示名</td>
+<td>display_name</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>ログイン画面のクリック対象</td>
+</tr>
+<tr>
+<td>ロール</td>
+<td>role</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 1</td>
+<td>UserRole。認可判定に使用</td>
+</tr>
+<tr>
+<td>管理者PINハッシュ</td>
+<td>admin_pin_hash</td>
+<td>text</td>
+<td>NULL</td>
+<td>4桁PINの BCrypt ハッシュ。admin 行のみ。平文は保存しない</td>
+</tr>
+<tr>
+<td>LINEユーザーID</td>
+<td>line_user_id</td>
+<td>text</td>
+<td>NULL, UNIQUE</td>
+<td>手動登録</td>
+</tr>
+<tr>
+<td>通知全体ON/OFF</td>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>通知のマスタスイッチ</td>
+</tr>
+<tr>
+<td>最終通知日時</td>
+<td>last_notified_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>同日2回目抑止の判定に使用（JST日付で判定）</td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>インデックス: <code>uq_users_line_user_id (line_user_id)</code></li>
+<li>初期データ: admin 1・user 1 を seed 投入（FR-07-02）。以降は SC-09 から追加。</li>
+</ul>
+<h3 id="12-themestbl-themes">1.2 themes（TBL-Themes）— テーマ</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>所有者</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>キーワード</td>
+<td>keyword</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>収集キーワード</td>
+</tr>
+<tr>
+<td>収集有効</td>
+<td>is_active</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>収集 ON/OFF</td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>制約: <code>uq_themes_user_keyword (user_id, keyword)</code> … 同一利用者内のキーワード重複防止</li>
+<li>インデックス: <code>ix_themes_user_id (user_id)</code></li>
+</ul>
+<h3 id="13-theme_categoriestbl-themecategories">1.3 theme_categories（TBL-ThemeCategories）— テーマ別 収集対象カテゴリ</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>テーマID</td>
+<td>theme_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→themes(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>カテゴリ</td>
+<td>category</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>Category enum</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_theme_categories (theme_id, category)</code></li>
+</ul>
+<h3 id="14-sourcestbl-sources">1.4 sources（TBL-Sources）— 情報源マスタ</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>表示名</td>
+<td>name</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>URL</td>
+<td>url</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td>フィード/ページURL</td>
+</tr>
+<tr>
+<td>取得方式</td>
+<td>fetch_type</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>FetchType enum</td>
+</tr>
+<tr>
+<td>有効</td>
+<td>is_active</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>運用上の有効/無効</td>
+</tr>
+<tr>
+<td>規約確認済</td>
+<td>terms_reviewed</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT false</td>
+<td><strong>規約ゲート</strong>。false は収集対象外</td>
+</tr>
+<tr>
+<td>規約確認日</td>
+<td>terms_reviewed_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>規約メモ</td>
+<td>terms_note</td>
+<td>text</td>
+<td>NULL</td>
+<td>規約上の制約（例「要約のみ可・画像転載禁止」）</td>
+</tr>
+<tr>
+<td>robots尊重</td>
+<td>robots_respect</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>robots ゲートの尊重フラグ</td>
+</tr>
+<tr>
+<td>最終取得日時</td>
+<td>last_fetched_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>収集対象条件: <code>is_active = true AND terms_reviewed = true</code>（規約ゲート・FR-02-12）</li>
+<li>初期データ（seed）: MANTANWEB / HOBBY Watch / Gamer / 電撃ホビーウェブ（いずれも fetch_type=1:Rss）。RSS URL・robots・規約は Phase 1/2 着手時に実地確認し、規約OKで <code>terms_reviewed=true</code> を立てるまで収集されない。</li>
+</ul>
+<hr />
+<h2 id="2">2. 収集データ（本体）</h2>
+<h3 id="21-articlestbl-articles">2.1 articles（TBL-Articles）— 記事</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>取得元</td>
+<td>source_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→sources(id) ON DELETE RESTRICT</td>
+<td></td>
+</tr>
+<tr>
+<td>見出し</td>
+<td>title</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>カテゴリ</td>
+<td>category</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>Category enum</td>
+</tr>
+<tr>
+<td>発生日（代表日）</td>
+<td>event_date</td>
+<td>date</td>
+<td>NULL</td>
+<td>並び替え・期間フィルタ用</td>
+</tr>
+<tr>
+<td>発生日原文</td>
+<td>event_date_text</td>
+<td>text</td>
+<td>NULL</td>
+<td>「9月上旬」等・表示用</td>
+</tr>
+<tr>
+<td>発生日精度</td>
+<td>event_date_precision</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 9</td>
+<td>EventDatePrecision enum</td>
+</tr>
+<tr>
+<td>発生日種別</td>
+<td>event_date_kind</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 9</td>
+<td>EventDateKind enum。表示ラベル・発売日順ソート用</td>
+</tr>
+<tr>
+<td>場所</td>
+<td>location</td>
+<td>text</td>
+<td>NULL</td>
+<td>イベント時のみ</td>
+</tr>
+<tr>
+<td>元URL</td>
+<td>url</td>
+<td>text</td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td>URLハッシュ</td>
+<td>url_hash</td>
+<td>text</td>
+<td>NOT NULL, <strong>UNIQUE</strong></td>
+<td>正規化URLのハッシュ（重複登録防止＝冪等性の一次担保）</td>
+</tr>
+<tr>
+<td>要約</td>
+<td>summary</td>
+<td>text</td>
+<td>NULL</td>
+<td>自作要約（本文は保存しない・§9 権利配慮）</td>
+</tr>
+<tr>
+<td>グループキー</td>
+<td>group_key</td>
+<td>text</td>
+<td>NULL</td>
+<td>類似グルーピング（別サイト同一情報の束ね）</td>
+</tr>
+<tr>
+<td>収集日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td>UTC</td>
+</tr>
+</tbody>
+</table></div>
+<p>インデックス:</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>対象</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uq_articles_url_hash</td>
+<td>UNIQUE(url_hash)</td>
+<td>冪等性の一次担保（FR-02-08）</td>
+</tr>
+<tr>
+<td>ix_articles_event_date</td>
+<td>(event_date)</td>
+<td>期間フィルタ・発売日順</td>
+</tr>
+<tr>
+<td>ix_articles_created_at</td>
+<td>(created_at)</td>
+<td>収集日順</td>
+</tr>
+<tr>
+<td>ix_articles_source_id</td>
+<td>(source_id)</td>
+<td>情報源絞込</td>
+</tr>
+<tr>
+<td>ix_articles_category</td>
+<td>(category)</td>
+<td>カテゴリ絞込</td>
+</tr>
+<tr>
+<td>ix_articles_timeline</td>
+<td>((COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)))</td>
+<td><strong>タイムライン整列キーの式インデックス</strong>（FR-04-01・一覧応答2秒 NFR-04）。※<code>timestamptz::date</code> はセッションTZ依存で index 式に使えないため固定ゾーン(UTC)へ変換してから date 化（実装Phase0で確定）</td>
+</tr>
+<tr>
+<td>gin_articles_title_trgm</td>
+<td>GIN(title gin_trgm_ops)</td>
+<td>pg_trgm 部分一致検索（FR-04-03）</td>
+</tr>
+<tr>
+<td>gin_articles_summary_trgm</td>
+<td>GIN(summary gin_trgm_ops)</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>タイムライン整列キー = <code>COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)</code>。<code>event_date</code> が NULL（precision=Unknown/Ongoing）の記事は収集日で代理整列し、降順では新着として上位に来る。式インデックスで NFR-04 を担保。<strong>一覧クエリの ORDER BY も同一式を使う</strong>こと（そうしないと index が効かない）。※<code>created_at::date</code> を直接使うと PostgreSQL の「index 式は IMMUTABLE 必須」に反する（timestamptz→date はTZ依存）ため UTC 固定で date 化する（実装Phase0で確定）。
+前提拡張: <code>CREATE EXTENSION IF NOT EXISTS pg_trgm;</code>（Flyway の初期マイグレーションで実行）。</p>
+</blockquote>
+<h3 id="22-article_theme_matchestbl-articlethemematches">2.2 article_theme_matches（TBL-ArticleThemeMatches）— 記事×テーマ マッチ</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>記事ID</td>
+<td>article_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→articles(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>テーマID</td>
+<td>theme_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→themes(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>マッチ日時</td>
+<td>matched_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_article_theme_matches (article_id, theme_id)</code>（重複突合防止＝冪等）</li>
+<li>インデックス: <code>ix_atm_theme_id (theme_id)</code>（テーマ起点の抽出用）</li>
+</ul>
+<hr />
+<h2 id="3">3. 利用者×記事／対象 の関連</h2>
+<h3 id="31-favorite_themestbl-favoritethemes">3.1 favorite_themes（TBL-FavoriteThemes）— テーマお気に入り</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者ID</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>テーマID</td>
+<td>theme_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→themes(id) ON DELETE CASCADE</td>
+<td>対象テーマ</td>
+</tr>
+<tr>
+<td>通知ON/OFF</td>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td>このお気に入りの通知可否</td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_favorite_themes (user_id, theme_id)</code>（重複登録防止）</li>
+</ul>
+<h3 id="32-favorite_sourcestbl-favoritesources">3.2 favorite_sources（TBL-FavoriteSources）— 情報源お気に入り</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者ID</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>情報源ID</td>
+<td>source_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→sources(id) ON DELETE RESTRICT</td>
+<td>対象情報源</td>
+</tr>
+<tr>
+<td>通知ON/OFF</td>
+<td>notify_enabled</td>
+<td>boolean</td>
+<td>NOT NULL DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_favorite_sources (user_id, source_id)</code>（重複登録防止）</li>
+</ul>
+<blockquote>
+<p>お気に入りをテーマ用／情報源用に分割し、各々が本物の FK を持つことで、削除済み対象を指す孤児お気に入りを DB が防ぐ（要件 §6 で単一ポリモーフィック <code>Favorites</code> から分割）。</p>
+</blockquote>
+<h3 id="33-bookmarkstbl-bookmarks">3.3 bookmarks（TBL-Bookmarks）— 記事ブックマーク（後で見る）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者ID</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>記事ID</td>
+<td>article_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→articles(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日時</td>
+<td>created_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_bookmarks (user_id, article_id)</code></li>
+<li><strong>通知対象ではない</strong>。データパージの除外対象（NFR-05：いずれかの利用者が bookmark 済みの記事はパージしない）。</li>
+</ul>
+<h3 id="34-read_statestbl-readstates">3.4 read_states（TBL-ReadStates）— 既読状態</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者ID</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>記事ID</td>
+<td>article_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→articles(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>既読日時</td>
+<td>read_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_read_states (user_id, article_id)</code>（行があれば既読・冪等）</li>
+</ul>
+<h3 id="35-article_notificationstbl-articlenotifications">3.5 article_notifications（TBL-ArticleNotifications）— 記事別通知履歴（再送防止）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者ID</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>記事ID</td>
+<td>article_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→articles(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>通知/打切日時</td>
+<td>notified_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td>UTC</td>
+</tr>
+<tr>
+<td>結果</td>
+<td>result</td>
+<td>smallint</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>0:Delivered / 1:GaveUp（打ち切り＝再送しない）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>主キー: <code>pk_article_notifications (user_id, article_id)</code>（重複通知防止＝冪等）</li>
+<li><strong>未通知＝本テーブルに行が無い状態</strong>。送信失敗（①②③⑤）では行を作らず次回起動で再送。成功（Delivered）と打ち切り（GaveUp＝④形式エラー／③の5日超過）でのみ行を作り再送対象から外す。GaveUp は SC-02 で「未通知（未達）」として可視化（FR-04-06）。</li>
+</ul>
+<hr />
+<h2 id="4">4. ログ／実績</h2>
+<h3 id="41-notification_logstbl-notificationlogs">4.1 notification_logs（TBL-NotificationLogs）— 通知ログ・通数カウント</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>送信先</td>
+<td>user_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→users(id) ON DELETE CASCADE</td>
+<td></td>
+</tr>
+<tr>
+<td>送信日時</td>
+<td>sent_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td>UTC</td>
+</tr>
+<tr>
+<td>記事件数</td>
+<td>article_count</td>
+<td>int</td>
+<td>NOT NULL</td>
+<td>束ねた記事件数</td>
+</tr>
+<tr>
+<td>消費通数</td>
+<td>message_count</td>
+<td>int</td>
+<td>NOT NULL</td>
+<td>送信先×吹き出し数</td>
+</tr>
+<tr>
+<td>送信結果</td>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>NotifyStatus enum</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>インデックス: <code>ix_notification_logs_sent_at (sent_at)</code></li>
+<li>月間通数 = <code>sent_at</code> を JST 月に丸めて <code>SUM(message_count)</code>。上限接近判定（FR-06-04）。</li>
+<li>保持: 1ヶ月（NFR-05）。</li>
+</ul>
+<h3 id="42-crawl_logstbl-crawllogs">4.2 crawl_logs（TBL-CrawlLogs）— 収集ログ</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>情報源</td>
+<td>source_id</td>
+<td>bigint</td>
+<td>NOT NULL, FK→sources(id) ON DELETE RESTRICT</td>
+<td></td>
+</tr>
+<tr>
+<td>開始</td>
+<td>started_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td>UTC</td>
+</tr>
+<tr>
+<td>終了</td>
+<td>finished_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>UTC</td>
+</tr>
+<tr>
+<td>取得件数</td>
+<td>item_count</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td>新規登録件数</td>
+<td>new_item_count</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td>ステータス</td>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>CrawlStatus enum</td>
+</tr>
+<tr>
+<td>エラーメッセージ</td>
+<td>error_message</td>
+<td>text</td>
+<td>NULL</td>
+<td>失敗時</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>インデックス: <code>ix_crawl_logs_started_at (started_at)</code></li>
+<li>保持: 1ヶ月（NFR-05）。パージ時、子 <code>llm_usage_logs.crawl_log_id</code> は SET NULL（下記）。</li>
+</ul>
+<h3 id="43-llm_usage_logstbl-llmusagelogs-llm">4.3 llm_usage_logs（TBL-LlmUsageLogs）— LLM利用ログ・コストカウント</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>論理</th>
+<th>物理カラム</th>
+<th>型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID</td>
+<td>id</td>
+<td>bigint</td>
+<td>PK</td>
+<td></td>
+</tr>
+<tr>
+<td>呼び出し日時</td>
+<td>called_at</td>
+<td>timestamptz</td>
+<td>NOT NULL DEFAULT now()</td>
+<td>UTC</td>
+</tr>
+<tr>
+<td>モデル</td>
+<td>model</td>
+<td>varchar(100)</td>
+<td>NOT NULL</td>
+<td>単価が変わるため保持</td>
+</tr>
+<tr>
+<td>入力トークン</td>
+<td>input_tokens</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>API レスポンスの usage 値</td>
+</tr>
+<tr>
+<td>出力トークン</td>
+<td>output_tokens</td>
+<td>int</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>概算コスト</td>
+<td>est_cost_micro_jpy</td>
+<td>bigint</td>
+<td>NOT NULL DEFAULT 0</td>
+<td>マイクロ円（円×100万）。単価×トークンを整数保持し丸め誤差回避。表示時 ÷1,000,000</td>
+</tr>
+<tr>
+<td>収集ログID</td>
+<td>crawl_log_id</td>
+<td>bigint</td>
+<td>NULL, FK→crawl_logs(id) ON DELETE SET NULL</td>
+<td>どの収集実行に紐づくか（トレース用・任意）</td>
+</tr>
+<tr>
+<td>ステータス</td>
+<td>status</td>
+<td>smallint</td>
+<td>NOT NULL</td>
+<td>LlmCallStatus enum</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>インデックス: <code>ix_llm_usage_logs_called_at (called_at)</code></li>
+<li>月間コスト = <code>called_at</code> を JST 月に丸めて <code>SUM(est_cost_micro_jpy)</code>（表示時に円換算）。ハードキャップ判定（NFR-06・FR-02-11）。</li>
+<li>単価は記録時に確定値を保存し、後日の単価改定で過去実績がぶれないようにする。</li>
+<li>保持: <strong>パージしない</strong>（当月・過去のコスト実績として保持）。親 crawl_logs が1ヶ月でパージされても本行は残す（SET NULL）。</li>
+</ul>
+<hr />
+<h2 id="5-nfr-05">5. データ保持・パージ方針（NFR-05）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>保持期間</th>
+<th>パージ条件</th>
+<th>連動削除</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>articles</td>
+<td>2年</td>
+<td><code>created_at</code> が2年超 <strong>かつ</strong> どの利用者の bookmarks にも存在しない</td>
+<td>read_states / article_theme_matches / article_notifications を CASCADE</td>
+</tr>
+<tr>
+<td>crawl_logs</td>
+<td>1ヶ月</td>
+<td><code>started_at</code> が1ヶ月超</td>
+<td>llm_usage_logs.crawl_log_id を SET NULL（実績は残す）</td>
+</tr>
+<tr>
+<td>notification_logs</td>
+<td>1ヶ月</td>
+<td><code>sent_at</code> が1ヶ月超</td>
+<td>なし</td>
+</tr>
+<tr>
+<td>その他マスタ・関連</td>
+<td>恒久</td>
+<td>利用者/テーマ/情報源の削除操作に従う（§ON DELETE）</td>
+<td>ER図 §2 参照</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>記事は「直近2年分」で対象期間と一致（前年同期比較のため）。ブックマーク済みは「後で見る」を消さないためパージ除外。パージ処理は Phase 5 のデータ保持タスクで実装（バッチ）。</p>
+</blockquote>
+<hr />
+<h2 id="6">6. トレーサビリティ</h2>
+<ul>
+<li>全テーブルが要件 §6 の <code>TBL-xxx</code> と1対1対応（14テーブル）。詳細は <a href="要件トレース表.md"><code>要件トレース表.md</code></a>。</li>
+<li>本書の DDL は Flyway <code>V1__init.sql</code>（Phase 0）に反映する。物理制約名・カラム順は詳細設計（<code>03_DetailedDesign</code>）で最終確定。</li>
+</ul>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>02_BasicDesign/テーブル定義書.md</code>）</div>
+  </main>
+</div>
+
+</body>
+</html>

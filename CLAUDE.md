@@ -44,12 +44,12 @@
 | フォルダ | 工程 | 主な成果物 | skill |
 |---|---|---|---|
 | `要件定義のためのもの/` | （入力）要件ブリーフ | PROJECT_BRIEF.md | — |
-| `01_要件定義/` | 要件定義 | 要件定義書、機能一覧、画面一覧、テーブル定義(DDL)、外部I/F仕様、エラー方針 | `requirements-definition` |
-| `02_基本設計/` | 基本設計（外部設計） | 画面設計、画面遷移、API/バッチI/F、ER図、テーブル定義書、メッセージ一覧 | `basic-design` |
-| `03_詳細設計/` | 詳細設計（内部設計） | クラス設計、シーケンス、モジュール仕様、DIポリシー、例外設計 | `detailed-design` |
+| `01_Requirements/` | 要件定義 | 要件定義書、機能一覧、画面一覧、テーブル定義(DDL)、外部I/F仕様、エラー方針 | `requirements-definition` |
+| `02_BasicDesign/` | 基本設計（外部設計） | 画面設計、画面遷移、API/バッチI/F、ER図、テーブル定義書、メッセージ一覧 | `basic-design` |
+| `03_DetailedDesign/` | 詳細設計（内部設計） | クラス設計、シーケンス、モジュール仕様、DIポリシー、例外設計 | `detailed-design` |
 | `04_Code/` | 実装 | Maven マルチモジュール（web / batch / domain / infrastructure / test 各モジュール） | `implementation` |
-| `05_単体テスト/` | 単体テスト | 単体テスト仕様書、JUnit 5 テストコード、実施結果/エビデンス | `unit-testing` |
-| `06_結合テスト/` | 結合テスト | 結合テスト仕様書、シナリオ、実施結果、既知不具合一覧 | `integration-testing` |
+| `05_UnitTest/` | 単体テスト | 単体テスト仕様書、JUnit 5 テストコード、実施結果/エビデンス | `unit-testing` |
+| `06_IntegrationTest/` | 結合テスト | 結合テスト仕様書、シナリオ、実施結果、既知不具合一覧 | `integration-testing` |
 
 各フォルダには directory-scoped な skill が置いてある。その工程の作業をするときは対応する skill を呼び出す（例: `/requirements-definition`）。skill 名が重複する場合は、作業対象ファイルを含むフォルダの skill を優先する。
 
@@ -118,7 +118,7 @@ Phase 5 までで個人利用として完成。実装工程（`04_Code/`）は�
 
 ## 7. 未決事項（要件定義で必ず確定させる）
 
-PROJECT_BRIEF §10 の未決事項は要件定義工程で確定済み（`01_要件定義/未決事項回答ログ.md` 参照）:
+PROJECT_BRIEF §10 の未決事項は要件定義工程で確定済み（`01_Requirements/未決事項回答ログ.md` 参照）:
 - 対象範囲＝アニメ・漫画中心／構造は汎用、カテゴリ＝8区分（グッズ/アニメ/漫画/イベント/ゲーム/ゲームセンター/カプセルトイ/その他）で確定
 - 最初の情報源3つ＝B案（MANTANWEB / HOBBY Watch / Gamer）で確定（RSS/robots/規約は着手時に実地確認）
 - Web 構成＝**Vaadin Flow**（Java へのピボットに伴い Blazor Server から変更）、LLM＝Claude API、全文検索＝pg_trgm で確定

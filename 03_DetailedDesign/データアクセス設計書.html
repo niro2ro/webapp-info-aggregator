@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>データアクセス設計書 — テーマ別最新情報アグリゲーター（詳細設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#1-spring-data-jpadd-dao-01">1. リポジトリ構成（Spring Data JPA）DD-DAO-01</a></li>
+<li><a href="#2-dbdd-dao-05">2. 冪等性の実装（DB制約＋握り）DD-DAO-05</a><ul>
+<li><a href="#21">2.1 記事の重複登録防止</a></li>
+<li><a href="#22-dd-dao-06">2.2 通知の冪等（DD-DAO-06）</a></li>
+</ul>
+</li>
+<li><a href="#3-utc-jst-dd-dao-07-nfr-08">3. UTC 保存・JST 変換の実装（DD-DAO-07 / NFR-08）</a></li>
+<li><a href="#4-enum-attributeconverterdd-dao-09">4. enum の永続化（AttributeConverter）DD-DAO-09</a></li>
+<li><a href="#5-dd-dao-10">5. トランザクション境界（DD-DAO-10）</a></li>
+<li><a href="#6-flyway-dd-dao-12">6. Flyway マイグレーション（DD-DAO-12）</a></li>
+<li><a href="#7">7. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 03_DetailedDesign/データアクセス設計書.md（正本は同名 .md）</div>
+    <h1 id="_1">データアクセス設計書 — テーマ別最新情報アグリゲーター（詳細設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（詳細設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../02_BasicDesign/テーブル定義書.md"><code>テーブル定義書.md</code></a>／<a href="../02_BasicDesign/ER図.md"><code>ER図.md</code></a></td>
+</tr>
+<tr>
+<td>設計ID体系</td>
+<td><code>DD-DAO-nn</code>。テーブルは <code>TBL-*</code>／物理は snake_case</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Spring Data JPA のリポジトリ構成・Flyway 方針・<strong>冪等性の実装</strong>・<strong>UTC 保存</strong>・enum 変換を確定する。開発者は DB/SQL に強いため、JPA を「SQL/DDL との対応」で説明する。</p>
+</blockquote>
+<hr />
+<h2 id="1-spring-data-jpadd-dao-01">1. リポジトリ構成（Spring Data JPA）DD-DAO-01</h2>
+<p><code>interface</code> を宣言するだけで Spring が実装を生成する（SQL を書かずに CRUD＋派生クエリ）。</p>
+<pre><code class="language-java">public interface ArticleRepository extends JpaRepository&lt;Article, Long&gt; {
+    boolean existsByUrlHash(String urlHash);          // SELECT 1 ... WHERE url_hash=?
+    // 複雑な整列/検索は JPQL か、必要なら jOOQ を局所併用
+    // 整列は式インデックス ix_articles_timeline と同一式にする必要がある。
+    // timestamptz::date は TZ 依存で IMMUTABLE でない（index 式に使えない）ため、
+    // UTC 固定で date 化した式 COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date) を用いる。
+    // JPQL では表現しづらいのでネイティブSQLで index 式に一致させる（実装Phase0で確定）。
+    @Query(value = &quot;&quot;&quot;
+        select * from articles a
+        where (:category is null or a.category = :category)
+        order by coalesce(a.event_date, (a.created_at at time zone 'UTC')::date) desc
+    &quot;&quot;&quot;, nativeQuery = true)
+    Page&lt;Article&gt; searchTimeline(@Param(&quot;category&quot;) Short category, Pageable p);
+}
+</code></pre>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>リポジトリ</th>
+<th>主メソッド</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArticleRepository</code>（DD-DAO-02）</td>
+<td><code>existsByUrlHash</code> / <code>searchTimeline</code> / pg_trgm 検索</td>
+<td>FR-02-08・FR-04</td>
+</tr>
+<tr>
+<td><code>ArticleThemeMatchRepository</code></td>
+<td>複合キー保存</td>
+<td>FR-02-10</td>
+</tr>
+<tr>
+<td><code>ArticleNotificationRepository</code>（DD-DAO-03）</td>
+<td>未通知抽出（NOT EXISTS）/ upsert</td>
+<td>FR-03-01/06</td>
+</tr>
+<tr>
+<td><code>NotificationLogRepository</code></td>
+<td>当月通数 <code>SUM</code>（JST月）</td>
+<td>FR-03-05</td>
+</tr>
+<tr>
+<td><code>LlmUsageLogRepository</code></td>
+<td>当月コスト <code>SUM</code>（JST月）</td>
+<td>FR-06-06</td>
+</tr>
+<tr>
+<td><code>SourceRepository</code></td>
+<td><code>findByIsActiveTrueAndTermsReviewedTrue</code></td>
+<td>FR-02-12</td>
+</tr>
+<tr>
+<td><code>ThemeRepository</code>/<code>UserRepository</code>/<code>Favorite*</code>/<code>ReadStateRepository</code>/<code>BookmarkRepository</code>/<code>CrawlLogRepository</code></td>
+<td>各CRUD</td>
+<td>§6</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>派生クエリ vs JPQL vs jOOQ（DD-DAO-04）</strong>: 単純条件は<strong>メソッド名から自動生成</strong>（<code>existsByUrlHash</code>）。整列/期間/種別が絡む一覧は <strong>JPQL</strong>（型安全・可読）。pg_trgm や式インデックスを効かせたい部分は必要に応じ<strong>ネイティブSQL/jOOQ を局所併用</strong>。全文検索は <code>WHERE title % :q</code>（pg_trgm）。</p>
+</blockquote>
+<hr />
+<h2 id="2-dbdd-dao-05">2. 冪等性の実装（DB制約＋握り）DD-DAO-05</h2>
+<h3 id="21">2.1 記事の重複登録防止</h3>
+<pre><code class="language-java">try {
+    articleRepository.save(article);      // INSERT
+    articleRepository.flush();            // ここで UNIQUE(url_hash) 違反が飛ぶ
+} catch (DataIntegrityViolationException e) {
+    // 別実行が同時に入れた等。正常系として握り、新規扱いしない（BD-BATCH-C-06）
+    return SaveOutcome.DUPLICATE;
+}
+</code></pre>
+<ul>
+<li>事前 <code>existsByUrlHash</code> は<strong>一次判定</strong>（無駄な処理を省く）、<strong>UNIQUE 制約が最終防衛線</strong>。<code>flush()</code> で違反を早期に受ける。</li>
+<li>URL 正規化→ハッシュは <code>UrlNormalizer</code>/<code>UrlHasher</code>（DD-CLS-20/21）で決定的に生成。</li>
+</ul>
+<h3 id="22-dd-dao-06">2.2 通知の冪等（DD-DAO-06）</h3>
+<ul>
+<li><strong>未通知＝<code>article_notifications</code> に <code>(user_id, article_id)</code> 行が無い</strong>。抽出は <code>NOT EXISTS</code>。</li>
+<li>成功で <code>INSERT (result=Delivered)</code>、打ち切りで <code>INSERT (result=GaveUp)</code>。複合PKにより二重INSERTは制約で弾く。</li>
+<li>同日2回目は <code>users.last_notified_at</code> を <strong>JST 日付</strong>で比較して抑止（DD-DAO-08 の時刻方針）。</li>
+</ul>
+<hr />
+<h2 id="3-utc-jst-dd-dao-07-nfr-08">3. UTC 保存・JST 変換の実装（DD-DAO-07 / NFR-08）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>層</th>
+<th>型</th>
+<th>扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB</td>
+<td><code>timestamptz</code></td>
+<td>UTC で格納（<code>event_date</code> のみ <code>date</code>）</td>
+</tr>
+<tr>
+<td>エンティティ</td>
+<td><code>Instant</code>（DD-DAO-08）</td>
+<td>常に UTC。<code>LocalDateTime</code> は使わない（ゾーン欠落の事故を防ぐ）</td>
+</tr>
+<tr>
+<td>集計（当月/同日）</td>
+<td>JST に変換して境界決定</td>
+<td><code>at = instant.atZone(TZ)</code>、<code>TZ = ZoneId.of("Asia/Tokyo")</code> を<strong>定数1箇所</strong>に集約</td>
+</tr>
+<tr>
+<td>表示</td>
+<td><code>JstFormatter</code>（DD-CLS-24）</td>
+<td>表示直前に JST の <code>ZonedDateTime</code>／文字列へ</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-java">public final class TimeZones {           // ゾーンIDの散在禁止（NFR-08）
+    public static final ZoneId JST = ZoneId.of(&quot;Asia/Tokyo&quot;);
+    private TimeZones() {}
+}
+</code></pre>
+<blockquote>
+<p>「同日」「当月」は<strong>JST の暦</strong>で判定する必要がある（利用者は日本時間で使う）。DB/エンティティは UTC のまま、境界計算と表示でのみ JST に変換する。</p>
+</blockquote>
+<hr />
+<h2 id="4-enum-attributeconverterdd-dao-09">4. enum の永続化（AttributeConverter）DD-DAO-09</h2>
+<p><code>@Enumerated(ORDINAL)</code>（列挙順に暗黙依存＝並べ替えで壊れる）を<strong>使わない</strong>。コード値を明示変換する。</p>
+<pre><code class="language-java">@Converter(autoApply = false)
+public class CategoryConverter implements AttributeConverter&lt;Category, Short&gt; {
+    public Short convertToDatabaseColumn(Category c){ return c == null ? null : c.code(); }
+    public Category convertToEntityAttribute(Short db){ return Category.fromCode(db); }
+}
+</code></pre>
+<ul>
+<li><code>Category</code>/<code>EventDatePrecision</code>/<code>EventDateKind</code>/<code>FetchType</code>/<code>CrawlStatus</code>/<code>LlmCallStatus</code>/<code>UserRole</code>/<code>NotifyStatus</code> それぞれに Converter。enum は <code>code()</code> と <code>fromCode()</code> を持つ（テーブル定義書 §0 の smallint コード値と一致）。</li>
+<li>将来カテゴリ追加は enum にコードを足すだけ（スキーマ変更不要）。</li>
+</ul>
+<hr />
+<h2 id="5-dd-dao-10">5. トランザクション境界（DD-DAO-10）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>処理</th>
+<th>境界</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>収集：1記事の登録＋マッチ保存</td>
+<td><code>@Transactional</code>（記事単位・短く）</td>
+<td>途中失敗のロールバックを記事単位に閉じ、他記事に波及させない</td>
+</tr>
+<tr>
+<td>収集：情報源ループ</td>
+<td><strong>各記事でコミット</strong>（ループ全体を1トランザクションにしない）</td>
+<td>1情報源で大量取得しても長時間ロックを避け、失敗分離と両立</td>
+</tr>
+<tr>
+<td>通知：1利用者の送信＋記録</td>
+<td>送信成功後に <code>Delivered</code>＋通数＋<code>last_notified_at</code> を1トランザクション</td>
+<td>「送ったのに未記録」を避け冪等を保つ。送信は外部呼び出しのためトランザクション内で最小限に</td>
+</tr>
+<tr>
+<td>一覧表示</td>
+<td>読み取り専用（<code>@Transactional(readOnly=true)</code>）＋DTO詰め替え</td>
+<td><code>LazyInitializationException</code> を避け、表示は DTO に閉じる</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>N+1 対策（DD-DAO-11）</strong>: 一覧で情報源名等が要るなら <code>join fetch</code> かプロジェクション（DTO直射影）で1クエリにまとめる。遅延ロードのままViewへ渡さない。</p>
+</blockquote>
+<hr />
+<h2 id="6-flyway-dd-dao-12">6. Flyway マイグレーション（DD-DAO-12）</h2>
+<ul>
+<li><code>V1__init.sql</code>：拡張（<code>CREATE EXTENSION IF NOT EXISTS pg_trgm;</code>）＋全テーブル DDL＋制約＋インデックス（式インデックス <code>((COALESCE(event_date, created_at::date)))</code>・GIN trgm 含む）＋seed（初期利用者・第一陣情報源で <code>terms_reviewed=false</code>）。</li>
+<li>以降の変更は <code>V2__*.sql</code>, <code>V3__*.sql</code> と<strong>追記</strong>（既存を書き換えない）。テーブル定義書＝マイグレーションの正。</li>
+<li>Hibernate の <code>ddl-auto</code> は <strong><code>validate</code></strong>（自動生成させず Flyway に一本化・スキーマの正を1つにする）。</li>
+</ul>
+<hr />
+<h2 id="7">7. トレーサビリティ</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>基本設計/要件</th>
+<th>本書</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>§6 冪等性（UNIQUE/複合PK）</td>
+<td>DD-DAO-05/06</td>
+</tr>
+<tr>
+<td>NFR-08（UTC/JST）</td>
+<td>DD-DAO-07/08</td>
+</tr>
+<tr>
+<td>§6 enum コード値</td>
+<td>DD-DAO-09</td>
+</tr>
+<tr>
+<td>NFR-04（一覧2秒・式インデックス）</td>
+<td>DD-DAO-02/11/12</td>
+</tr>
+<tr>
+<td>Flyway（テーブル定義書）</td>
+<td>DD-DAO-12</td>
+</tr>
+</tbody>
+</table></div>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>03_DetailedDesign/データアクセス設計書.md</code>）</div>
+  </main>
+</div>
+
+</body>
+</html>

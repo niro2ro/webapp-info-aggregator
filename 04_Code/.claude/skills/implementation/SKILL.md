@@ -9,7 +9,7 @@ description: 実装工程の作業をするとき。承認済み詳細設計を�
 
 ## 前提
 
-- `03_詳細設計/` が**レビュー承認済み**であること。
+- `03_DetailedDesign/` が**レビュー承認済み**であること。
 - 設計と実装が食い違ったら、勝手に実装を変えず設計側に戻して整合を取る（設計変更の記録を残す）。
 
 ## プロジェクト構成（Maven マルチモジュール・詳細設計の分割に従う）
@@ -22,7 +22,7 @@ description: 実装工程の作業をするとき。承認済み詳細設計を�
 ├─ aggregator-infrastructure/ # JPA/Hibernate, RestClient, 収集, LINE, Claude API
 ├─ aggregator-web/           # Spring Boot + Vaadin Flow
 ├─ aggregator-batch/         # Spring Boot 別アプリ + CommandLineRunner（収集/通知を別エントリ）
-└─ （単体テストは各モジュールの src/test/java に。05_単体テスト 工程で構築）
+└─ （単体テストは各モジュールの src/test/java に。05_UnitTest 工程で構築）
 ```
 
 Flyway のマイグレーション SQL は `aggregator-infrastructure/src/main/resources/db/migration/V1__*.sql` に置く。
@@ -59,4 +59,4 @@ Flyway のマイグレーション SQL は `aggregator-infrastructure/src/main/r
 
 ## 完了条件
 
-各 Phase の完成条件を満たし動作確認できること。実装したユニットは `05_単体テスト`（`unit-testing` skill）でテストする。README に設計判断・権利配慮・コスト設計を記載する（ポートフォリオ評価に直結）。
+各 Phase の完成条件を満たし動作確認できること。実装したユニットは `05_UnitTest`（`unit-testing` skill）でテストする。README に設計判断・権利配慮・コスト設計を記載する（ポートフォリオ評価に直結）。

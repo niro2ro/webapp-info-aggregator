@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DI設計書 — テーマ別最新情報アグリゲーター（詳細設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#1-dd-di-01">1. 注入方法：コンストラクタ注入を基本とする（DD-DI-01）</a></li>
+<li><a href="#2-bean-dd-di-02">2. Bean スコープの方針（DD-DI-02）</a></li>
+<li><a href="#3-bean-dd-di-04">3. インフラ Bean の一元定義（DD-DI-04）</a></li>
+<li><a href="#4-beandd-di-06">4. プロファイルとバッチ別アプリでの Bean（DD-DI-06）</a></li>
+<li><a href="#5">5. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 03_DetailedDesign/DI設計書.md（正本は同名 .md）</div>
+    <h1 id="di">DI設計書 — テーマ別最新情報アグリゲーター（詳細設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（詳細設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="クラス設計書.md"><code>クラス設計書.md</code></a>／<a href="アーキテクチャ設計書.md"><code>アーキテクチャ設計書.md</code></a></td>
+</tr>
+<tr>
+<td>設計ID体系</td>
+<td><code>DD-DI-nn</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Spring の DI（依存性注入）の方針を確定する。<strong>DI は「<code>new</code> で具象を掴まず、必要な相手をコンテナに入れてもらう」仕組み</strong>。Delphi では自分で生成/管理していた依存を、Spring コンテナが生成・注入する。ここでは Java 実務未経験者向けに<strong>なぜその方針か</strong>を明記する（CLAUDE.md §2）。</p>
+</blockquote>
+<hr />
+<h2 id="1-dd-di-01">1. 注入方法：コンストラクタ注入を基本とする（DD-DI-01）</h2>
+<pre><code class="language-java">@Service
+public class CollectionService {
+    private final FeedFetcher feedFetcher;
+    private final ArticleRepository articleRepository;
+    private final LlmBudgetGuard budgetGuard;
+
+    // コンストラクタが1つなら @Autowired は不要（Spring が自動で注入）
+    public CollectionService(FeedFetcher feedFetcher,
+                             ArticleRepository articleRepository,
+                             LlmBudgetGuard budgetGuard) {
+        this.feedFetcher = feedFetcher;
+        this.articleRepository = articleRepository;
+        this.budgetGuard = budgetGuard;
+    }
+}
+</code></pre>
+<p><strong>なぜコンストラクタ注入か（フィールド注入 <code>@Autowired</code> を使わない理由）</strong>:</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>理由</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不変にできる</td>
+<td>依存を <code>final</code> にでき、生成後に差し替わらない（スレッド安全・予測可能）</td>
+</tr>
+<tr>
+<td>必須依存が明確</td>
+<td>コンストラクタ引数＝必須依存。足りなければ起動時に落ちる（実行時 NPE より早い）</td>
+</tr>
+<tr>
+<td>テスト容易</td>
+<td>テストで <code>new CollectionService(モック, モック, モック)</code> と<strong>Spring 無しでも生成</strong>できる（単体テスト工程の前提）</td>
+</tr>
+<tr>
+<td>循環依存を検出</td>
+<td>コンストラクタ注入だと循環依存が起動時に露見し設計の是正を促す</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>フィールド注入（<code>@Autowired private X x;</code>）は上記が崩れるため使わない。setter 注入は「任意依存」の限定用途のみ。</p>
+</blockquote>
+<hr />
+<h2 id="2-bean-dd-di-02">2. Bean スコープの方針（DD-DI-02）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>スコープ</th>
+<th>使う対象</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>singleton（既定）</strong></td>
+<td>サービス・リポジトリ・ポート実装・ルール（<code>CollectionService</code>/<code>*Repository</code>/<code>RomeFeedFetcher</code>/<code>UrlNormalizer</code> 等）</td>
+<td><strong>状態を持たない</strong>（フィールドは注入された依存のみ）ので1インスタンスを共有して安全・省メモリ。処理ごとの状態は引数/戻り値/ローカル変数で扱う</td>
+</tr>
+<tr>
+<td>prototype</td>
+<td>原則使わない</td>
+<td>状態を持つ部品が必要でも、まず「状態はメソッド引数へ」を検討。どうしても必要なら都度 <code>new</code>（Bean にしない）</td>
+</tr>
+<tr>
+<td>Vaadin セッション/UIスコープ</td>
+<td>画面（View）クラス</td>
+<td>Vaadin がUI（ブラウザセッション）単位で管理。<strong>画面は表示状態のみ持ち、業務状態は持たない</strong>（DD-CLS-11）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>なぜサービスが singleton で安全か（DD-DI-03）</strong>: サービスは「注入された依存（すべて不変）」しか持たず、リクエストごとのデータは<strong>メソッドの引数とローカル変数</strong>で流す。共有可変状態がないので複数スレッド（仮想スレッド収集・Vaadin の複数UI）から同時に呼ばれても競合しない。</p>
+</blockquote>
+<hr />
+<h2 id="3-bean-dd-di-04">3. インフラ Bean の一元定義（DD-DI-04）</h2>
+<p><code>RestClient</code> や外部SDKクライアントは <code>@Configuration</code> で<strong>1回だけ生成</strong>して Bean 化する。</p>
+<pre><code class="language-java">@Configuration
+public class HttpClientConfig {
+    @Bean
+    RestClient contentRestClient(RestClient.Builder builder,
+                                 @Value(&quot;${app.user-agent}&quot;) String ua) {
+        return builder
+            .defaultHeader(&quot;User-Agent&quot;, ua)   // アプリ名＋連絡先（BD-IF-01-03）
+            .build();
+    }
+}
+</code></pre>
+<p><strong>なぜ <code>RestClient</code> を都度 <code>new</code> せず Bean 化するか（DD-DI-05）</strong>:
+- コネクションプール・タイムアウト・共通ヘッダ（User-Agent）・Resilience4j 設定を<strong>一箇所に集約</strong>でき、毎回作る無駄（コネクション再確立）を避ける。
+- 収集の全取得で同じ設定を使わせられる（マナー遵守を仕組みで担保）。</p>
+<p>同様に <code>ClaudeLlmStructurer</code>・<code>LineBotNotifier</code>・<code>ObjectMapper</code>（JSON）も Bean 化。APIキー/トークンは <code>@Value("${...}")</code> で<strong>環境変数から</strong>注入（コードに直書きしない・<a href="設定・秘密情報設計書.md"><code>設定・秘密情報設計書.md</code></a>）。</p>
+<hr />
+<h2 id="4-beandd-di-06">4. プロファイルとバッチ別アプリでの Bean（DD-DI-06）</h2>
+<ul>
+<li>3つの起動クラス（Web/収集/通知）は同じ domain/infrastructure を共有するが、<strong>必要な Bean だけをコンポーネントスキャン</strong>する。通知アプリでは <code>LlmStructurer</code> を配線しない（<strong>通知経路に LLM を置かない</strong>＝CLAUDE.md §5 を配線レベルで保証）。</li>
+<li><code>@Profile("web"|"collection"|"notification")</code> や起動クラスのスキャン範囲で、プロセスごとの Bean 集合を分ける。</li>
+<li>秘密情報の有無で挙動を変えない（未設定は起動時エラーで気付く・DD-CFG）。</li>
+</ul>
+<hr />
+<h2 id="5">5. トレーサビリティ</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>基本設計/要件</th>
+<th>本書</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-IF-00-03（差し替え・ポート）</td>
+<td>DD-DI-01/03</td>
+</tr>
+<tr>
+<td>CLAUDE.md §5（通知にLLM不使用）</td>
+<td>DD-DI-06</td>
+</tr>
+<tr>
+<td>テスト容易性（テスト工程の前提）</td>
+<td>DD-DI-01</td>
+</tr>
+<tr>
+<td>BD-IF-01-03（UA連絡先）・BD-IF-00-01（秘密情報）</td>
+<td>DD-DI-04/05</td>
+</tr>
+</tbody>
+</table></div>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>03_DetailedDesign/DI設計書.md</code>）</div>
+  </main>
+</div>
+
+</body>
+</html>

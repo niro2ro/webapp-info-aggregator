@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>バッチ設計書 — テーマ別最新情報アグリゲーター（基本設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#0">0. 共通方針</a><ul>
+<li><a href="#_2">使用ライブラリ（着手時に最新版・仕様を確認）</a></li>
+</ul>
+</li>
+<li><a href="#1-bd-batch-c">1. 収集バッチ（BD-BATCH-C）</a><ul>
+<li><a href="#11">1.1 目的・入出力</a></li>
+<li><a href="#12">1.2 処理フロー</a></li>
+<li><a href="#13">1.3 ステップ詳細</a></li>
+</ul>
+</li>
+<li><a href="#2-bd-batch-n">2. 通知バッチ（BD-BATCH-N）</a><ul>
+<li><a href="#21">2.1 目的・入出力</a></li>
+<li><a href="#22">2.2 処理フロー</a></li>
+<li><a href="#23">2.3 ステップ詳細</a></li>
+<li><a href="#24-notifystatus">2.4 送信失敗の分類・再送（NotifyStatus）</a></li>
+</ul>
+</li>
+<li><a href="#3-db">3. 冪等性の担保点（バッチ×DB）</a></li>
+<li><a href="#4">4. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 02_BasicDesign/バッチ設計書.md（正本は同名 .md）</div>
+    <h1 id="_1">バッチ設計書 — テーマ別最新情報アグリゲーター（基本設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（基本設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../01_Requirements/要件定義書.md"><code>01_Requirements/要件定義書.md</code></a> FR-02/FR-03・§8（承認済み v1.8）</td>
+</tr>
+<tr>
+<td>関連</td>
+<td><a href="テーブル定義書.md"><code>テーブル定義書.md</code></a>／<a href="外部IF設計書.md"><code>外部IF設計書.md</code></a>／<a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a></td>
+</tr>
+<tr>
+<td>実行基盤</td>
+<td>Spring Boot 別アプリ＋<code>CommandLineRunner</code>（Web と別プロセス・ヘッドレス・実行して終了）</td>
+</tr>
+<tr>
+<td>設計ID体系</td>
+<td>収集＝<code>BD-BATCH-C-nn</code>／通知＝<code>BD-BATCH-N-nn</code>。要件 <code>FR-02/03</code>・<code>TBL-*</code> を参照</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>本書は<strong>収集バッチ</strong>と<strong>通知バッチ</strong>の処理フロー・入出力・冪等性の担保点・フォールバック・障害分離を確定する。両バッチは<strong>別プロセス</strong>で、<strong>通知は LLM を一切呼ばない</strong>（CLAUDE.md §5）。</p>
+</blockquote>
+<hr />
+<h2 id="0">0. 共通方針</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>方針</th>
+<th>決定内容</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-BATCH-00-01</td>
+<td>プロセス分離</td>
+<td>収集・通知は<strong>別の Spring Boot アプリ</strong>（<code>CommandLineRunner</code> でワンショット実行→終了）。Web と別プロセス。常駐しない</td>
+<td>NFR-09・§6 Phase</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-02</td>
+<td>起動方式</td>
+<td>ローカルは Windows タスクスケジューラ（ログオン時・遅延5分）、VPS は cron / systemd timer（Phase 6）。<strong>定期起動は運用要件</strong>（G1・機能要件ではない）。手動起動は SC-07（FR-06-02）</td>
+<td>G1・NFR-12</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-03</td>
+<td>冪等性</td>
+<td><strong>1日に複数回起動されても重複登録・重複通知しない</strong>。DB 制約（<code>url_hash</code> UNIQUE／<code>ArticleNotifications</code> PK）を最終防衛線とし、アプリ判定だけに頼らない</td>
+<td>NFR-07</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-04</td>
+<td>日時</td>
+<td>すべて UTC（<code>Instant</code>）で処理・保存。「同日」判定や月次集計は <strong>JST に変換</strong>して行う（<code>Asia/Tokyo</code>・ゾーンIDは一箇所に集約）</td>
+<td>NFR-08</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-05</td>
+<td>障害分離</td>
+<td>1情報源／1利用者の失敗が、他の情報源／利用者の処理を止めない。失敗は握って次へ進み、ログに残す</td>
+<td>NFR-10</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-06</td>
+<td>ログ</td>
+<td>ファイル依存を避け <strong>DB（CrawlLogs／NotificationLogs／LlmUsageLogs）＋標準出力</strong>へ。UTF-8</td>
+<td>§8・§9</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-07</td>
+<td>設定・秘密情報</td>
+<td>接続文字列・APIキー・LINEトークンは環境変数で注入（<code>application.yml</code> はプレースホルダのみ）。リトライ回数・間隔・上限等も外部化</td>
+<td>NFR-11</td>
+</tr>
+<tr>
+<td>BD-BATCH-00-08</td>
+<td>所要時間</td>
+<td>収集バッチは <strong>15分以内</strong>（NFR-03）。同一ホストへの間隔1秒以上を守りつつ、情報源間は仮想スレッドで並行化してよい</td>
+<td>NFR-03・§5</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_2">使用ライブラリ（着手時に最新版・仕様を確認）</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>ライブラリ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP 取得・リトライ</td>
+<td>Spring <code>RestClient</code> ＋ Resilience4j（リトライ／タイムアウト／サーキットブレーカー）</td>
+</tr>
+<tr>
+<td>RSS/Atom 解析</td>
+<td>ROME（rome-tools）</td>
+</tr>
+<tr>
+<td>HTML 解析（専用パーサー）</td>
+<td>jsoup</td>
+</tr>
+<tr>
+<td>robots.txt 解析</td>
+<td>crawler-commons（<code>SimpleRobotRules</code>）</td>
+</tr>
+<tr>
+<td>LLM 構造化</td>
+<td>anthropic-sdk-java（<code>LlmStructurer</code> I/F ＋ <code>LlmBudgetGuard</code>）</td>
+</tr>
+<tr>
+<td>LINE 送信</td>
+<td>line-bot-sdk-java</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="1-bd-batch-c">1. 収集バッチ（BD-BATCH-C）</h2>
+<h3 id="11">1.1 目的・入出力</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>情報源から最新情報を取得し、<strong>自作要約＋メタ＋元URL</strong>として <code>Articles</code> に登録、有効テーマと突合する（FR-02）</td>
+</tr>
+<tr>
+<td>入力</td>
+<td><code>Sources</code>（収集対象）／各情報源の RSS・HTML／有効な <code>Themes</code>・<code>ThemeCategories</code></td>
+</tr>
+<tr>
+<td>出力</td>
+<td><code>Articles</code>（INSERT）／<code>ArticleThemeMatches</code>／<code>CrawlLogs</code>／<code>LlmUsageLogs</code>／<code>Sources.last_fetched_at</code> 更新</td>
+</tr>
+<tr>
+<td>呼ぶ外部</td>
+<td>情報源サイト（GET）／Claude API（<strong>不足時のみ</strong>・予算内のみ）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="12">1.2 処理フロー</h3>
+<pre class="mermaid">flowchart TD
+    S(["収集バッチ起動：CommandLineRunner"]) --&gt; L1["収集対象を取得：is_active=true かつ terms_reviewed=true・規約ゲート"]
+    L1 --&gt; LOOP{{"情報源ごとに繰り返し・障害分離"}}
+    LOOP --&gt; F1["取得方式を選択：RSS → 専用パーサー → LLM のフォールバック"]
+    F1 --&gt; R1{"robotsゲート：robots.txt で許可?・日次キャッシュ"}
+    R1 --&gt;|Disallow・取得エラーは安全側でスキップ| SKIP["当該URLをスキップし CrawlLogs に記録"]
+    R1 --&gt;|Allow| G1["取得：RestClient＋Resilience4j・同一ホスト間隔1秒以上・UA に連絡先"]
+    G1 --&gt; N1["URL正規化：クエリ除去・リダイレクト解決 → ハッシュ化"]
+    N1 --&gt; D1{"url_hash が既存?"}
+    D1 --&gt;|あり| DUP["重複：登録しない・UNIQUE制約が一次担保"]
+    D1 --&gt;|なし| B1{"当月LLMコスト &lt; 上限?・予算ガード"}
+    B1 --&gt;|超過| X1["LLMを呼ばず RSS・専用パーサーの結果で登録"]
+    B1 --&gt;|OK| E1["抽出：タイトル・カテゴリ・発生日・種別・場所・要約。不足時のみLLM構造化"]
+    X1 --&gt; INS["Articles へ INSERT：要約＋メタ＋元URL・本文/画像は保存しない"]
+    E1 --&gt; INS
+    INS --&gt; M1["有効テーマと突合 → ArticleThemeMatches"]
+    M1 --&gt; LOG["CrawlLogs 更新・LLM呼出時は LlmUsageLogs 記録"]
+    SKIP --&gt; LOG
+    DUP --&gt; LOG
+    LOG --&gt; LOOP
+    LOOP --&gt;|全情報源完了| END(["終了：プロセス終了"])
+</pre>
+<h3 id="13">1.3 ステップ詳細</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>ステップ</th>
+<th>内容</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-BATCH-C-01</td>
+<td>収集対象抽出</td>
+<td><strong>規約ゲート</strong>：<code>is_active=true AND terms_reviewed=true</code> の情報源のみループ対象。未確認は集めない</td>
+<td>FR-02-12</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-02</td>
+<td>取得方式の選択</td>
+<td><code>fetch_type</code> に従い <strong>RSS → 専用パーサー → LLM</strong> の順（コスト・権利・安定性で有利な順）</td>
+<td>FR-02-01〜04</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-03</td>
+<td>robotsゲート</td>
+<td>取得直前に対象ホストの robots.txt を判定（<strong>日次キャッシュ</strong>）。Disallow はスキップし <code>CrawlLogs</code> 記録。取得できない/無い＝許可扱いだが、<strong>取得エラー（タイムアウト等）は安全側で当日スキップ</strong>。<code>Crawl-delay</code> があれば従う</td>
+<td>FR-02-05</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-04</td>
+<td>取得</td>
+<td><code>RestClient</code>＋Resilience4j（リトライ／タイムアウト／CB）。<strong>同一ホスト間隔1秒以上</strong>、User-Agent に<strong>アプリ名＋連絡先</strong></td>
+<td>FR-02-05・§9</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-05</td>
+<td>URL正規化・ハッシュ</td>
+<td>クエリ除去・リダイレクト解決後に正規化 → ハッシュ化（同一判定キー）</td>
+<td>FR-02-07</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-06</td>
+<td>重複判定（一次）</td>
+<td><code>url_hash</code> が既存なら登録しない。<strong>INSERT 時の UNIQUE 制約違反は正常系</strong>として握りつぶす（冪等の最終防衛線）</td>
+<td>FR-02-08・NFR-07</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-07</td>
+<td>LLM予算ガード</td>
+<td>LLM 構造化の<strong>直前</strong>に当月累計コスト（<code>LlmUsageLogs</code> 集計・安全マージン込み）を判定。上限到達なら <strong>LLM を呼ばず RSS/パーサー結果で登録</strong>（収集は継続）</td>
+<td>FR-02-11・NFR-06</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-08</td>
+<td>抽出・マッピング</td>
+<td>タイトル／カテゴリ／発生日（代表日・原文・精度）／<strong>発生日種別</strong>／場所／要約 を抽出。RSS/パーサーで埋まらない項目のみ LLM。<strong>要約は自作</strong>（本文転載しない）</td>
+<td>FR-02-06・§9</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-09</td>
+<td>発生日種別の決定</td>
+<td>①カテゴリ既定 → ②原文キーワード補正 → ③<strong>LLM を呼ぶ記事のみ</strong>出力に種別を含める。<strong>種別のために LLM を新規に呼ばない</strong></td>
+<td>§1 ビジネスルール・EventDateKind</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-10</td>
+<td>登録</td>
+<td><code>Articles</code> に INSERT（要約＋メタ＋元URL）。<code>event_date</code> が NULL なら整列は <code>created_at</code> 代理（式インデックス）</td>
+<td>FR-02・SC-02</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-11</td>
+<td>類似グルーピング</td>
+<td>別サイトの同一情報をタイトル類似度＋発生日で束ね <code>group_key</code> を付与（Phase 2）</td>
+<td>FR-02-09</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-12</td>
+<td>テーマ突合</td>
+<td>収集記事を有効テーマのキーワードと突合し <code>ArticleThemeMatches</code> を永続化（複合PKで重複突合防止）</td>
+<td>FR-02-10</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-13</td>
+<td>ログ記録</td>
+<td>情報源単位に <code>CrawlLogs</code>（件数・新規数・status・エラー）。LLM 呼出は <code>LlmUsageLogs</code>（usage×単価で概算コスト）</td>
+<td>§8・FR-06-05/06</td>
+</tr>
+<tr>
+<td>BD-BATCH-C-14</td>
+<td>障害分離</td>
+<td>1情報源で例外→握って <code>CrawlLogs</code> に Failed/PartialError を残し次の情報源へ</td>
+<td>NFR-10</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>フォールバックの意味</strong>: RSS で骨格（タイトル・日付・カテゴリ）が取れれば LLM 不要＝コスト最小。RSS で不足する項目だけ専用パーサー→LLM で補完する。予算ガード（C-07）で上限到達時は LLM を飛ばしても<strong>収集自体は止めない</strong>。</p>
+</blockquote>
+<hr />
+<h2 id="2-bd-batch-n">2. 通知バッチ（BD-BATCH-N）</h2>
+<h3 id="21">2.1 目的・入出力</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目的</td>
+<td>お気に入り対象の<strong>未通知の新着</strong>を LINE に1通（Flexカルーセル）で届ける（FR-03）。<strong>LLM 不使用</strong></td>
+</tr>
+<tr>
+<td>入力</td>
+<td><code>ArticleNotifications</code>（未通知判定）／<code>FavoriteThemes</code>・<code>FavoriteSources</code>（通知ON）／<code>Users</code>（notify_enabled・line_user_id・last_notified_at）／<code>NotificationLogs</code>（当月通数）</td>
+</tr>
+<tr>
+<td>出力</td>
+<td>LINE push（外部）／<code>ArticleNotifications</code>（Delivered/GaveUp）／<code>NotificationLogs</code>（通数）／<code>Users.last_notified_at</code></td>
+</tr>
+<tr>
+<td>呼ぶ外部</td>
+<td>LINE Messaging API（push）のみ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="22">2.2 処理フロー</h3>
+<pre class="mermaid">flowchart TD
+    S(["通知バッチ起動：LLM不使用"]) --&gt; U1["通知対象ユーザーを取得：notify_enabled=true かつ line_user_id あり"]
+    U1 --&gt; LOOP{{"ユーザーごとに繰り返し・障害分離"}}
+    LOOP --&gt; C1{"本日すでに通知済?・last_notified_at を JST 日付で判定"}
+    C1 --&gt;|はい| NEXT["このユーザーは送らない・次へ"]
+    C1 --&gt;|いいえ| P1["未通知の新着を抽出：ArticleNotifications に行が無い記事"]
+    P1 --&gt; P2["お気に入り絞込：通知ONのテーマ・情報源に該当する記事のみ"]
+    P2 --&gt; P3{"送る新着がある?"}
+    P3 --&gt;|無し| NEXT
+    P3 --&gt;|有り| Q1{"当月通数に空きがある?・200通"}
+    Q1 --&gt;|上限到達| STOP["送信停止・未通知バッジでアプリ内表示に委ねる"]
+    Q1 --&gt;|空きあり| CA["Flexカルーセルに集約：12件上限・超過は他N件はアプリで確認"]
+    CA --&gt; SEND["LINE push 送信：冪等キー付与"]
+    SEND --&gt; R1{"送信結果を NotifyStatus に分類"}
+    R1 --&gt;|成功| OK1["ArticleNotifications=Delivered・NotificationLogs 通数加算・last_notified_at 更新"]
+    R1 --&gt;|一時障害・レート・認証失効・タイムアウト| KEEP["行を作らず未通知のまま・次回起動で再送。⑤は冪等キーで二重防止"]
+    R1 --&gt;|形式エラー・認証失効が5日超過| GU["ArticleNotifications=GaveUp・再送対象から除外"]
+    OK1 --&gt; LOOP
+    KEEP --&gt; LOOP
+    GU --&gt; LOOP
+    STOP --&gt; LOOP
+    NEXT --&gt; LOOP
+    LOOP --&gt;|全ユーザー完了| END(["終了"])
+</pre>
+<h3 id="23">2.3 ステップ詳細</h3>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>ステップ</th>
+<th>内容</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BD-BATCH-N-01</td>
+<td>対象ユーザー抽出</td>
+<td><code>notify_enabled=true</code> かつ <code>line_user_id</code> 登録済みの利用者のみ</td>
+<td>FR-07-03</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-02</td>
+<td>同日2回目の抑止</td>
+<td><code>Users.last_notified_at</code> を <strong>JST 日付</strong>で判定。本日既送なら送らない</td>
+<td>FR-03-04・§6</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-03</td>
+<td>未通知抽出</td>
+<td><code>ArticleNotifications</code> に <code>(user_id, article_id)</code> 行が<strong>無い</strong>記事＝未通知（未通知フラグ方式）</td>
+<td>FR-03-01</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-04</td>
+<td>お気に入り絞込</td>
+<td>通知ON の <code>FavoriteThemes</code>／<code>FavoriteSources</code> に該当する記事のみ（テーマは <code>ArticleThemeMatches</code> 経由、情報源は <code>Articles.source_id</code>）</td>
+<td>FR-03-02・FR-05-04</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-05</td>
+<td>通数チェック</td>
+<td>当月 <code>NotificationLogs</code> の <code>SUM(message_count)</code>（JST月）を確認。<strong>上限（200通）到達で送信停止</strong>しアプリ内表示へ切替</td>
+<td>FR-03-05・§6</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-06</td>
+<td>カルーセル集約</td>
+<td>複数記事を<strong>1通</strong>（Flex Message カルーセル）に集約。<strong>バブル上限（おおむね12件・着手時に公式確認）超過は切り詰め</strong>、残りは「他◯件はアプリで確認」（分割送信しない＝無料枠節約）</td>
+<td>FR-03-03</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-07</td>
+<td>送信（冪等キー）</td>
+<td>LINE push に<strong>冪等キー</strong>（<code>X-Line-Retry-Key</code> 相当・着手時に確認）を付与。⑤タイムアウト再送時の二重配信を防ぐ</td>
+<td>FR-03-08・NFR-07</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-08</td>
+<td>結果分類</td>
+<td>HTTP ステータス＋例外種別で <code>NotifyStatus</code> に分類（§2.4）</td>
+<td>FR-03-07・§8.1</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-09</td>
+<td>成功時記録</td>
+<td><code>ArticleNotifications</code> に <strong>Delivered</strong> を INSERT（複合PKで重複通知防止）、<code>NotificationLogs</code> に通数、<code>Users.last_notified_at</code> を更新</td>
+<td>FR-03-06・NFR-07</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-10</td>
+<td>再送/打ち切り</td>
+<td>再送（①②③⑤）＝<strong>行を作らず未通知のまま</strong>次回起動で再送。打ち切り（④・③の5日超過）＝<code>ArticleNotifications</code> に <strong>GaveUp</strong> を記録し再送対象外。GaveUp は SC-02 で「未通知（未達）」表示</td>
+<td>FR-03-07・FR-04-06</td>
+</tr>
+<tr>
+<td>BD-BATCH-N-11</td>
+<td>障害分離</td>
+<td>1利用者の送信失敗が他利用者の送信を止めない</td>
+<td>NFR-10</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="24-notifystatus">2.4 送信失敗の分類・再送（NotifyStatus）</h3>
+<p>判別は LINE API の HTTP ステータス＋例外種別。常駐しないため「再送」は原則<strong>次回起動時</strong>（同一実行内は Resilience4j による秒単位の短いリトライのみ）。</p>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>分類</th>
+<th>判別</th>
+<th>同一実行内リトライ</th>
+<th>次回起動で再送</th>
+<th>打ち切り</th>
+<th>記録</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①TempError</td>
+<td>HTTP 5xx／接続断</td>
+<td>○（指数バックオフ）</td>
+<td>○</td>
+<td>—</td>
+<td>未通知のまま</td>
+</tr>
+<tr>
+<td>②RateLimited</td>
+<td>HTTP 429</td>
+<td>○（<code>Retry-After</code> 短ければ従う）</td>
+<td>○</td>
+<td>—</td>
+<td>未通知のまま</td>
+</tr>
+<tr>
+<td>③AuthFailed</td>
+<td>HTTP 401</td>
+<td>✗</td>
+<td>○（トークン修正後）</td>
+<td><strong>5日超過で GaveUp</strong></td>
+<td>未通知→超過で GaveUp</td>
+</tr>
+<tr>
+<td>③Blocked</td>
+<td>push では判別困難</td>
+<td>✗</td>
+<td>○（友だち追加後）</td>
+<td><strong>5日超過で GaveUp</strong></td>
+<td>未通知→超過で GaveUp</td>
+</tr>
+<tr>
+<td>④FormatError</td>
+<td>HTTP 400＋詳細</td>
+<td>✗</td>
+<td>✗</td>
+<td><strong>○ GaveUp（不具合）</strong></td>
+<td>GaveUp</td>
+</tr>
+<tr>
+<td>⑤Timeout</td>
+<td>読み取りタイムアウト</td>
+<td>✗</td>
+<td>○（<strong>冪等キー付き</strong>）</td>
+<td>—</td>
+<td>未通知のまま</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>受信側の安全網: 新着は LINE の成否に関わらず<strong>必ずアプリ内（タイムライン）に入る</strong>。アプリが情報の正。③は SC-05 の LINE連携ステータス＋友だち追加案内で受信側が自己解決。</p>
+</blockquote>
+<hr />
+<h2 id="3-db">3. 冪等性の担保点（バッチ×DB）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>担保</th>
+<th>ステップ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>記事の重複登録</td>
+<td><code>Articles.url_hash</code> UNIQUE（違反は正常系で握る）</td>
+<td>BD-BATCH-C-06</td>
+</tr>
+<tr>
+<td>記事×テーマの重複突合</td>
+<td><code>ArticleThemeMatches</code> 複合PK</td>
+<td>BD-BATCH-C-12</td>
+</tr>
+<tr>
+<td>重複通知（再送しない）</td>
+<td><code>ArticleNotifications</code> 複合PK（行が在る＝通知済 or 打ち切り）</td>
+<td>BD-BATCH-N-09/10</td>
+</tr>
+<tr>
+<td>同日2回目の通知抑止</td>
+<td><code>Users.last_notified_at</code> を JST 日付で判定</td>
+<td>BD-BATCH-N-02</td>
+</tr>
+<tr>
+<td>⑤タイムアウト再送の二重配信防止</td>
+<td>LINE 冪等キー</td>
+<td>BD-BATCH-N-07</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>未通知＝<code>ArticleNotifications</code> に行が無い状態</strong>。送信失敗（①②③⑤）では行を作らず、成功（Delivered）・打ち切り（GaveUp）でのみ行を作る。これにより「複数回起動されても、成功した通知は再送されず、失敗した通知は次回に届く」を DB レベルで保証する。</p>
+</blockquote>
+<hr />
+<h2 id="4">4. トレーサビリティ</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>要件</th>
+<th>バッチ設計</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-02-01〜12（収集）</td>
+<td>BD-BATCH-C-01〜14</td>
+</tr>
+<tr>
+<td>FR-03-01〜08（通知）</td>
+<td>BD-BATCH-N-01〜11</td>
+</tr>
+<tr>
+<td>§8.1（LINE失敗分類）</td>
+<td>§2.4</td>
+</tr>
+<tr>
+<td>NFR-03/06/07/08/10（性能・コスト・冪等・日時・障害分離）</td>
+<td>§0・各フロー</td>
+</tr>
+<tr>
+<td>TBL-Articles/ArticleThemeMatches/ArticleNotifications/NotificationLogs/CrawlLogs/LlmUsageLogs</td>
+<td>§1.1・§2.1・§3</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>外部API（Claude／LINE）の入出力スキーマ・通数カウント・冪等キーの詳細は <a href="外部IF設計書.md"><code>外部IF設計書.md</code></a> に、画面表示メッセージは <a href="メッセージ・エラー一覧.md"><code>メッセージ・エラー一覧.md</code></a> に分離する。</p>
+</blockquote>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>02_BasicDesign/バッチ設計書.md</code>）</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  (function(){
+    if (!window.mermaid) return;
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict', flowchart:{useMaxWidth:true}, er:{useMaxWidth:true} });
+  })();
+</script>
+
+</body>
+</html>
