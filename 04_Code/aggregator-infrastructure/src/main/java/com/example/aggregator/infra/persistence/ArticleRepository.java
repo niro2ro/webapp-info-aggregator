@@ -20,7 +20,7 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
      */
     @Query(value = """
             SELECT * FROM articles a
-            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            ORDER BY COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findTimeline(Pageable pageable);
 
@@ -29,7 +29,7 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
             SELECT a.* FROM articles a
             JOIN article_theme_matches m ON m.article_id = a.id
             WHERE m.theme_id = :themeId
-            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            ORDER BY COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findTimelineByTheme(Long themeId, Pageable pageable);
 
@@ -38,7 +38,7 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
             SELECT a.* FROM articles a
             JOIN bookmarks b ON b.article_id = a.id
             WHERE b.user_id = :userId
-            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            ORDER BY COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findBookmarkedByUser(Long userId);
 
@@ -65,7 +65,7 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
                         SELECT 1 FROM favorite_sources fs
                         WHERE fs.source_id = a.source_id AND fs.user_id = :userId AND fs.notify_enabled = true)
                   )
-            ORDER BY COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
+            ORDER BY COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date) DESC, a.created_at DESC
             """, nativeQuery = true)
     List<ArticleEntity> findUnnotifiedFavorited(Long userId, Pageable pageable);
 }

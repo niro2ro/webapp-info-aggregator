@@ -3,6 +3,7 @@ package com.example.aggregator.web.ui;
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.Category;
 import com.example.aggregator.domain.model.ThemeEntity;
+import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.infra.persistence.ArticleQuery;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
@@ -167,8 +168,23 @@ public class TimelineView extends VerticalLayout {
     }
 
     private Div card(ArticleEntity a, boolean read, boolean bookmarked) {
-        String kind = a.getEventDateKind().label();
-        String date = a.getEventDate() != null ? a.getEventDate().toString() : "(日付不明)";
+        // 代表日の表示を明確化:
+        //  ・実イベント日(event_date)があれば「発売日/開催日/放送日 + 日付」
+        //  ・無ければ「掲載日(published_at)」、それも無ければ「収集日(created_at)」
+        String kind;
+        String date;
+        if (a.getEventDate() != null) {
+            kind = a.getEventDateKind().label();
+            if (kind == null || kind.isEmpty()) kind = "予定日";
+            date = a.getEventDate().toString();
+        } else if (a.getPublishedAt() != null) {
+            kind = "掲載日";
+            date = a.getPublishedAt().atZone(TimeZones.JST).toLocalDate().toString();
+        } else {
+            kind = "収集日";
+            date = a.getCreatedAt() != null
+                    ? a.getCreatedAt().atZone(TimeZones.JST).toLocalDate().toString() : "-";
+        }
         Span kindSpan = new Span(kind.isEmpty() ? " " : kind);
         kindSpan.getStyle().set("display", "block").set("font-size", "11px")
                 .set("color", "var(--lumo-secondary-text-color)");
@@ -237,10 +253,11 @@ public class TimelineView extends VerticalLayout {
 
     private String sortLabel(ArticleQuery.Sort s) {
         return switch (s) {
-            case EVENT_DESC -> "発生日順（新しい順）";
-            case EVENT_ASC -> "発生日順（古い順）";
-            case RELEASE -> "発売日順";
-            case COLLECTED_DESC -> "収集日順";
+            case EVENT_DESC -> "日付順（新しい順）";       // 実イベント日→掲載日→収集日 の代表日
+            case EVENT_ASC -> "日付順（古い順）";
+            case RELEASE -> "発売日が近い順";              // 実際の発売日でソート
+            case PUBLISHED_DESC -> "記事の掲載日順";        // 記事が配信された日
+            case COLLECTED_DESC -> "収集日順";             // こちらが取り込んだ日
         };
     }
 }

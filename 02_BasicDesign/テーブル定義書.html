@@ -555,11 +555,18 @@ strong{font-weight:700;}
 <td>Category enum</td>
 </tr>
 <tr>
-<td>発生日（代表日）</td>
+<td>実イベント日（代表日）</td>
 <td>event_date</td>
 <td>date</td>
 <td>NULL</td>
-<td>並び替え・期間フィルタ用</td>
+<td>発売日/開催日/放送日など<strong>記事を読んで分かる実際の日付</strong>。LLM/パーサーが埋める（不明は NULL）。並び替え・期間フィルタ用</td>
+</tr>
+<tr>
+<td>掲載日</td>
+<td>published_at</td>
+<td>timestamptz</td>
+<td>NULL</td>
+<td>記事が配信された日時（RSSの日付）＝「記事発生日」。V4で追加。event_date と役割分離</td>
 </tr>
 <tr>
 <td>発生日原文</td>
@@ -663,8 +670,13 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>ix_articles_timeline</td>
-<td>((COALESCE(event_date, (created_at AT TIME ZONE 'UTC')::date)))</td>
-<td><strong>タイムライン整列キーの式インデックス</strong>（FR-04-01・一覧応答2秒 NFR-04）。※<code>timestamptz::date</code> はセッションTZ依存で index 式に使えないため固定ゾーン(UTC)へ変換してから date 化（実装Phase0で確定）</td>
+<td>((COALESCE(event_date, (published_at AT TIME ZONE 'UTC')::date, (created_at AT TIME ZONE 'UTC')::date)))</td>
+<td><strong>タイムライン整列キーの式インデックス</strong>（FR-04-01・一覧応答2秒 NFR-04）。代表日＝実イベント日→掲載日→収集日 の順にフォールバック（V4で published_at を追加）。※<code>timestamptz::date</code> は固定ゾーン(UTC)へ変換してから date 化（IMMUTABLE要件）</td>
+</tr>
+<tr>
+<td>ix_articles_published_at</td>
+<td>(published_at)</td>
+<td>掲載日順ソート（V4追加）</td>
 </tr>
 <tr>
 <td>gin_articles_title_trgm</td>

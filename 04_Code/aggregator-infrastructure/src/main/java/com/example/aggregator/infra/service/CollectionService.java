@@ -12,9 +12,9 @@ import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
-import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 import com.example.aggregator.infra.persistence.ArticleRepository;
@@ -101,11 +101,12 @@ public class CollectionService {
         String eventDateText = null;
         String location = null;
 
-        // Phase 1 暫定: RSS の配信日時を代表日として扱う（JST 日付）。
-        LocalDate eventDate = item.publishedAt() != null
-                ? item.publishedAt().atZone(TimeZones.JST).toLocalDate() : null;
-        EventDatePrecision precision = eventDate != null
-                ? EventDatePrecision.EXACT : EventDatePrecision.UNKNOWN;
+        // 記事の掲載日（配信日）は published_at に保持する（＝「記事発生日」）。
+        // event_date は「実イベント日（発売日/開催日/放送日）」専用にし、RSS 配信日を代入しない。
+        // 実イベント日は記事本文の理解が要るため、LLM/パーサーが埋める（無ければ NULL のまま）。
+        Instant publishedAt = item.publishedAt();
+        LocalDate eventDate = null;
+        EventDatePrecision precision = EventDatePrecision.UNKNOWN;
 
         // --- ② LLM フォールバック（外部IF §1.1 ③）: RSS で「発生日不明」または「分類不明」のときだけ ---
         // 呼ぶ。既定の NoOp 実装（キー未設定）では常に空が返り、①の値のまま進む＝Phase 1 と同一挙動。
@@ -138,6 +139,7 @@ public class CollectionService {
                 .title(item.title())
                 .category(category)
                 .eventDate(eventDate)
+                .publishedAt(publishedAt)
                 .eventDateText(eventDateText)
                 .eventDatePrecision(precision)
                 .eventDateKind(kind)
