@@ -33,6 +33,9 @@ public class ArticleEntity {
     @Column(name = "event_date")
     private LocalDate eventDate;
 
+    @Column(name = "published_at")
+    private Instant publishedAt;
+
     @Column(name = "event_date_text")
     private String eventDateText;
 
@@ -67,6 +70,7 @@ public class ArticleEntity {
         this.title = b.title;
         this.category = b.category;
         this.eventDate = b.eventDate;
+        this.publishedAt = b.publishedAt;
         this.eventDateText = b.eventDateText;
         this.eventDatePrecision = b.eventDatePrecision;
         this.eventDateKind = b.eventDateKind;
@@ -82,6 +86,7 @@ public class ArticleEntity {
     public String getTitle() { return title; }
     public Category getCategory() { return category; }
     public LocalDate getEventDate() { return eventDate; }
+    public Instant getPublishedAt() { return publishedAt; }
     public String getEventDateText() { return eventDateText; }
     public EventDatePrecision getEventDatePrecision() { return eventDatePrecision; }
     public EventDateKind getEventDateKind() { return eventDateKind; }
@@ -99,6 +104,7 @@ public class ArticleEntity {
         private String title;
         private Category category;
         private LocalDate eventDate;
+        private Instant publishedAt;
         private String eventDateText;
         private EventDatePrecision eventDatePrecision = EventDatePrecision.UNKNOWN;
         private EventDateKind eventDateKind = EventDateKind.OTHER;
@@ -112,6 +118,7 @@ public class ArticleEntity {
         public Builder title(String v) { this.title = v; return this; }
         public Builder category(Category v) { this.category = v; return this; }
         public Builder eventDate(LocalDate v) { this.eventDate = v; return this; }
+        public Builder publishedAt(Instant v) { this.publishedAt = v; return this; }
         public Builder eventDateText(String v) { this.eventDateText = v; return this; }
         public Builder eventDatePrecision(EventDatePrecision v) { this.eventDatePrecision = v; return this; }
         public Builder eventDateKind(EventDateKind v) { this.eventDateKind = v; return this; }

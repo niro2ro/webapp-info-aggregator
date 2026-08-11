@@ -54,20 +54,21 @@ class CollectionServiceFallbackTest {
     }
 
     @Test
-    @DisplayName("LLM が空（NoOp）のときは RSS 由来の値のまま登録される（Phase 1 と同一挙動）")
-    void noOpKeepsRssValues() {
+    @DisplayName("LLMが空(NoOp)なら実イベント日(event_date)はNULLで、RSS配信日はpublished_atに入る")
+    void noOpSeparatesPublishedFromEvent() {
         when(articles.existsByUrlHash(any())).thenReturn(false);
         when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
         LlmStructurer noop = input -> Optional.empty();
 
-        // publishedAt=null → precision UNKNOWN、categoryHint=null → OTHER（LLM 分岐に入るが空なので不変）
-        RawItem item = new RawItem("新商品の予約開始", "https://example.com/a", null, "本文の説明", null);
+        java.time.Instant pub = java.time.Instant.parse("2026-09-18T00:00:00Z");
+        RawItem item = new RawItem("新商品の予約開始", "https://example.com/a", pub, "本文の説明", null);
         boolean added = service(noop).ingestOne(source(), item, List.of());
 
         assertThat(added).isTrue();
         ArticleEntity saved = captureSaved();
         assertThat(saved.getCategory()).isEqualTo(Category.OTHER);
-        assertThat(saved.getEventDate()).isNull();
+        assertThat(saved.getEventDate()).isNull();                 // 実イベント日は読まないと不明
+        assertThat(saved.getPublishedAt()).isEqualTo(pub);         // 記事の掲載日はRSS配信日
         assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.UNKNOWN);
         assertThat(saved.getSummary()).isEqualTo("本文の説明");
     }

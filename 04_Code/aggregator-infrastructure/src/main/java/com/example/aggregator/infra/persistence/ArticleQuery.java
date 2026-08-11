@@ -17,7 +17,7 @@ public record ArticleQuery(
         Sort sort,
         int limit) {
 
-    public enum Sort { EVENT_DESC, EVENT_ASC, RELEASE, COLLECTED_DESC }
+    public enum Sort { EVENT_DESC, EVENT_ASC, RELEASE, PUBLISHED_DESC, COLLECTED_DESC }
 
     public static ArticleQuery defaults(Long userId) {
         return new ArticleQuery(userId, null, null, null, null, false, Sort.EVENT_DESC, 50);

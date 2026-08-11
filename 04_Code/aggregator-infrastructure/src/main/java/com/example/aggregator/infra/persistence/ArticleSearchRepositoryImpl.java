@@ -21,7 +21,7 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     private EntityManager em;
 
     private static final String TIMELINE_KEY =
-            "COALESCE(a.event_date, (a.created_at AT TIME ZONE 'UTC')::date)";
+            "COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date)";
 
     @Override
     public List<ArticleEntity> search(ArticleQuery q) {
@@ -82,6 +82,7 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
             case EVENT_DESC -> TIMELINE_KEY + " DESC, a.created_at DESC";
             case EVENT_ASC -> TIMELINE_KEY + " ASC, a.created_at ASC";
             case RELEASE -> "a.event_date ASC NULLS LAST, a.created_at DESC";
+            case PUBLISHED_DESC -> "a.published_at DESC NULLS LAST, a.created_at DESC";
             case COLLECTED_DESC -> "a.created_at DESC";
         };
     }
