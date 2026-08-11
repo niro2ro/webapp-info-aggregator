@@ -2,10 +2,10 @@ package com.example.aggregator.web.ui;
 
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.infra.persistence.ArticleRepository;
+import com.example.aggregator.infra.service.CollectionRunner;
 import com.example.aggregator.infra.service.CostService;
 import com.example.aggregator.infra.service.NotificationCountService;
 import com.example.aggregator.infra.service.NotificationService;
-import com.example.aggregator.web.SampleIngestService;
 import com.example.aggregator.web.security.AdminOnly;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -30,7 +30,7 @@ import org.springframework.data.domain.PageRequest;
 @PageTitle("管理ダッシュボード | アグリゲーター")
 public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
-    private final SampleIngestService sampleIngest;
+    private final CollectionRunner collectionRunner;
     private final NotificationService notificationService;
     private final NotificationCountService counts;
     private final CostService cost;
@@ -40,9 +40,9 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
     private final Span llmCost = new Span();
     private final Grid<ArticleEntity> recent = new Grid<>(ArticleEntity.class, false);
 
-    public AdminDashboardView(SampleIngestService sampleIngest, NotificationService notificationService,
+    public AdminDashboardView(CollectionRunner collectionRunner, NotificationService notificationService,
                               NotificationCountService counts, CostService cost, ArticleRepository articles) {
-        this.sampleIngest = sampleIngest;
+        this.collectionRunner = collectionRunner;
         this.notificationService = notificationService;
         this.counts = counts;
         this.cost = cost;
@@ -62,9 +62,15 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
     private VerticalLayout batchSection() {
         VerticalLayout box = card("バッチ手動実行");
         Button collect = new Button("収集バッチ実行", e -> {
-            var r = sampleIngest.ingestSample();   // 実サイト巡回の本配線までの暫定（同梱サンプルRSSで収集）
+            var r = collectionRunner.run();   // 規約確認済の情報源から実サイト収集（robots/間隔/UA を遵守）
             refresh();
-            Notification.show("収集: 取得" + r.total() + "件 / 新規" + r.registered() + " / 重複" + r.duplicated());
+            if (r.sources() == 0) {
+                Notification.show("収集対象0件。「情報源マスタ」で規約確認済（有効かつ規約OK）の情報源を用意してください。",
+                        5000, Notification.Position.MIDDLE);
+            } else {
+                Notification.show("収集: 情報源" + r.sources() + " / 成功" + r.succeeded() + " / 失敗" + r.failed()
+                        + " / 取得" + r.totalFetched() + " / 新規" + r.totalRegistered());
+            }
         });
         collect.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button notify = new Button("通知バッチ実行", e -> {
@@ -73,7 +79,8 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
             Notification.show("通知: 対象" + r.usersProcessed() + " / 通知" + r.usersNotified()
                     + " / 通数" + r.messagesSent());
         });
-        Span note = new Span("※収集は現在サンプルRSSでの実行です（実サイト巡回の本配線は整備中）。通知はLINE無効時はログのみ。");
+        Span note = new Span("※収集は規約確認済の情報源から実サイト取得します（robots.txt・同一ホスト1秒間隔・"
+                + "連絡先入りUAを遵守）。通知はLINE無効時はログのみ。");
         note.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
         box.add(new HorizontalLayout(collect, notify), note);
         return box;

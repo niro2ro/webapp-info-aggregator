@@ -3,6 +3,7 @@ package com.example.aggregator.batch.collection;
 import com.example.aggregator.infra.notify.LineBotNotifier;
 import com.example.aggregator.infra.notify.LineProperties;
 import com.example.aggregator.infra.notify.NoOpLineNotifier;
+import com.example.aggregator.infra.service.CollectionRunner;
 import com.example.aggregator.infra.service.NotificationCountService;
 import com.example.aggregator.infra.service.NotificationService;
 import org.slf4j.Logger;
@@ -36,10 +37,16 @@ public class CollectionBatchApplication {
         SpringApplication.run(CollectionBatchApplication.class, args);
     }
 
-    /** ワンショット処理。CommandLineRunner は起動後に1回実行され、完了するとプロセスは終了する。 */
+    /**
+     * ワンショット処理。CommandLineRunner は起動後に1回実行され、完了するとプロセスは終了する。
+     * 規約確認済（terms_reviewed=true）の情報源から実収集する（対象0件なら何もせず終了）。
+     */
     @Bean
-    CommandLineRunner collectionRunner() {
-        return args -> log.info("[収集バッチ] 起動確認（収集オーケストレーションは整備中。"
-                + "CollectionService に RSS→パーサー→LLM フォールバックを配線済み）");
+    CommandLineRunner collectionRunner(CollectionRunner collectionRunner) {
+        return args -> {
+            CollectionRunner.RunResult r = collectionRunner.run();
+            log.info("[収集バッチ] 完了: 情報源{} 成功{} 失敗{} 取得{} 新規{}",
+                    r.sources(), r.succeeded(), r.failed(), r.totalFetched(), r.totalRegistered());
+        };
     }
 }

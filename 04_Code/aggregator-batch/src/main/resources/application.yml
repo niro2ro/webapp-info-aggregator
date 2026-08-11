@@ -22,6 +22,13 @@ spring:
 app:
   user-agent: "${APP_USER_AGENT:Aggregator/0.1 (contact: you@example.com)}"
 
+  # 収集のHTTPマナー・信頼性（BD-BATCH-C-04）。既定で動作し、必要時に環境変数で調整。
+  collect:
+    connect-timeout-ms: ${COLLECT_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${COLLECT_READ_TIMEOUT_MS:10000}
+    max-attempts: ${COLLECT_MAX_ATTEMPTS:3}
+    min-host-interval-ms: ${COLLECT_MIN_HOST_INTERVAL_MS:1000}
+
   # LLM（収集時の構造化のみ）。既定 enabled=false → NoOp 実装でキー無しでも起動（開発/CI）。
   # 本番は enabled=true にし ANTHROPIC_API_KEY を環境変数で注入（application.yml に実値を書かない）。
   llm:
