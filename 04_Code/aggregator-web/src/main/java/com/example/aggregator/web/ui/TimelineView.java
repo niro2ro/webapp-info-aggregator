@@ -2,9 +2,12 @@ package com.example.aggregator.web.ui;
 
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.Category;
+import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.infra.persistence.ArticleQuery;
 import com.example.aggregator.infra.persistence.ArticleRepository;
+import com.example.aggregator.infra.persistence.ThemeRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
+import com.example.aggregator.infra.service.ThemeSearchCollector;
 import com.example.aggregator.web.SampleIngestService;
 import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.Text;
@@ -42,18 +45,24 @@ public class TimelineView extends VerticalLayout {
     private final ArticleRepository articles;
     private final SampleIngestService sampleIngest;
     private final ArticleInteractionService interaction;
+    private final ThemeRepository themes;
+    private final ThemeSearchCollector themeSearch;
 
     private final TextField search = new TextField();
     private final ComboBox<Category> categoryFilter = new ComboBox<>();
+    private final ComboBox<ThemeEntity> themeFilter = new ComboBox<>();
     private final Select<ArticleQuery.Sort> sortSelect = new Select<>();
     private final Checkbox unreadOnly = new Checkbox("未読のみ");
     private final VerticalLayout list = new VerticalLayout();
 
     public TimelineView(ArticleRepository articles, SampleIngestService sampleIngest,
-                        ArticleInteractionService interaction) {
+                        ArticleInteractionService interaction, ThemeRepository themes,
+                        ThemeSearchCollector themeSearch) {
         this.articles = articles;
         this.sampleIngest = sampleIngest;
         this.interaction = interaction;
+        this.themes = themes;
+        this.themeSearch = themeSearch;
 
         setSizeFull();
         setPadding(true);
@@ -73,6 +82,13 @@ public class TimelineView extends VerticalLayout {
         categoryFilter.setClearButtonVisible(true);
         categoryFilter.addValueChangeListener(e -> refresh());
 
+        // テーマ絞り込み（登録テーマにマッチした記事のみ表示・BD-SC-02-05）
+        themeFilter.setPlaceholder("テーマ：すべて");
+        themeFilter.setItemLabelGenerator(ThemeEntity::getKeyword);
+        themeFilter.setClearButtonVisible(true);
+        themeFilter.addValueChangeListener(e -> refresh());
+        reloadThemeItems();
+
         sortSelect.setLabel(null);
         sortSelect.setItems(ArticleQuery.Sort.values());
         sortSelect.setItemLabelGenerator(this::sortLabel);
@@ -81,25 +97,47 @@ public class TimelineView extends VerticalLayout {
 
         unreadOnly.addValueChangeListener(e -> refresh());
 
-        HorizontalLayout toolbar = new HorizontalLayout(sortSelect, categoryFilter, unreadOnly, search);
+        HorizontalLayout toolbar = new HorizontalLayout(sortSelect, themeFilter, categoryFilter, unreadOnly, search);
         toolbar.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         toolbar.setWidthFull();
         toolbar.expand(search);
+
+        // 登録テーマのキーワードで検索RSSから収集（テーマ語で最近の記事を探しに行く）
+        Button collectThemes = new Button("登録テーマの記事を収集", e -> {
+            var r = themeSearch.collectForUser(USER_ID);
+            if (r.themes() == 0) {
+                Notification.show("有効なテーマがありません。「テーマ管理」で追加してください。", 4000, Notification.Position.MIDDLE);
+            } else {
+                Notification.show("テーマ検索: テーマ" + r.themes() + " / 取得" + r.totalFetched()
+                        + " / 新規" + r.totalRegistered() + (r.failed() > 0 ? " / 失敗" + r.failed() : ""));
+            }
+            reloadThemeItems();
+            refresh();
+        });
+        collectThemes.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button collect = new Button("サンプルRSSを収集", e -> {
             sampleIngest.ensureSampleTheme();
             var r = sampleIngest.ingestSample();
             Notification.show("収集: 取得 " + r.total() + " / 新規 " + r.registered() + " / 重複 " + r.duplicated());
+            reloadThemeItems();
             refresh();
         });
-        collect.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        collect.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        HorizontalLayout actions = new HorizontalLayout(collectThemes, collect);
 
         list.setPadding(false);
         list.setSpacing(true);
         list.setWidthFull();
 
-        add(title, collect, toolbar, list);
+        add(title, actions, toolbar, list);
         refresh();
+    }
+
+    /** テーマ絞り込みドロップダウンの選択肢を、ログイン利用者の有効テーマで更新する。 */
+    private void reloadThemeItems() {
+        themeFilter.setItems(themes.findByUserIdAndActiveTrueOrderByKeyword(USER_ID));
     }
 
     private void refresh() {
@@ -108,8 +146,8 @@ public class TimelineView extends VerticalLayout {
                 USER_ID,
                 search.getValue(),
                 categoryFilter.getValue(),
-                null,
-                null,
+                null,   // 発生日種別（未使用）
+                themeFilter.getValue() == null ? null : themeFilter.getValue().getId(),   // テーマ絞り込み
                 unreadOnly.getValue(),
                 sortSelect.getValue() == null ? ArticleQuery.Sort.EVENT_DESC : sortSelect.getValue(),
                 50);
@@ -117,7 +155,8 @@ public class TimelineView extends VerticalLayout {
         Set<Long> readIds = interaction.readArticleIds(USER_ID);
         Set<Long> bmIds = interaction.bookmarkedArticleIds(USER_ID);
         if (rows.isEmpty()) {
-            Span empty = new Span("該当する記事はありません。上の「サンプルRSSを収集」で取り込むか、条件を変えてください。");
+            Span empty = new Span("該当する記事はありません。「テーマ管理」でテーマを追加し、上の"
+                    + "「登録テーマの記事を収集」を押すと、そのテーマの最近の記事を集めます（条件を変えても確認できます）。");
             empty.getStyle().set("color", "var(--lumo-secondary-text-color)");
             list.add(empty);
             return;

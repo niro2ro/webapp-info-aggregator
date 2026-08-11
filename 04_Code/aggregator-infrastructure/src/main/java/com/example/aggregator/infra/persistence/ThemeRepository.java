@@ -9,5 +9,8 @@ public interface ThemeRepository extends JpaRepository<ThemeEntity, Long> {
 
     List<ThemeEntity> findByActiveTrue();
 
+    /** 指定利用者の有効テーマ（キーワード順）。タイムラインのテーマ絞り込み・テーマ検索収集に使う。 */
+    List<ThemeEntity> findByUserIdAndActiveTrueOrderByKeyword(Long userId);
+
     boolean existsByUserIdAndKeyword(Long userId, String keyword);
 }
