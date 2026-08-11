@@ -55,5 +55,11 @@ public class CrawlLogEntity {
     }
 
     public Long getId() { return id; }
+    public Long getSourceId() { return sourceId; }
+    public Instant getStartedAt() { return startedAt; }
+    public Instant getFinishedAt() { return finishedAt; }
+    public int getItemCount() { return itemCount; }
+    public int getNewItemCount() { return newItemCount; }
     public CrawlStatus getStatus() { return status; }
+    public String getErrorMessage() { return errorMessage; }
 }

@@ -19,4 +19,13 @@ public interface LlmUsageLogRepository extends JpaRepository<LlmUsageLogEntity, 
                   >= date_trunc('month', (now() AT TIME ZONE 'Asia/Tokyo'))
             """, nativeQuery = true)
     long sumCurrentMonthMicroJpy();
+
+    /** 当月（JST 月）の集計: [呼び出し回数, 入力トークン計, 出力トークン計]（SC-07 ダッシュボード）。 */
+    @Query(value = """
+            SELECT COALESCE(COUNT(*),0), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+            FROM llm_usage_logs
+            WHERE (called_at AT TIME ZONE 'Asia/Tokyo')
+                  >= date_trunc('month', (now() AT TIME ZONE 'Asia/Tokyo'))
+            """, nativeQuery = true)
+    long[] currentMonthAggregate();
 }

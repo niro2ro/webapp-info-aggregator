@@ -61,6 +61,16 @@ public class UserService {
         return users.findById(id);
     }
 
+    /** 本人のLINE連携設定を更新（SC-05 上段）: 通知先IDと通知の全体ON/OFF。空文字は未登録(null)扱い。 */
+    @Transactional
+    public void updateLineSettings(Long userId, String lineUserId, boolean notifyEnabled) {
+        UserEntity u = users.findById(userId).orElseThrow(() -> new IllegalArgumentException("利用者が見つかりません。"));
+        String id = (lineUserId == null || lineUserId.isBlank()) ? null : lineUserId.trim();
+        u.setLineUserId(id);
+        u.setNotifyEnabled(notifyEnabled);
+        users.save(u);
+    }
+
     public List<UserEntity> all() {
         return users.findAll();
     }

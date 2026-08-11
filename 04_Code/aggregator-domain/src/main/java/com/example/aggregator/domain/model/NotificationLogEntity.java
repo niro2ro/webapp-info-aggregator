@@ -46,6 +46,7 @@ public class NotificationLogEntity {
 
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
+    public java.time.Instant getSentAt() { return sentAt; }
     public int getArticleCount() { return articleCount; }
     public int getMessageCount() { return messageCount; }
     public NotifyStatus getStatus() { return status; }
