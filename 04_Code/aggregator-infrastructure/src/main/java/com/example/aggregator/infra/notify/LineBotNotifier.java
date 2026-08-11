@@ -37,6 +37,7 @@ public class LineBotNotifier implements LineNotifier {
 
     private final MessagingApiClient client;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public LineBotNotifier(LineProperties props) {
         // builder(token): トークンで認証済みクライアントを構築（トークンは環境変数由来）。
         this.client = MessagingApiClient.builder(props.getChannelToken()).build();

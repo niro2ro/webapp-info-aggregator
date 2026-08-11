@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,9 @@ public class UserService {
     private final PasswordEncoder encoder;
     private final ConcurrentHashMap<Long, Attempt> attempts = new ConcurrentHashMap<>();
 
+    // コンストラクタが2つあるため、Spring が生成に使う本番用を @Autowired で明示する
+    //（複数コンストラクタで無指定だと Spring は引数なしコンストラクタを探して失敗する）。
+    @Autowired
     public UserService(UserRepository users) {
         this(users, new BCryptPasswordEncoder());
     }
