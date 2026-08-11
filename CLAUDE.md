@@ -47,7 +47,7 @@
 | `01_要件定義/` | 要件定義 | 要件定義書、機能一覧、画面一覧、テーブル定義(DDL)、外部I/F仕様、エラー方針 | `requirements-definition` |
 | `02_基本設計/` | 基本設計（外部設計） | 画面設計、画面遷移、API/バッチI/F、ER図、テーブル定義書、メッセージ一覧 | `basic-design` |
 | `03_詳細設計/` | 詳細設計（内部設計） | クラス設計、シーケンス、モジュール仕様、DIポリシー、例外設計 | `detailed-design` |
-| `04_実装/` | 実装 | Maven マルチモジュール（web / batch / domain / infrastructure / test 各モジュール） | `implementation` |
+| `04_Code/` | 実装 | Maven マルチモジュール（web / batch / domain / infrastructure / test 各モジュール） | `implementation` |
 | `05_単体テスト/` | 単体テスト | 単体テスト仕様書、JUnit 5 テストコード、実施結果/エビデンス | `unit-testing` |
 | `06_結合テスト/` | 結合テスト | 結合テスト仕様書、シナリオ、実施結果、既知不具合一覧 | `integration-testing` |
 
@@ -112,7 +112,7 @@
 | 5 | タスクスケジューラ登録、管理画面、ログ | 自宅 PC で自動で回る |
 | 6 | VPS 移行、時刻ベース通知へ変更、死活監視 | 公開 URL を提示できる（転職活動開始の1ヶ月前） |
 
-Phase 5 までで個人利用として完成。実装工程（`04_実装/`）はこの Phase 区分に沿って進める。
+Phase 5 までで個人利用として完成。実装工程（`04_Code/`）はこの Phase 区分に沿って進める。
 
 ---
 

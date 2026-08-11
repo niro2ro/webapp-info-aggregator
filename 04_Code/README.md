@@ -1,4 +1,4 @@
-# テーマ別最新情報アグリゲーター — 実装（04_実装）
+# テーマ別最新情報アグリゲーター — 実装（04_Code）
 
 アニメ・漫画などのテーマを登録すると、複数の情報源から最新情報（グッズ／イベント／放送／カプセルトイ等）を自動収集し、発生日順に一覧できる Web アプリ。お気に入り対象の新着は LINE で通知する。**Java（Spring Boot + Vaadin Flow）学習を兼ねた転職用ポートフォリオ**。
 
@@ -9,7 +9,7 @@
 Java 21 / Spring Boot 3.3 / Maven マルチモジュール / PostgreSQL 16 / Flyway / Spring Data JPA + Hibernate。UI は Vaadin Flow（Phase 1〜）、収集/通知は別プロセスのバッチ（`CommandLineRunner`）。
 
 ```
-04_実装/
+04_Code/
 ├─ docker-compose.yml          # ローカル PostgreSQL
 ├─ pom.xml                     # 親POM（マルチモジュール）
 ├─ aggregator-domain/          # エンティティ・enum・ドメインルール（フレームワーク非依存）
