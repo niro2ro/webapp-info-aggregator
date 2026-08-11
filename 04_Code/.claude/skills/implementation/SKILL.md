@@ -1,6 +1,6 @@
 ---
 name: implementation
-description: 実装工程の作業をするとき。承認済み詳細設計をもとに Java(Spring Boot)プロジェクトを Phase 0→5 の順に実装する。Java/Spring固有の書き方は理由を説明し、秘密情報は直書きせず、冪等性・UTC・OS非依存を守る。04_実装/ にソースを置く。
+description: 実装工程の作業をするとき。承認済み詳細設計をもとに Java(Spring Boot)プロジェクトを Phase 0→5 の順に実装する。Java/Spring固有の書き方は理由を説明し、秘密情報は直書きせず、冪等性・UTC・OS非依存を守る。04_Code/ にソースを置く。
 ---
 
 # 実装工程
@@ -15,7 +15,7 @@ description: 実装工程の作業をするとき。承認済み詳細設計を�
 ## プロジェクト構成（Maven マルチモジュール・詳細設計の分割に従う）
 
 ```
-04_実装/
+04_Code/
 ├─ docker-compose.yml        # PostgreSQL をローカル起動
 ├─ pom.xml                   # 親 POM（マルチモジュール）
 ├─ aggregator-domain/        # エンティティ・値オブジェクト・ドメインロジック
