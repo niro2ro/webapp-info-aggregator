@@ -80,18 +80,26 @@ public class LineBotNotifier implements LineNotifier {
     private PushOutcome classify(Throwable cause, NotificationBundle bundle) {
         if (cause instanceof MessagingApiClientException ex) {
             int code = ex.getCode();
-            NotifyStatus status = switch (code) {
-                case 401 -> NotifyStatus.AUTH_FAILED;
-                case 403 -> NotifyStatus.BLOCKED;   // 未追加/ブロックの可能性
-                case 429 -> NotifyStatus.RATE_LIMITED;
-                case 400 -> NotifyStatus.FORMAT_ERROR;
-                default -> code >= 500 ? NotifyStatus.TEMP_ERROR : NotifyStatus.BLOCKED;
-            };
+            NotifyStatus status = classifyHttpCode(code);
             log.warn("[LINE] 送信失敗 user={} code={} → {}", bundle.userId(), code, status);
             return PushOutcome.failed(status);
         }
         // コードを伴わない障害（接続断・タイムアウト等）は一時障害／不明として次回再送。
         log.warn("[LINE] 送信失敗 user={}（接続/不明）: {}", bundle.userId(), cause == null ? "null" : cause.toString());
         return PushOutcome.failed(NotifyStatus.TEMP_ERROR);
+    }
+
+    /**
+     * LINE のHTTPステータス → NotifyStatus（外部IF §3.4 の対応表）。分類規則のみを切り出し単体テスト可能にする。
+     * 401=認証不備 / 403=ブロック・未追加 / 429=レート制限 / 400=形式不正（打ち切り） / 5xx=一時障害 / その他=不明扱い。
+     */
+    static NotifyStatus classifyHttpCode(int code) {
+        return switch (code) {
+            case 401 -> NotifyStatus.AUTH_FAILED;
+            case 403 -> NotifyStatus.BLOCKED;
+            case 429 -> NotifyStatus.RATE_LIMITED;
+            case 400 -> NotifyStatus.FORMAT_ERROR;
+            default -> code >= 500 ? NotifyStatus.TEMP_ERROR : NotifyStatus.BLOCKED;
+        };
     }
 }
