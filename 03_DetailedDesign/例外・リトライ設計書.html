@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>例外・リトライ設計書 — テーマ別最新情報アグリゲーター（詳細設計）</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2230; --muted:#5c6579;
+  --line:#e3e7ee; --line2:#eef1f6; --accent:#2f5bd6; --accent-weak:#eaf0ff;
+  --chip:#f0f2f6; --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+  --thead:#f0f3f8; --quote:#f7f9fc; --quote-bar:#c3ccdb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+    --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --panel:#161c26; --ink:#e7ebf3; --muted:#9aa4b6;
+  --line:#28313f; --line2:#1e2530; --accent:#6d92ff; --accent-weak:#1b2740;
+  --chip:#212a37; --shadow:0 1px 3px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  --thead:#202937; --quote:#1a212c; --quote-bar:#31465f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1180px;margin:0 auto;}
+nav.toc-side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 14px 40px;border-right:1px solid var(--line);background:var(--panel);}
+nav.toc-side .toc-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:0 8px 10px;}
+nav.toc-side ul{list-style:none;margin:0;padding:0;}
+nav.toc-side li{margin:0;}
+nav.toc-side a{display:block;padding:5px 8px;border-radius:7px;color:var(--muted);text-decoration:none;
+  font-size:13px;line-height:1.4;border-left:2px solid transparent;}
+nav.toc-side a:hover{background:var(--line2);color:var(--ink);}
+nav.toc-side > .toc > ul > li > a{color:var(--ink);font-weight:600;margin-top:4px;}
+nav.toc-side ul ul{margin-left:10px;border-left:1px solid var(--line2);padding-left:4px;}
+nav.toc-side ul ul a{font-size:12.5px;}
+main{padding:34px 40px 100px;min-width:0;}
+main h1{font-size:30px;line-height:1.3;margin:.1em 0 .5em;letter-spacing:.01em;}
+main h2{font-size:22px;margin:1.8em 0 .5em;padding-bottom:.28em;border-bottom:2px solid var(--line);scroll-margin-top:16px;}
+main h3{font-size:17px;margin:1.5em 0 .4em;color:var(--ink);scroll-margin-top:16px;}
+main h4{font-size:14.5px;margin:1.2em 0 .3em;color:var(--muted);letter-spacing:.02em;}
+main p{margin:.6em 0;}
+main a{color:var(--accent);text-decoration:none;}
+main a:hover{text-decoration:underline;}
+main hr{border:0;border-top:1px solid var(--line);margin:2em 0;}
+main ul,main ol{padding-left:1.4em;margin:.5em 0;}
+main li{margin:.25em 0;}
+code{background:var(--chip);padding:.08em .42em;border-radius:5px;font-size:.86em;
+  font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;}
+pre{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6;}
+pre.mermaid{background:var(--panel);text-align:center;line-height:1.2;}
+blockquote{margin:.8em 0;padding:10px 16px;background:var(--quote);border-left:4px solid var(--quote-bar);
+  border-radius:0 8px 8px 0;color:var(--ink);}
+blockquote p{margin:.3em 0;font-size:13.8px;}
+.tbl-scroll{overflow-x:auto;margin:.8em 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px;background:var(--panel);}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line2);}
+thead th{background:var(--thead);color:var(--ink);font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  white-space:nowrap;position:sticky;top:0;}
+tbody tr:last-child td{border-bottom:0;}
+tbody tr:hover{background:var(--line2);}
+strong{font-weight:700;}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc-side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);}
+  main{padding:24px 18px 80px;}
+  main h1{font-size:25px;}
+}
+.doc-foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+.doc-nav{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+.doc-nav a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc-side">
+    <div class="toc-title">目次</div>
+    <div class="toc">
+<ul>
+<li><a href="#1-dd-exc-01">1. 例外階層（DD-EXC-01）</a></li>
+<li><a href="#2-resilience4jhttplinedd-exc-04">2. Resilience4j（HTTP取得・LINE送信）DD-EXC-04</a></li>
+<li><a href="#3-dd-exc-05">3. 失敗分離の実装（ループ境界で握る）DD-EXC-05</a></li>
+<li><a href="#4-line-dd-exc-06">4. LINE 送信の分類→処理（DD-EXC-06）</a></li>
+<li><a href="#5-dd-exc-07">5. ログ方針（DD-EXC-07）</a></li>
+<li><a href="#6">6. トレーサビリティ</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="doc-nav">📁 03_DetailedDesign/例外・リトライ設計書.md（正本は同名 .md）</div>
+    <h1 id="_1">例外・リトライ設計書 — テーマ別最新情報アグリゲーター（詳細設計）</h1>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>版</td>
+<td>1.0（詳細設計・初版）</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-08-08</td>
+</tr>
+<tr>
+<td>前工程</td>
+<td><a href="../02_BasicDesign/バッチ設計書.md"><code>バッチ設計書.md</code></a> §8.1／<a href="../02_BasicDesign/外部IF設計書.md"><code>外部IF設計書.md</code></a> §3.4</td>
+</tr>
+<tr>
+<td>設計ID体系</td>
+<td><code>DD-EXC-nn</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>例外階層・Resilience4j 設定・情報源/利用者単位の失敗分離を実装レベルで確定する。</p>
+</blockquote>
+<hr />
+<h2 id="1-dd-exc-01">1. 例外階層（DD-EXC-01）</h2>
+<pre class="mermaid">classDiagram
+    class AggregatorException {
+        &lt;&lt;abstract&gt;&gt; RuntimeException
+    }
+    class CollectionException
+    class SourceFetchException
+    class RobotsDisallowedException
+    class LlmException
+    class BudgetExceededException
+    class NotificationException
+    class LineSendException
+    AggregatorException &lt;|-- CollectionException
+    CollectionException &lt;|-- SourceFetchException
+    CollectionException &lt;|-- RobotsDisallowedException
+    CollectionException &lt;|-- LlmException
+    LlmException &lt;|-- BudgetExceededException
+    AggregatorException &lt;|-- NotificationException
+    NotificationException &lt;|-- LineSendException
+</pre>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>例外</th>
+<th>用途</th>
+<th>既定の扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AggregatorException</code>（DD-EXC-02）</td>
+<td>基底（非チェック=RuntimeException）</td>
+<td>ログ＋文脈付与</td>
+</tr>
+<tr>
+<td><code>SourceFetchException</code></td>
+<td>取得失敗（HTTP/パース）</td>
+<td>情報源単位で握り継続（CrawlLog=Failed）</td>
+</tr>
+<tr>
+<td><code>RobotsDisallowedException</code></td>
+<td>robots 不許可・取得エラー</td>
+<td>当該URLスキップ（当日）・情報扱い</td>
+</tr>
+<tr>
+<td><code>LlmException</code> / <code>BudgetExceededException</code></td>
+<td>構造化失敗 / 予算超過</td>
+<td>記事スキップ or LLM回避（RSSで登録）</td>
+</tr>
+<tr>
+<td><code>LineSendException</code></td>
+<td>LINE 送信失敗</td>
+<td><code>NotifyStatus</code> に分類し再送/打ち切り</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>なぜ非チェック例外（RuntimeException）中心か（DD-EXC-03）</strong>: チェック例外はシグネチャ汚染と過剰な try/catch を招く。業務例外は非チェックにし、<strong>握る場所（ループ境界）を1箇所に決める</strong>方が分離の意図が明確。Spring もトランザクションのロールバック既定は非チェック例外。</p>
+</blockquote>
+<hr />
+<h2 id="2-resilience4jhttplinedd-exc-04">2. Resilience4j（HTTP取得・LINE送信）DD-EXC-04</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>機能</th>
+<th>対象</th>
+<th>方針（値は設定で外部化・着手時に調整）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retry</td>
+<td>HTTP取得・LINE送信</td>
+<td>数回・<strong>指数バックオフ</strong>。①TempError/②RateLimited（<code>Retry-After</code>尊重）に適用。④FormatError/③AuthFailed は<strong>リトライしない</strong></td>
+</tr>
+<tr>
+<td>TimeLimiter</td>
+<td>全外部呼び出し</td>
+<td>接続/読み取りタイムアウト。⑤Timeout は「不明」として冪等キー再送へ</td>
+</tr>
+<tr>
+<td>CircuitBreaker</td>
+<td>ホスト/API単位</td>
+<td>連続失敗で一時オープンし無駄打ちを止める。収集の他情報源はブロックしない</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-java">@Retry(name = &quot;httpFetch&quot;)           // 一時障害のみ自動リトライ
+@CircuitBreaker(name = &quot;httpFetch&quot;)
+public RawItem fetch(String url) { ... }
+</code></pre>
+<blockquote>
+<p>リトライ可否は<strong>分類で出し分ける</strong>（§8.1）。同一実行内で回復しなければ、収集は次回起動、通知は「未通知のまま次回起動で再送」（常駐しないバッチのため“N分後”ではなく次回起動＝BD-BATCH-N-10）。</p>
+</blockquote>
+<hr />
+<h2 id="3-dd-exc-05">3. 失敗分離の実装（ループ境界で握る）DD-EXC-05</h2>
+<pre><code class="language-java">for (Source s : activeSources) {          // 情報源単位（NFR-10）
+    try {
+        collectFrom(s);                    // 例外はここで止める
+        crawlLogs.save(success(s));
+    } catch (RuntimeException e) {
+        crawlLogs.save(failed(s, e));      // ログに残して
+        // 次の情報源へ continue（全体は止めない）
+    }
+}
+</code></pre>
+<ul>
+<li>通知も同様に<strong>利用者単位</strong>で try/catch（1利用者の失敗が他を止めない・BD-BATCH-N-11）。</li>
+<li>握る粒度は「情報源/利用者」の1レベルのみ。内側で握り潰さない（原因が消えるのを防ぐ）。</li>
+</ul>
+<hr />
+<h2 id="4-line-dd-exc-06">4. LINE 送信の分類→処理（DD-EXC-06）</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>NotifyStatus</th>
+<th>例外/HTTP</th>
+<th>リトライ</th>
+<th>次回再送</th>
+<th>打ち切り</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①TempError</td>
+<td>5xx/接続断</td>
+<td>○ 指数</td>
+<td>○</td>
+<td>—</td>
+</tr>
+<tr>
+<td>②RateLimited</td>
+<td>429</td>
+<td>○（Retry-After）</td>
+<td>○</td>
+<td>—</td>
+</tr>
+<tr>
+<td>③AuthFailed</td>
+<td>401</td>
+<td>✗</td>
+<td>○</td>
+<td>5日超過で GaveUp</td>
+</tr>
+<tr>
+<td>③Blocked</td>
+<td>判別困難</td>
+<td>✗</td>
+<td>○</td>
+<td>5日超過で GaveUp</td>
+</tr>
+<tr>
+<td>④FormatError</td>
+<td>400</td>
+<td>✗</td>
+<td>✗</td>
+<td>GaveUp（不具合）</td>
+</tr>
+<tr>
+<td>⑤Timeout</td>
+<td>読取TO</td>
+<td>✗</td>
+<td>○（冪等キー）</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>（外部IF設計書 §3.4・メッセージ一覧 §6 と一致。5日判定は最初の失敗時刻からの経過で行い、<code>ArticleNotifications</code> 未作成期間で管理。）</p>
+<hr />
+<h2 id="5-dd-exc-07">5. ログ方針（DD-EXC-07）</h2>
+<ul>
+<li>失敗は <strong>DB（CrawlLogs/NotificationLogs）＋標準出力</strong>へ。ファイル依存を避ける（NFR-09・§9）。</li>
+<li>例外ログには<strong>情報源名/URL/利用者ID等の文脈</strong>を必ず付与（原因追跡のため）。秘密情報（トークン/キー）はログに出さない。</li>
+<li>文字コード UTF-8。ログレベルは Profiles で切替（本番=INFO、開発=DEBUG）。</li>
+</ul>
+<hr />
+<h2 id="6">6. トレーサビリティ</h2>
+<div class="tbl-scroll"><table>
+<thead>
+<tr>
+<th>基本設計/要件</th>
+<th>本書</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>§8・§8.1（エラー方針・分類）</td>
+<td>DD-EXC-01/06</td>
+</tr>
+<tr>
+<td>NFR-10（障害分離）</td>
+<td>DD-EXC-05</td>
+</tr>
+<tr>
+<td>BD-IF-03-04（冪等キー再送）</td>
+<td>DD-EXC-04/06</td>
+</tr>
+<tr>
+<td>NFR-09/§9（ログ・移行性）</td>
+<td>DD-EXC-07</td>
+</tr>
+</tbody>
+</table></div>
+    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>03_DetailedDesign/例外・リトライ設計書.md</code>）</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  (function(){
+    if (!window.mermaid) return;
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'strict', flowchart:{useMaxWidth:true}, er:{useMaxWidth:true} });
+  })();
+</script>
+
+</body>
+</html>

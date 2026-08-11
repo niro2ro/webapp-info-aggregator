@@ -16,30 +16,30 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # 既定の変換対象（リポジトリルートからの相対パス）
 TARGETS = [
-    "01_要件定義/要件定義書.md",
-    "01_要件定義/未決事項回答ログ.md",
-    "02_基本設計/ER図.md",
-    "02_基本設計/テーブル定義書.md",
-    "02_基本設計/要件トレース表.md",
-    "02_基本設計/画面設計書.md",
-    "02_基本設計/画面遷移図.md",
-    "02_基本設計/バッチ設計書.md",
-    "02_基本設計/外部IF設計書.md",
-    "02_基本設計/メッセージ・エラー一覧.md",
-    "03_詳細設計/アーキテクチャ設計書.md",
-    "03_詳細設計/クラス設計書.md",
-    "03_詳細設計/シーケンス設計書.md",
-    "03_詳細設計/DI設計書.md",
-    "03_詳細設計/例外・リトライ設計書.md",
-    "03_詳細設計/データアクセス設計書.md",
-    "03_詳細設計/設定・秘密情報設計書.md",
-    "03_詳細設計/設計トレース表.md",
+    "01_Requirements/要件定義書.md",
+    "01_Requirements/未決事項回答ログ.md",
+    "02_BasicDesign/ER図.md",
+    "02_BasicDesign/テーブル定義書.md",
+    "02_BasicDesign/要件トレース表.md",
+    "02_BasicDesign/画面設計書.md",
+    "02_BasicDesign/画面遷移図.md",
+    "02_BasicDesign/バッチ設計書.md",
+    "02_BasicDesign/外部IF設計書.md",
+    "02_BasicDesign/メッセージ・エラー一覧.md",
+    "03_DetailedDesign/アーキテクチャ設計書.md",
+    "03_DetailedDesign/クラス設計書.md",
+    "03_DetailedDesign/シーケンス設計書.md",
+    "03_DetailedDesign/DI設計書.md",
+    "03_DetailedDesign/例外・リトライ設計書.md",
+    "03_DetailedDesign/データアクセス設計書.md",
+    "03_DetailedDesign/設定・秘密情報設計書.md",
+    "03_DetailedDesign/設計トレース表.md",
 ]
 
 # タブ切り替え＋全幅レイアウトで出力するファイル（図を大きく見せたいもの）。
 # H2 セクションごとにタブ化し、1画面に1セクションを全幅表示する。
 TABBED = {
-    "02_基本設計/画面遷移図.md",
+    "02_BasicDesign/画面遷移図.md",
 }
 
 STYLE = r"""
