@@ -1,5 +1,6 @@
 package com.example.aggregator.infra.service;
 
+import com.example.aggregator.domain.collect.ArticleContentExtractor;
 import com.example.aggregator.domain.collect.RawItem;
 import com.example.aggregator.domain.llm.ExtractedText;
 import com.example.aggregator.domain.llm.LlmStructurer;
@@ -46,6 +47,7 @@ public class CollectionService {
     private final UrlHasher urlHasher;
     private final EventDateKindResolver kindResolver;
     private final LlmStructurer llmStructurer;
+    private final ArticleContentExtractor contentExtractor;
 
     public CollectionService(ArticleRepository articles,
                              ArticleThemeMatchRepository matches,
@@ -53,11 +55,13 @@ public class CollectionService {
                              UrlNormalizer urlNormalizer,
                              UrlHasher urlHasher,
                              EventDateKindResolver kindResolver,
-                             LlmStructurer llmStructurer) {
+                             LlmStructurer llmStructurer,
+                             ArticleContentExtractor contentExtractor) {
         this.articles = articles;
         this.matches = matches;
         this.themes = themes;
         this.urlNormalizer = urlNormalizer;
+        this.contentExtractor = contentExtractor;
         this.urlHasher = urlHasher;
         this.kindResolver = kindResolver;
         this.llmStructurer = llmStructurer;
@@ -109,12 +113,13 @@ public class CollectionService {
         EventDatePrecision precision = EventDatePrecision.UNKNOWN;
 
         // --- ② LLM フォールバック（外部IF §1.1 ③）: RSS で「発生日不明」または「分類不明」のときだけ ---
-        // 呼ぶ。既定の NoOp 実装（キー未設定）では常に空が返り、①の値のまま進む＝Phase 1 と同一挙動。
+        // LLM が無効（NoOp・キー未設定）なら本文取得もLLM呼び出しも行わず①の値のまま進む＝軽量・無課金。
         // 予算判定・使用量記録は実装側（LLM 境界）に閉じている（NFR-06）。
-        if (precision == EventDatePrecision.UNKNOWN || category == Category.OTHER) {
-            // Phase 2 暫定: 抽出テキストは RSS 説明文を用いる（本文の完全取得は後続の
-            // HttpContentFetcher/robots ゲート導入で置き換える）。本文は保存しない（§9）。
-            String extractText = item.description() == null ? item.title() : item.description();
+        if ((eventDate == null || category == Category.OTHER) && llmStructurer.isEnabled()) {
+            // 記事本文を取得して LLM に渡す（外部IF §2.2「本文抽出テキスト」）。robots/間隔は抽出器が担保。
+            // 取得できなければ RSS 説明文にフォールバック。本文は保存しない（§9）。
+            String extractText = contentExtractor.extract(item.url())
+                    .orElseGet(() -> item.description() == null ? item.title() : item.description());
             Optional<StructuredArticle> enriched =
                     llmStructurer.structure(new ExtractedText(item.title(), item.url(), extractText));
             if (enriched.isPresent()) {

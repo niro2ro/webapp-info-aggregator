@@ -28,6 +28,7 @@ app:
     read-timeout-ms: ${COLLECT_READ_TIMEOUT_MS:10000}
     max-attempts: ${COLLECT_MAX_ATTEMPTS:3}
     min-host-interval-ms: ${COLLECT_MIN_HOST_INTERVAL_MS:1000}
+    max-body-chars: ${COLLECT_MAX_BODY_CHARS:4000}   # LLMに渡す本文の最大文字数(コスト抑制)
 
   # LLM（収集時の構造化のみ）。既定 enabled=false → NoOp 実装でキー無しでも起動（開発/CI）。
   # 本番は enabled=true にし ANTHROPIC_API_KEY を環境変数で注入（application.yml に実値を書かない）。

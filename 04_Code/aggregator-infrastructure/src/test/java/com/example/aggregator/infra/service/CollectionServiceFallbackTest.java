@@ -2,9 +2,13 @@ package com.example.aggregator.infra.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.aggregator.domain.collect.ArticleContentExtractor;
 import com.example.aggregator.domain.collect.RawItem;
 import com.example.aggregator.domain.llm.LlmStructurer;
 import com.example.aggregator.domain.llm.StructuredArticle;
@@ -35,10 +39,12 @@ class CollectionServiceFallbackTest {
     private final ArticleRepository articles = mock(ArticleRepository.class);
     private final ArticleThemeMatchRepository matches = mock(ArticleThemeMatchRepository.class);
     private final ThemeRepository themes = mock(ThemeRepository.class);
+    private final ArticleContentExtractor extractor = mock(ArticleContentExtractor.class);
 
     private CollectionService service(LlmStructurer structurer) {
+        lenient().when(extractor.extract(any())).thenReturn(Optional.empty());
         return new CollectionService(articles, matches, themes,
-                new UrlNormalizer(), new UrlHasher(), new EventDateKindResolver(), structurer);
+                new UrlNormalizer(), new UrlHasher(), new EventDateKindResolver(), structurer, extractor);
     }
 
     private SourceEntity source() {
@@ -108,5 +114,25 @@ class CollectionServiceFallbackTest {
 
         assertThat(added).isFalse();
         org.mockito.Mockito.verify(articles, org.mockito.Mockito.never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("LLM無効(isEnabled=false)なら記事本文を取得しない（無駄打ち防止）")
+    void disabledStructurerSkipsBodyFetch() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        // NoOp 相当: 構造化しない かつ 無効を宣言
+        LlmStructurer disabled = new LlmStructurer() {
+            @Override public Optional<StructuredArticle> structure(com.example.aggregator.domain.llm.ExtractedText in) {
+                return Optional.empty();
+            }
+            @Override public boolean isEnabled() { return false; }
+        };
+
+        RawItem item = new RawItem("記事", "https://example.com/z", null, "説明", null);
+        boolean added = service(disabled).ingestOne(source(), item, List.of());
+
+        assertThat(added).isTrue();
+        verify(extractor, never()).extract(any());   // 本文取得は呼ばれない
     }
 }

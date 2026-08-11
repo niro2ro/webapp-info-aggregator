@@ -30,6 +30,7 @@ app:
     read-timeout-ms: ${COLLECT_READ_TIMEOUT_MS:10000}
     max-attempts: ${COLLECT_MAX_ATTEMPTS:3}
     min-host-interval-ms: ${COLLECT_MIN_HOST_INTERVAL_MS:1000}
+    max-body-chars: ${COLLECT_MAX_BODY_CHARS:4000}   # LLMに渡す本文の最大文字数(コスト抑制)
     # テーマ検索収集の検索RSS（{q}=キーワード）。既定はGoogleニュース。利用規約は各自で確認・差し替え可。
     search-feed-url-template: ${COLLECT_SEARCH_FEED_URL:https://news.google.com/rss/search?q={q}&hl=ja&gl=JP&ceid=JP:ja}
 
