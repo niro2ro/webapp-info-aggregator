@@ -49,13 +49,36 @@ public class SourceEntity {
 
     protected SourceEntity() {} // JPA 用
 
+    public SourceEntity(String name, String url, FetchType fetchType) {
+        this.name = name;
+        this.url = url;
+        this.fetchType = fetchType;
+    }
+
+    /**
+     * 規約確認フラグを設定する。true にした瞬間の時刻を確認日として記録する（SC-06・監査目的）。
+     * false に戻したら確認日はクリア（未確認＝収集対象外に戻す）。
+     */
+    public void setTermsReviewed(boolean reviewed) {
+        this.termsReviewed = reviewed;
+        this.termsReviewedAt = reviewed ? Instant.now() : null;
+    }
+
     public Long getId() { return id; }
     public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
     public FetchType getFetchType() { return fetchType; }
+    public void setFetchType(FetchType fetchType) { this.fetchType = fetchType; }
     public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public boolean isTermsReviewed() { return termsReviewed; }
+    public Instant getTermsReviewedAt() { return termsReviewedAt; }
+    public String getTermsNote() { return termsNote; }
+    public void setTermsNote(String termsNote) { this.termsNote = termsNote; }
     public boolean isRobotsRespect() { return robotsRespect; }
+    public void setRobotsRespect(boolean robotsRespect) { this.robotsRespect = robotsRespect; }
     public Instant getLastFetchedAt() { return lastFetchedAt; }
     public void setLastFetchedAt(Instant t) { this.lastFetchedAt = t; }
 }

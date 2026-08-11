@@ -49,20 +49,24 @@ public class MainLayout extends AppLayout {
         navbar.getStyle().set("padding", "0 16px");
         addToNavbar(navbar);
 
-        // --- 左ドロワー ---
+        // --- 左ドロワー（共通・画面設計 §94 / モックアップ準拠） ---
         VerticalLayout drawer = new VerticalLayout(
                 new RouterLink("🗒  タイムライン", TimelineView.class),
                 new RouterLink("🏷  テーマ管理", ThemeView.class),
-                new RouterLink("⭐  お気に入り", FavoritesView.class));
+                new RouterLink("🔔  LINE通知設定", NotificationSettingsView.class));
         drawer.setSpacing(true);
         drawer.setPadding(true);
 
-        // --- 管理グループ（admin のみ・SC-09。SC-06〜08 は後続で追加） ---
+        // --- 管理グループ（admin のみ・SC-06〜09。メニュー非表示＋到達拒否の二重防御・BD-SC-00-06） ---
         if (CurrentUser.isAdmin()) {
-            Span adminLabel = new Span("管理");
+            Span adminLabel = new Span("管理（admin のみ）");
             adminLabel.getStyle().set("font-size", "11px").set("color", "var(--lumo-secondary-text-color)")
                     .set("margin-top", "8px");
-            drawer.add(new Hr(), adminLabel, new RouterLink("👥  利用者管理", UserAdminView.class));
+            drawer.add(new Hr(), adminLabel,
+                    new RouterLink("🌐  情報源マスタ", SourceMasterView.class),
+                    new RouterLink("📊  管理ダッシュボード", AdminDashboardView.class),
+                    new RouterLink("📜  実行ログ", ExecutionLogView.class),
+                    new RouterLink("👥  利用者管理", UserAdminView.class));
         }
         addToDrawer(drawer);
     }

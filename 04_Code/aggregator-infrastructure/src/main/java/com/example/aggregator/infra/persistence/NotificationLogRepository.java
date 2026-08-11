@@ -1,11 +1,15 @@
 package com.example.aggregator.infra.persistence;
 
 import com.example.aggregator.domain.model.NotificationLogEntity;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 /** 通知送信ログ。当月（JST 月）通数の合計で無料枠（200通）を管理する（FR-03-05・BD-IF-03-03）。 */
 public interface NotificationLogRepository extends JpaRepository<NotificationLogEntity, Long> {
+
+    /** 実行ログ画面用（新しい順・直近100件）。 */
+    List<NotificationLogEntity> findTop100ByOrderBySentAtDesc();
 
     /**
      * 当月（Asia/Tokyo の暦月）の消費通数合計。sent_at は timestamptz(UTC)。JST に変換して月初と比較する。
