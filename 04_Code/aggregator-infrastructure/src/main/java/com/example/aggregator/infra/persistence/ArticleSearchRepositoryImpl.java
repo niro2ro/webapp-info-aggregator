@@ -54,6 +54,10 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                     + "WHERE m.article_id = a.id AND t.user_id = :uid AND t.is_active = true) ");
             binds.add(new Object[]{"uid", q.userId()});
         }
+        if (q.sourceId() != null) {
+            sql.append("AND a.source_id = :sid ");
+            binds.add(new Object[]{"sid", q.sourceId()});
+        }
         if (q.unreadOnly() && q.userId() != null) {
             sql.append("AND NOT EXISTS (SELECT 1 FROM read_states r "
                     + "WHERE r.article_id = a.id AND r.user_id = :uid) ");
