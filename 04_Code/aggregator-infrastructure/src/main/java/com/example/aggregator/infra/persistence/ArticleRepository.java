@@ -14,6 +14,9 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
     /** 冪等の一次判定（url_hash 既存チェック・FR-02-08）。 */
     boolean existsByUrlHash(String urlHash);
 
+    /** 実イベント日が未設定の記事（再解析の対象・新しい順）。取りこぼし分だけをLLMで埋める。 */
+    List<ArticleEntity> findByEventDateIsNullOrderByCreatedAtDesc(Pageable pageable);
+
     /**
      * タイムライン（発生日順・降順）。整列キーは式インデックス ix_articles_timeline と同一式にする。
      * timestamptz::date は IMMUTABLE でないため UTC 固定で date 化（実装Phase0で確定）。

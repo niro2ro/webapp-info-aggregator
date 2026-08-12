@@ -81,6 +81,20 @@ public class ArticleEntity {
         this.groupKey = b.groupKey;
     }
 
+    /**
+     * 既存記事に実イベント日（発売日等）を後から反映する（再解析・LLM）。日付が取れたときだけ更新する。
+     * 種別はカテゴリ/原文ルールの結果を優先し、ルールで OTHER のときだけ LLM の種別を採用する（外部IF §2.2）。
+     */
+    public void enrichEventDate(LocalDate eventDate, EventDatePrecision precision,
+                               EventDateKind kind, String eventDateText, String location) {
+        if (eventDate == null) return;
+        this.eventDate = eventDate;
+        if (precision != null) this.eventDatePrecision = precision;
+        if (eventDateText != null) this.eventDateText = eventDateText;
+        if (location != null) this.location = location;
+        if (kind != null && this.eventDateKind == EventDateKind.OTHER) this.eventDateKind = kind;
+    }
+
     public Long getId() { return id; }
     public Long getSourceId() { return sourceId; }
     public String getTitle() { return title; }
