@@ -13,6 +13,7 @@ import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
+import com.example.aggregator.domain.rule.TitleKey;
 import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
 import java.time.Instant;
@@ -91,9 +92,14 @@ public class CollectionService {
     public boolean ingestOne(SourceEntity source, RawItem item, List<ThemeEntity> activeThemes) {
         String normalized = urlNormalizer.normalize(item.url());
         String hash = urlHasher.hash(normalized);
+        String titleKey = TitleKey.of(item.title());
 
         // 一次判定（無駄な処理を省く）。最終防衛線は UNIQUE 制約（下の catch）。
+        // ① 同一URL（正規化）は重複。② 同一タイトル（別サイトの同じ記事）は1件に集約（FR-02-09）。
         if (articles.existsByUrlHash(hash)) {
+            return false;
+        }
+        if (!titleKey.isBlank() && articles.existsByTitleKey(titleKey)) {
             return false;
         }
 
@@ -151,6 +157,7 @@ public class CollectionService {
                 .location(location)
                 .url(item.url())
                 .urlHash(hash)
+                .titleKey(titleKey)
                 .summary(summary)
                 .build();
 

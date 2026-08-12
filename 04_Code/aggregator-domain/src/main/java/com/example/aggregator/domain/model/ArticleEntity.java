@@ -54,6 +54,9 @@ public class ArticleEntity {
     @Column(name = "url_hash", nullable = false, unique = true)
     private String urlHash;
 
+    @Column(name = "title_key")
+    private String titleKey;
+
     @Column(name = "summary")
     private String summary;
 
@@ -77,6 +80,7 @@ public class ArticleEntity {
         this.location = b.location;
         this.url = b.url;
         this.urlHash = b.urlHash;
+        this.titleKey = b.titleKey;
         this.summary = b.summary;
         this.groupKey = b.groupKey;
     }
@@ -107,6 +111,7 @@ public class ArticleEntity {
     public String getLocation() { return location; }
     public String getUrl() { return url; }
     public String getUrlHash() { return urlHash; }
+    public String getTitleKey() { return titleKey; }
     public String getSummary() { return summary; }
     public Instant getCreatedAt() { return createdAt; }
 
@@ -125,6 +130,7 @@ public class ArticleEntity {
         private String location;
         private String url;
         private String urlHash;
+        private String titleKey;
         private String summary;
         private String groupKey;
 
@@ -139,6 +145,7 @@ public class ArticleEntity {
         public Builder location(String v) { this.location = v; return this; }
         public Builder url(String v) { this.url = v; return this; }
         public Builder urlHash(String v) { this.urlHash = v; return this; }
+        public Builder titleKey(String v) { this.titleKey = v; return this; }
         public Builder summary(String v) { this.summary = v; return this; }
         public Builder groupKey(String v) { this.groupKey = v; return this; }
         public ArticleEntity build() { return new ArticleEntity(this); }

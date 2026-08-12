@@ -14,6 +14,9 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
     /** 冪等の一次判定（url_hash 既存チェック・FR-02-08）。 */
     boolean existsByUrlHash(String urlHash);
 
+    /** 同一タイトル判定（別サイトからの同じ記事を1件に集約・FR-02-09）。空キーは対象外。 */
+    boolean existsByTitleKey(String titleKey);
+
     /** 実イベント日が未設定の記事（再解析の対象・新しい順）。取りこぼし分だけをLLMで埋める。 */
     List<ArticleEntity> findByEventDateIsNullOrderByCreatedAtDesc(Pageable pageable);
 

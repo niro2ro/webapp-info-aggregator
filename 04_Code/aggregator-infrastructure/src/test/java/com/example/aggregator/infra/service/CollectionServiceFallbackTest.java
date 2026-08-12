@@ -117,6 +117,21 @@ class CollectionServiceFallbackTest {
     }
 
     @Test
+    @DisplayName("同一タイトル（別サイト＝別URL）は重複として登録しない")
+    void sameTitleFromDifferentSourceSkipped() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);          // URLは新規
+        when(articles.existsByTitleKey(any())).thenReturn(true);          // 同じタイトルが既存
+        LlmStructurer noop = input -> Optional.empty();
+
+        RawItem item = new RawItem("新作フィギュア予約開始 - dメニューニュース",
+                "https://dmenu.example.com/x", null, "説明", null);
+        boolean added = service(noop).ingestOne(source(), item, List.of());
+
+        assertThat(added).isFalse();
+        org.mockito.Mockito.verify(articles, org.mockito.Mockito.never()).saveAndFlush(any());
+    }
+
+    @Test
     @DisplayName("LLM無効(isEnabled=false)なら記事本文を取得しない（無駄打ち防止）")
     void disabledStructurerSkipsBodyFetch() {
         when(articles.existsByUrlHash(any())).thenReturn(false);
