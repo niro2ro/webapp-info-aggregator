@@ -25,11 +25,17 @@ public class CostService {
 
     public CostSummary currentMonth() {
         long micro = usageLogs.sumCurrentMonthMicroJpy();
-        long[] agg = usageLogs.currentMonthAggregate();  // [count, inputTokens, outputTokens]
+        java.util.List<Object[]> rows = usageLogs.currentMonthAggregate();
+        Object[] agg = rows.isEmpty() ? new Object[]{0L, 0L, 0L} : rows.get(0); // [count, inputTokens, outputTokens]
         long costYen = micro / 1_000_000L;               // マイクロ円→円（表示用に切り捨て）
         long remainingYen = Math.max(0, props.getMonthlyBudgetJpy() - costYen);
         boolean capReached = micro >= props.effectiveCapMicroJpy();
-        return new CostSummary(agg[0], agg[1], agg[2], costYen,
+        return new CostSummary(num(agg[0]), num(agg[1]), num(agg[2]), costYen,
                 props.getMonthlyBudgetJpy(), remainingYen, capReached);
+    }
+
+    /** DB の集計値（BigInteger/Long など）を long に安全変換。 */
+    private static long num(Object o) {
+        return o == null ? 0L : ((Number) o).longValue();
     }
 }
