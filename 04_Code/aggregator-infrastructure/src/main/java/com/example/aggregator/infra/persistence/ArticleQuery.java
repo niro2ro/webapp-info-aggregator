@@ -13,6 +13,7 @@ public record ArticleQuery(
         Category category,    // カテゴリ絞り込み。null は無視
         EventDateKind kind,   // 発生日種別絞り込み。null は無視
         Long themeId,         // テーマ絞り込み（マッチ記事のみ）。null は無視
+        Long sourceId,        // 情報源絞り込み。null は無視
         boolean unreadOnly,   // 未読のみ
         Sort sort,
         int limit) {
@@ -20,6 +21,6 @@ public record ArticleQuery(
     public enum Sort { EVENT_DESC, EVENT_ASC, RELEASE, PUBLISHED_DESC, COLLECTED_DESC }
 
     public static ArticleQuery defaults(Long userId) {
-        return new ArticleQuery(userId, null, null, null, null, false, Sort.EVENT_DESC, 50);
+        return new ArticleQuery(userId, null, null, null, null, null, false, Sort.EVENT_DESC, 50);
     }
 }

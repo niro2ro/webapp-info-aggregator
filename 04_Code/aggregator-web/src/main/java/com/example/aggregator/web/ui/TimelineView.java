@@ -2,13 +2,17 @@ package com.example.aggregator.web.ui;
 
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.Category;
+import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.infra.persistence.ArticleQuery;
 import com.example.aggregator.infra.persistence.ArticleRepository;
+import com.example.aggregator.infra.persistence.SourceRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
 import com.example.aggregator.infra.service.ThemeSearchCollector;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.example.aggregator.web.SampleIngestService;
 import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.Text;
@@ -48,22 +52,26 @@ public class TimelineView extends VerticalLayout {
     private final ArticleInteractionService interaction;
     private final ThemeRepository themes;
     private final ThemeSearchCollector themeSearch;
+    private final SourceRepository sources;
 
     private final TextField search = new TextField();
     private final ComboBox<Category> categoryFilter = new ComboBox<>();
     private final ComboBox<ThemeEntity> themeFilter = new ComboBox<>();
+    private final ComboBox<SourceEntity> sourceFilter = new ComboBox<>();
     private final Select<ArticleQuery.Sort> sortSelect = new Select<>();
     private final Checkbox unreadOnly = new Checkbox("未読のみ");
     private final VerticalLayout list = new VerticalLayout();
+    private Map<Long, String> sourceNames = Map.of();   // source_id → 名前（カード表示用）
 
     public TimelineView(ArticleRepository articles, SampleIngestService sampleIngest,
                         ArticleInteractionService interaction, ThemeRepository themes,
-                        ThemeSearchCollector themeSearch) {
+                        ThemeSearchCollector themeSearch, SourceRepository sources) {
         this.articles = articles;
         this.sampleIngest = sampleIngest;
         this.interaction = interaction;
         this.themes = themes;
         this.themeSearch = themeSearch;
+        this.sources = sources;
 
         setSizeFull();
         setPadding(true);
@@ -90,6 +98,13 @@ public class TimelineView extends VerticalLayout {
         themeFilter.addValueChangeListener(e -> refresh());
         reloadThemeItems();
 
+        // 情報源で絞り込み（統合タイムラインのまま、RSS/検索など由来を切り替えられる）
+        sourceFilter.setPlaceholder("情報源：すべて");
+        sourceFilter.setItemLabelGenerator(SourceEntity::getName);
+        sourceFilter.setClearButtonVisible(true);
+        sourceFilter.addValueChangeListener(e -> refresh());
+        reloadSourceItems();
+
         sortSelect.setLabel(null);
         sortSelect.setItems(ArticleQuery.Sort.values());
         sortSelect.setItemLabelGenerator(this::sortLabel);
@@ -98,7 +113,7 @@ public class TimelineView extends VerticalLayout {
 
         unreadOnly.addValueChangeListener(e -> refresh());
 
-        HorizontalLayout toolbar = new HorizontalLayout(sortSelect, themeFilter, categoryFilter, unreadOnly, search);
+        HorizontalLayout toolbar = new HorizontalLayout(sortSelect, themeFilter, sourceFilter, categoryFilter, unreadOnly, search);
         toolbar.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         toolbar.setWidthFull();
         toolbar.expand(search);
@@ -141,6 +156,13 @@ public class TimelineView extends VerticalLayout {
         themeFilter.setItems(themes.findByUserIdAndActiveTrueOrderByKeyword(USER_ID));
     }
 
+    /** 情報源フィルタの選択肢と、カード表示用の source_id→名前 マップを更新する。 */
+    private void reloadSourceItems() {
+        List<SourceEntity> all = sources.findAll();
+        sourceFilter.setItems(all);
+        sourceNames = all.stream().collect(Collectors.toMap(SourceEntity::getId, SourceEntity::getName));
+    }
+
     private void refresh() {
         list.removeAll();
         ArticleQuery q = new ArticleQuery(
@@ -149,6 +171,7 @@ public class TimelineView extends VerticalLayout {
                 categoryFilter.getValue(),
                 null,   // 発生日種別（未使用）
                 themeFilter.getValue() == null ? null : themeFilter.getValue().getId(),   // テーマ絞り込み
+                sourceFilter.getValue() == null ? null : sourceFilter.getValue().getId(), // 情報源絞り込み
                 unreadOnly.getValue(),
                 sortSelect.getValue() == null ? ArticleQuery.Sort.EVENT_DESC : sortSelect.getValue(),
                 50);
@@ -233,9 +256,16 @@ public class TimelineView extends VerticalLayout {
         readBtn.setEnabled(!read);
         readBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
 
-        Span source = new Span("🌐 情報源#" + a.getSourceId());
+        // 由来バッジ＋情報源名（検索由来か専門サイト由来かを一目で）
+        String srcName = sourceNames.getOrDefault(a.getSourceId(), "情報源#" + a.getSourceId());
+        boolean fromSearch = ThemeSearchCollector.SEARCH_SOURCE_NAME.equals(srcName);
+        Span origin = new Span(fromSearch ? "🔎 検索" : "🏷 サイト");
+        origin.getElement().getThemeList().add("badge");
+        origin.getElement().getThemeList().add(fromSearch ? "contrast" : "success");
+        origin.getStyle().set("font-size", "11px");
+        Span source = new Span("🌐 " + srcName);
         source.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
-        HorizontalLayout meta = new HorizontalLayout(source, link, readBtn, bm);
+        HorizontalLayout meta = new HorizontalLayout(origin, source, link, readBtn, bm);
         meta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         meta.setSpacing(true);
 

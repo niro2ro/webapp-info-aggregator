@@ -31,8 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ThemeSearchCollector {
 
     private static final Logger log = LoggerFactory.getLogger(ThemeSearchCollector.class);
-    /** 検索結果記事の格納先となる管理用情報源の名前。 */
-    static final String SEARCH_SOURCE_NAME = "テーマ検索（Googleニュース）";
+    /** 検索結果記事の格納先となる管理用情報源の名前（由来判定に画面からも参照するため公開）。 */
+    public static final String SEARCH_SOURCE_NAME = "テーマ検索（Googleニュース）";
 
     private final ThemeRepository themes;
     private final SourceRepository sources;
