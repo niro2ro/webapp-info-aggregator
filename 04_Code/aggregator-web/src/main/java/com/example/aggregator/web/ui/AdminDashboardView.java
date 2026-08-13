@@ -3,24 +3,29 @@ package com.example.aggregator.web.ui;
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.llm.LlmProperties;
+import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.infra.service.ArticleReanalyzeService;
 import com.example.aggregator.infra.service.CollectionRunner;
 import com.example.aggregator.infra.service.CostService;
+import com.example.aggregator.infra.service.FeedProbeService;
 import com.example.aggregator.infra.service.NotificationCountService;
 import com.example.aggregator.infra.service.NotificationService;
 import com.example.aggregator.web.security.AdminOnly;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import java.time.format.DateTimeFormatter;
 import org.springframework.data.domain.PageRequest;
 
 /**
@@ -32,6 +37,10 @@ import org.springframework.data.domain.PageRequest;
 @PageTitle("管理ダッシュボード | アグリゲーター")
 public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
+    /** 診断結果の日付表示は JST（保存はUTC・表示のみJST・NFR-08）。 */
+    private static final DateTimeFormatter PROBE_DATE =
+            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZones.JST);
+
     private final CollectionRunner collectionRunner;
     private final NotificationService notificationService;
     private final NotificationCountService counts;
@@ -39,6 +48,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
     private final ArticleRepository articles;
     private final ArticleReanalyzeService reanalyze;
     private final LlmProperties llmProps;
+    private final FeedProbeService feedProbe;
 
     private final Span messageQuota = new Span();
     private final Span llmCost = new Span();
@@ -46,7 +56,8 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
     public AdminDashboardView(CollectionRunner collectionRunner, NotificationService notificationService,
                               NotificationCountService counts, CostService cost, ArticleRepository articles,
-                              ArticleReanalyzeService reanalyze, LlmProperties llmProps) {
+                              ArticleReanalyzeService reanalyze, LlmProperties llmProps,
+                              FeedProbeService feedProbe) {
         this.collectionRunner = collectionRunner;
         this.notificationService = notificationService;
         this.counts = counts;
@@ -54,6 +65,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
         this.articles = articles;
         this.reanalyze = reanalyze;
         this.llmProps = llmProps;
+        this.feedProbe = feedProbe;
 
         setSizeFull();
         setPadding(true);
@@ -61,8 +73,68 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
         H2 title = new H2("管理ダッシュボード");
         title.addClassName("view-title");
 
-        add(title, batchSection(), llmSection(), quotaSection(), recentSection());
+        add(title, batchSection(), feedProbeSection(), llmSection(), quotaSection(), recentSection());
         refresh();
+    }
+
+    // RSS取得テスト（保存なし）: 任意のフィードURLを実際に叩いて「取得件数・先頭数件」を確認する。
+    // 規約確認や情報源登録より前に、そのサイトのRSSが本当に取れるかを切り分けるための道具。
+    private VerticalLayout feedProbeSection() {
+        VerticalLayout box = card("RSS取得テスト（保存なし・確認用）");
+
+        TextField url = new TextField();
+        url.setPlaceholder("https://example.com/rss.xml など、RSS/AtomフィードのURL");
+        url.setWidthFull();
+        url.setClearButtonVisible(true);
+
+        // 結果表示領域（押すたびに作り直す）。
+        VerticalLayout result = new VerticalLayout();
+        result.setPadding(false);
+        result.setSpacing(false);
+
+        Button probe = new Button("取得テスト", e -> {
+            result.removeAll();
+            FeedProbeService.ProbeResult r = feedProbe.probe(url.getValue());
+            if (!r.ok()) {
+                Span err = new Span("✕ " + r.error());
+                err.getStyle().set("color", "var(--lumo-error-text-color)").set("font-weight", "600");
+                result.add(err);
+                return;
+            }
+            Span ok = new Span("✓ 取得成功: " + r.count() + " 件（DBには保存していません）");
+            ok.getStyle().set("color", "#4e7d55").set("font-weight", "600");
+            result.add(ok);
+            if (r.count() == 0) {
+                Span empty = new Span("※フィードとしては読めましたが、記事が0件でした（検索語ヒットなし等）。");
+                empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+                result.add(empty);
+            }
+            for (FeedProbeService.ProbeItem it : r.samples()) {
+                String date = it.publishedAt() != null ? PROBE_DATE.format(it.publishedAt()) : "日付なし";
+                Span line = new Span("・[" + date + "] " + (it.title() == null ? "(タイトルなし)" : it.title()));
+                line.getStyle().set("font-size", "13px");
+                VerticalLayout item = new VerticalLayout(line);
+                item.setPadding(false);
+                item.setSpacing(false);
+                if (it.url() != null) {
+                    Anchor a = new Anchor(it.url(), it.url());
+                    a.setTarget("_blank");
+                    a.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
+                    item.add(a);
+                }
+                result.add(item);
+            }
+        });
+        probe.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Span note = new Span("実サイトのRSS/AtomフィードのURLを入れて「取得テスト」を押すと、実際に取得・解析して "
+                + "件数と先頭" + FeedProbeService.SAMPLE_LIMIT + "件を表示します。DBには保存しません。"
+                + "収集バッチ・テーマ検索収集と同じ取得/解析経路を使うため、ここで取れれば本番でも取れます。"
+                + "取れない場合は、そのURLがRSSでない/取得がブロックされている可能性です。");
+        note.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+
+        box.add(url, probe, note, result);
+        return box;
     }
 
     // LLM 稼働状況＋既存記事の再解析（発売日の穴埋め）
