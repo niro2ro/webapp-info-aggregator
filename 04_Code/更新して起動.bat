@@ -7,12 +7,18 @@ echo ============================================
 echo   アグリゲーター : 更新して起動
 echo ============================================
 
-rem 秘密情報（LLM/LINEのキー）があれば読み込む（secrets.bat は git 管理外）
+rem 秘密情報（LLM/LINEのキー）があれば読み込む（secrets.bat は git 管理外）。
+rem secrets.bat が無くても、setx 等で環境変数を設定済みなら、それがそのまま使われます。
 if exist "secrets.bat" (
     call "secrets.bat"
     echo [i] secrets.bat を読み込みました（LLM/LINE設定）
 ) else (
-    echo [i] secrets.bat は未設定（LLM/LINEは無効のまま起動します）
+    echo [i] secrets.bat は無し。環境変数の設定（setx 済みなど）があればそれを使います。
+)
+if defined ANTHROPIC_API_KEY (
+    echo [i] ANTHROPIC_API_KEY を検出（LLM_ENABLED=%LLM_ENABLED%）
+) else (
+    echo [i] ANTHROPIC_API_KEY 未設定 → LLM無効で起動します。
 )
 
 rem ログの日本語表示のため UTF-8 出力にする
