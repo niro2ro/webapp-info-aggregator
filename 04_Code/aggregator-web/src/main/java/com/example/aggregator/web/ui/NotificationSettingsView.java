@@ -92,30 +92,46 @@ public class NotificationSettingsView extends VerticalLayout {
         h.getStyle().set("margin", "0");
 
         TextField lineId = new TextField("LINEユーザーID");
-        lineId.setPlaceholder("Uxxxxxxxx（LINEの宛先ID）");
+        lineId.setPlaceholder("Uxxxxxxxx（このbot用の宛先ID・33文字）");
         lineId.setWidth("320px");
         if (me != null && me.getLineUserId() != null) lineId.setValue(me.getLineUserId());
 
-        Checkbox notifyAll = new Checkbox("通知を受け取る（全体ON/OFF）");
-        notifyAll.setValue(me == null || me.isNotifyEnabled());
-
         Span status = new Span();
-        applyStatus(status, me);
 
-        Button save = new Button("保存", e -> {
+        // 登録＝DBに保存 / 連携解除＝DBから削除（line_user_id を null に）
+        Button register = new Button("登録", e -> {
             try {
-                users.updateLineSettings(userId, lineId.getValue(), notifyAll.getValue());
+                users.linkLine(userId, lineId.getValue());
                 applyStatus(status, users.find(userId).orElse(null));
-                Notification.show("LINE連携設定を保存しました。");
+                Notification.show("LINEユーザーIDを登録しました。");
             } catch (IllegalArgumentException ex) {
                 Notification.show(ex.getMessage());
             }
         });
-        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        HorizontalLayout row = new HorizontalLayout(lineId, notifyAll, save);
+        Button unlink = new Button("連携解除", e -> {
+            users.unlinkLine(userId);
+            lineId.clear();
+            applyStatus(status, users.find(userId).orElse(null));
+            Notification.show("LINE連携を解除しました（通知先を削除）。");
+        });
+        unlink.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        unlink.setEnabled(me != null && me.getLineUserId() != null);   // 未登録なら押せない
+
+        HorizontalLayout row = new HorizontalLayout(lineId, register, unlink);
         row.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
         row.setSpacing(true);
+
+        // 通知の全体ON/OFF（マスタスイッチ）。変更で即保存する。
+        Checkbox notifyAll = new Checkbox("通知を受け取る（全体ON/OFF）");
+        notifyAll.setValue(me == null || me.isNotifyEnabled());
+        notifyAll.addValueChangeListener(e -> {
+            users.setNotifyEnabled(userId, e.getValue());
+            applyStatus(status, users.find(userId).orElse(null));
+        });
+
+        applyStatus(status, me);
 
         // 未追加・ブロック時の自己解決導線（③を受信側が解決・BD-SC-05-08）。
         Anchor addFriend = new Anchor("https://line.me/", "▶ LINEで友だち追加する（未追加・ブロック時）");
@@ -125,7 +141,7 @@ public class NotificationSettingsView extends VerticalLayout {
         Span cond = new Span("通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE ID登録済 ⑤通数枠あり");
         cond.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
 
-        block.add(h, row, status, addFriend, cond);
+        block.add(h, row, notifyAll, status, addFriend, cond);
         return block;
     }
 
