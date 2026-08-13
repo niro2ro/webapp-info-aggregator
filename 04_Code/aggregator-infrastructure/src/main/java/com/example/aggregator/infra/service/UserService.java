@@ -61,13 +61,29 @@ public class UserService {
         return users.findById(id);
     }
 
-    /** 本人のLINE連携設定を更新（SC-05 上段）: 通知先IDと通知の全体ON/OFF。空文字は未登録(null)扱い。 */
+    /** LINE連携を登録（SC-05 上段）: 通知先の line_user_id を保存する。空はエラー。 */
     @Transactional
-    public void updateLineSettings(Long userId, String lineUserId, boolean notifyEnabled) {
+    public void linkLine(Long userId, String lineUserId) {
+        String id = lineUserId == null ? "" : lineUserId.trim();
+        if (id.isEmpty()) throw new IllegalArgumentException("LINEユーザーIDを入力してください。");
         UserEntity u = users.findById(userId).orElseThrow(() -> new IllegalArgumentException("利用者が見つかりません。"));
-        String id = (lineUserId == null || lineUserId.isBlank()) ? null : lineUserId.trim();
         u.setLineUserId(id);
-        u.setNotifyEnabled(notifyEnabled);
+        users.save(u);
+    }
+
+    /** LINE連携を解除: line_user_id を DB から削除（null）する。 */
+    @Transactional
+    public void unlinkLine(Long userId) {
+        UserEntity u = users.findById(userId).orElseThrow(() -> new IllegalArgumentException("利用者が見つかりません。"));
+        u.setLineUserId(null);
+        users.save(u);
+    }
+
+    /** 通知の全体ON/OFF（マスタスイッチ）だけを更新する。 */
+    @Transactional
+    public void setNotifyEnabled(Long userId, boolean enabled) {
+        UserEntity u = users.findById(userId).orElseThrow(() -> new IllegalArgumentException("利用者が見つかりません。"));
+        u.setNotifyEnabled(enabled);
         users.save(u);
     }
 
