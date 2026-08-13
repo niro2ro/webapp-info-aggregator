@@ -108,7 +108,7 @@ public class TimelineView extends VerticalLayout {
         sortSelect.setLabel(null);
         sortSelect.setItems(ArticleQuery.Sort.values());
         sortSelect.setItemLabelGenerator(this::sortLabel);
-        sortSelect.setValue(ArticleQuery.Sort.EVENT_DESC);
+        sortSelect.setValue(ArticleQuery.Sort.PUBLISHED_DESC);
         sortSelect.addValueChangeListener(e -> refresh());
 
         unreadOnly.addValueChangeListener(e -> refresh());
@@ -173,7 +173,7 @@ public class TimelineView extends VerticalLayout {
                 themeFilter.getValue() == null ? null : themeFilter.getValue().getId(),   // テーマ絞り込み
                 sourceFilter.getValue() == null ? null : sourceFilter.getValue().getId(), // 情報源絞り込み
                 unreadOnly.getValue(),
-                sortSelect.getValue() == null ? ArticleQuery.Sort.EVENT_DESC : sortSelect.getValue(),
+                sortSelect.getValue() == null ? ArticleQuery.Sort.PUBLISHED_DESC : sortSelect.getValue(),
                 50);
         List<ArticleEntity> rows = articles.search(q);
         Set<Long> readIds = interaction.readArticleIds(USER_ID);
@@ -283,10 +283,9 @@ public class TimelineView extends VerticalLayout {
 
     private String sortLabel(ArticleQuery.Sort s) {
         return switch (s) {
-            case EVENT_DESC -> "日付順（新しい順）";       // 実イベント日→掲載日→収集日 の代表日
-            case EVENT_ASC -> "日付順（古い順）";
-            case RELEASE -> "発売日が近い順";              // 実際の発売日でソート
-            case PUBLISHED_DESC -> "記事の掲載日順";        // 記事が配信された日
+            case RELEASE_ASC -> "発売日順（近い順）";       // 実イベント日が近い順（日付なしは末尾）
+            case RELEASE_DESC -> "発売日順（遠い順）";       // 実イベント日が遠い順
+            case PUBLISHED_DESC -> "掲載日順";             // 記事が配信された日
             case COLLECTED_DESC -> "収集日順";             // こちらが取り込んだ日
         };
     }

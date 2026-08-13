@@ -20,9 +20,6 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     @PersistenceContext
     private EntityManager em;
 
-    private static final String TIMELINE_KEY =
-            "COALESCE(a.event_date, (a.published_at AT TIME ZONE 'UTC')::date, (a.created_at AT TIME ZONE 'UTC')::date)";
-
     @Override
     public List<ArticleEntity> search(ArticleQuery q) {
         StringBuilder sql = new StringBuilder("SELECT a.* FROM articles a WHERE 1=1 ");
@@ -63,11 +60,6 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                     + "WHERE r.article_id = a.id AND r.user_id = :uid) ");
             binds.add(new Object[]{"uid", q.userId()});
         }
-        if (q.sort() == ArticleQuery.Sort.RELEASE) {
-            // 発売日順: 種別=発売日(1) の記事を発売日で（近い順＝昇順が上位）
-            sql.append("AND a.event_date_kind = 1 ");
-        }
-
         sql.append("ORDER BY ").append(orderBy(q.sort()));
 
         Query query = em.createNativeQuery(sql.toString(), ArticleEntity.class);
@@ -83,11 +75,11 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     /** ORDER BY はホワイトリスト（外部文字列を混ぜない）。 */
     private String orderBy(ArticleQuery.Sort sort) {
         return switch (sort) {
-            case EVENT_DESC -> TIMELINE_KEY + " DESC, a.created_at DESC";
-            case EVENT_ASC -> TIMELINE_KEY + " ASC, a.created_at ASC";
-            case RELEASE -> "a.event_date ASC NULLS LAST, a.created_at DESC";
-            case PUBLISHED_DESC -> "a.published_at DESC NULLS LAST, a.created_at DESC";
-            case COLLECTED_DESC -> "a.created_at DESC";
+            // 発売日(実イベント日)。日付が無い記事は末尾へ（NULLS LAST）。
+            case RELEASE_ASC -> "a.event_date ASC NULLS LAST, a.created_at DESC";    // 近い順
+            case RELEASE_DESC -> "a.event_date DESC NULLS LAST, a.created_at DESC";  // 遠い順
+            case PUBLISHED_DESC -> "a.published_at DESC NULLS LAST, a.created_at DESC"; // 掲載日順
+            case COLLECTED_DESC -> "a.created_at DESC";                             // 収集日順
         };
     }
 }
