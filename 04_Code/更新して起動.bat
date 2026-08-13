@@ -20,6 +20,11 @@ if defined ANTHROPIC_API_KEY (
 ) else (
     echo [i] ANTHROPIC_API_KEY 未設定 → LLM無効で起動します。
 )
+if defined LINE_CHANNEL_TOKEN (
+    echo [i] LINE_CHANNEL_TOKEN を検出（LINE_ENABLED=%LINE_ENABLED%）
+) else (
+    echo [i] LINE_CHANNEL_TOKEN 未設定 → LINE無効で起動します。
+)
 
 rem ログの日本語表示のため UTF-8 出力にする
 set "JAVA_TOOL_OPTIONS=-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8"
