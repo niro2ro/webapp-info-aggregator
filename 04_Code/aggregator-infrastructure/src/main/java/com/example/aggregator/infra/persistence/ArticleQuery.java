@@ -18,9 +18,10 @@ public record ArticleQuery(
         Sort sort,
         int limit) {
 
-    public enum Sort { EVENT_DESC, EVENT_ASC, RELEASE, PUBLISHED_DESC, COLLECTED_DESC }
+    /** 並び順: 発売日(実イベント日)の近い/遠い順、掲載日順、収集日順。 */
+    public enum Sort { RELEASE_ASC, RELEASE_DESC, PUBLISHED_DESC, COLLECTED_DESC }
 
     public static ArticleQuery defaults(Long userId) {
-        return new ArticleQuery(userId, null, null, null, null, null, false, Sort.EVENT_DESC, 50);
+        return new ArticleQuery(userId, null, null, null, null, null, false, Sort.PUBLISHED_DESC, 50);
     }
 }
