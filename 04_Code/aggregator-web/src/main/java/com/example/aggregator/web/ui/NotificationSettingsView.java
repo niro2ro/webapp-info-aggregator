@@ -108,30 +108,43 @@ public class NotificationSettingsView extends VerticalLayout {
 
         Span status = new Span();
 
+        Button register = new Button("登録");
+        register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button unlink = new Button("連携解除");
+        unlink.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        Button test = new Button("テスト送信");
+        test.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        // 登録状況でボタンを活性/非活性に: 登録済み→「登録」を無効／未登録→「連携解除」「テスト送信」を無効
+        Runnable refreshButtons = () -> {
+            UserEntity cur = users.find(userId).orElse(null);
+            boolean registered = cur != null && cur.getLineUserId() != null && !cur.getLineUserId().isBlank();
+            register.setEnabled(!registered);
+            unlink.setEnabled(registered);
+            test.setEnabled(registered);
+        };
+
         // 登録＝DBに保存 / 連携解除＝DBから削除（line_user_id を null に）
-        Button register = new Button("登録", e -> {
+        register.addClickListener(e -> {
             try {
                 users.linkLine(userId, lineId.getValue());
                 applyStatus(status, users.find(userId).orElse(null));
+                refreshButtons.run();
                 Notification.show("LINEユーザーIDを登録しました。");
             } catch (IllegalArgumentException ex) {
                 Notification.show(ex.getMessage());
             }
         });
-        register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        Button unlink = new Button("連携解除", e -> {
+        unlink.addClickListener(e -> {
             users.unlinkLine(userId);
             lineId.clear();
             applyStatus(status, users.find(userId).orElse(null));
+            refreshButtons.run();
             Notification.show("LINE連携を解除しました（通知先を削除）。");
         });
-        unlink.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-        unlink.setEnabled(me != null && me.getLineUserId() != null);   // 未登録なら押せない
+        test.addClickListener(e -> sendTest(status));
 
-        // テスト送信: 登録済みのユーザーIDへ1通だけ送り、トークン/友だち追加/IDの正しさを確認する
-        Button test = new Button("テスト送信", e -> sendTest(status));
-        test.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        refreshButtons.run();   // 初期状態を反映
 
         HorizontalLayout row = new HorizontalLayout(lineId, register, unlink, test);
         row.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
