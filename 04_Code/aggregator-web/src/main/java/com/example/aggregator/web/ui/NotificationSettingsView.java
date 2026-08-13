@@ -3,7 +3,13 @@ package com.example.aggregator.web.ui;
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
+import com.example.aggregator.domain.model.NotifyStatus;
 import com.example.aggregator.domain.model.UserEntity;
+import com.example.aggregator.domain.notify.LineNotifier;
+import com.example.aggregator.domain.notify.NotificationBundle;
+import com.example.aggregator.domain.notify.NotificationItem;
+import com.example.aggregator.domain.notify.PushOutcome;
+import com.example.aggregator.infra.notify.LineProperties;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.persistence.SourceRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
@@ -51,6 +57,8 @@ public class NotificationSettingsView extends VerticalLayout {
     private final FavoriteService favorites;
     private final ArticleInteractionService interaction;
     private final UserService users;
+    private final LineNotifier lineNotifier;
+    private final LineProperties lineProps;
 
     private final Grid<ThemeEntity> themeGrid = new Grid<>(ThemeEntity.class, false);
     private final Grid<SourceEntity> sourceGrid = new Grid<>(SourceEntity.class, false);
@@ -58,13 +66,15 @@ public class NotificationSettingsView extends VerticalLayout {
 
     public NotificationSettingsView(ThemeRepository themes, SourceRepository sources, ArticleRepository articles,
                                     FavoriteService favorites, ArticleInteractionService interaction,
-                                    UserService users) {
+                                    UserService users, LineNotifier lineNotifier, LineProperties lineProps) {
         this.themes = themes;
         this.sources = sources;
         this.articles = articles;
         this.favorites = favorites;
         this.interaction = interaction;
         this.users = users;
+        this.lineNotifier = lineNotifier;
+        this.lineProps = lineProps;
 
         setSizeFull();
         setPadding(true);
@@ -119,7 +129,11 @@ public class NotificationSettingsView extends VerticalLayout {
         unlink.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
         unlink.setEnabled(me != null && me.getLineUserId() != null);   // 未登録なら押せない
 
-        HorizontalLayout row = new HorizontalLayout(lineId, register, unlink);
+        // テスト送信: 登録済みのユーザーIDへ1通だけ送り、トークン/友だち追加/IDの正しさを確認する
+        Button test = new Button("テスト送信", e -> sendTest(status));
+        test.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        HorizontalLayout row = new HorizontalLayout(lineId, register, unlink, test);
         row.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
         row.setSpacing(true);
 
@@ -156,6 +170,40 @@ public class NotificationSettingsView extends VerticalLayout {
         else { text = "連携OK（通知が届きます）"; color = "#4e7d55"; }
         status.setText("連携ステータス: " + text);
         status.getStyle().set("color", color).set("font-size", "13px").set("font-weight", "600");
+    }
+
+    /** 登録済みのユーザーIDへテスト通知を1通送る（トークン/友だち追加/IDの確認用）。 */
+    private void sendTest(Span status) {
+        if (!lineProps.isEnabled()) {
+            Notification.show("LINEが無効です。secrets.bat で LINE_ENABLED=true とアクセストークンを設定して再起動してください。",
+                    6000, Notification.Position.MIDDLE);
+            return;
+        }
+        UserEntity me = users.find(userId).orElse(null);
+        if (me == null || me.getLineUserId() == null || me.getLineUserId().isBlank()) {
+            Notification.show("先にLINEユーザーIDを登録してください。");
+            return;
+        }
+        NotificationItem item = new NotificationItem(0L, "【テスト】通知テスト",
+                "https://line.me/", "このメッセージが届けばLINE連携は成功です。", null);
+        NotificationBundle bundle = NotificationBundle.of(userId, me.getLineUserId(), java.util.List.of(item));
+        PushOutcome outcome = lineNotifier.push(bundle);   // 実送信は例外を投げず結果で返る
+        Notification.show(testMessage(outcome.status()), 6000, Notification.Position.MIDDLE);
+        applyStatus(status, me);
+    }
+
+    /** テスト送信結果を利用者向けメッセージに変換（外部IF §3.4 の分類に対応）。 */
+    private static String testMessage(NotifyStatus s) {
+        return switch (s) {
+            case SUCCESS -> "テスト送信しました。LINEを確認してください（届くまで数秒）。";
+            case AUTH_FAILED -> "失敗: トークンが無効です。Developers Consoleでアクセストークンを再確認してください。";
+            case BLOCKED -> "失敗: 友だち未追加/ブロックの可能性。botを友だち追加してください。";
+            case RATE_LIMITED -> "失敗: レート制限です。少し待って再試行してください。";
+            case TEMP_ERROR -> "失敗: 一時的な障害です。少し待って再試行してください。";
+            case FORMAT_ERROR -> "失敗: 送信内容の形式エラー（不具合）。";
+            case TIMEOUT -> "失敗: タイムアウト。再試行してください。";
+            default -> "失敗: " + s;
+        };
     }
 
     // ===== 下段: お気に入り／ブックマーク（タブ・BD-SC-05-01） =====
