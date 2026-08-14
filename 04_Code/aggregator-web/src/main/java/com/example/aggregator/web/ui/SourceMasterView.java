@@ -64,8 +64,10 @@ public class SourceMasterView extends VerticalLayout implements AdminOnly {
         refresh();
     }
 
-    private void openForm(SourceEntity edit) {
-        boolean isEdit = edit != null;
+    private void openForm(SourceEntity row) {
+        boolean isEdit = row != null;
+        // 編集時はグリッド保持のインスタンスではなくDBの最新を取り直す（表示が古くても実状態を出す）。
+        SourceEntity edit = isEdit ? sources.find(row.getId()).orElse(row) : null;
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(isEdit ? "情報源の編集" : "情報源の追加");
 
@@ -100,9 +102,15 @@ public class SourceMasterView extends VerticalLayout implements AdminOnly {
                 }
                 dialog.close();
                 refresh();
-                Notification.show("保存しました。");
+                Notification.show("保存しました。（有効=" + active.getValue() + " / 規約確認済="
+                        + reviewed.getValue() + " / robots尊重=" + robots.getValue() + "）");
             } catch (IllegalArgumentException ex) {
-                Notification.show(ex.getMessage());
+                // 入力チェック（名称/URL未入力など）。ユーザーが直せる想定のメッセージ。
+                Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            } catch (Exception ex) {
+                // それ以外の失敗（DB制約・接続など）を握りつぶさず理由を表示する（不具合切り分け）。
+                Notification.show("保存に失敗しました: " + ex.getClass().getSimpleName()
+                        + " - " + ex.getMessage(), 8000, Notification.Position.MIDDLE);
             }
         });
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

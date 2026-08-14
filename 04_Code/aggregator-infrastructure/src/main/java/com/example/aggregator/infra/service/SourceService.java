@@ -4,6 +4,7 @@ import com.example.aggregator.domain.model.FetchType;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.infra.persistence.SourceRepository;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,11 @@ public class SourceService {
 
     public List<SourceEntity> all() {
         return sources.findAll();
+    }
+
+    /** 編集ダイアログを開くとき等、DBの最新1件を取り直す（グリッドの表示が古くても実状態を反映するため）。 */
+    public Optional<SourceEntity> find(Long id) {
+        return sources.findById(id);
     }
 
     @Transactional
