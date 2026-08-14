@@ -1,7 +1,10 @@
 package com.example.aggregator.web.ui;
 
 import com.example.aggregator.domain.model.ArticleEntity;
+import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.infra.persistence.ArticleRepository;
+import com.example.aggregator.infra.persistence.SourceRepository;
+import com.example.aggregator.infra.service.ThemeSearchCollector;
 import com.example.aggregator.infra.llm.LlmProperties;
 import com.example.aggregator.domain.rule.TimeZones;
 import com.example.aggregator.infra.service.ArticleReanalyzeService;
@@ -26,6 +29,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import org.springframework.data.domain.PageRequest;
 
 /**
@@ -49,6 +53,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
     private final ArticleReanalyzeService reanalyze;
     private final LlmProperties llmProps;
     private final FeedProbeService feedProbe;
+    private final SourceRepository sources;
 
     private final Span messageQuota = new Span();
     private final Span llmCost = new Span();
@@ -57,7 +62,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
     public AdminDashboardView(CollectionRunner collectionRunner, NotificationService notificationService,
                               NotificationCountService counts, CostService cost, ArticleRepository articles,
                               ArticleReanalyzeService reanalyze, LlmProperties llmProps,
-                              FeedProbeService feedProbe) {
+                              FeedProbeService feedProbe, SourceRepository sources) {
         this.collectionRunner = collectionRunner;
         this.notificationService = notificationService;
         this.counts = counts;
@@ -66,6 +71,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
         this.reanalyze = reanalyze;
         this.llmProps = llmProps;
         this.feedProbe = feedProbe;
+        this.sources = sources;
 
         setSizeFull();
         setPadding(true);
@@ -94,21 +100,84 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
         Button probe = new Button("取得テスト", e -> {
             result.removeAll();
-            FeedProbeService.ProbeResult r = feedProbe.probe(url.getValue());
-            if (!r.ok()) {
-                Span err = new Span("✕ " + r.error());
-                err.getStyle().set("color", "var(--lumo-error-text-color)").set("font-weight", "600");
-                result.add(err);
+            result.add(renderProbe(feedProbe.probe(url.getValue()), true));
+        });
+        probe.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        // 情報源マスタの各URLを1件ずつ個別にテストする（テーマ検索用の内部ソースは対象外）。
+        Button probeAll = new Button("情報源マスタを一括テスト（全URL）", e -> {
+            result.removeAll();
+            List<SourceEntity> targets = sources.findAll().stream()
+                    .filter(s -> !ThemeSearchCollector.SEARCH_SOURCE_NAME.equals(s.getName()))
+                    .toList();
+            if (targets.isEmpty()) {
+                Span none = new Span("情報源マスタに対象がありません。");
+                none.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
+                result.add(none);
                 return;
             }
-            Span ok = new Span("✓ 取得成功: " + r.count() + " 件（DBには保存していません）");
-            ok.getStyle().set("color", "#4e7d55").set("font-weight", "600");
-            result.add(ok);
-            if (r.count() == 0) {
-                Span empty = new Span("※フィードとしては読めましたが、記事が0件でした（検索語ヒットなし等）。");
-                empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
-                result.add(empty);
+            int ok = 0;
+            List<FeedProbeService.NamedProbe> results = feedProbe.probeSources(targets);
+            for (FeedProbeService.NamedProbe np : results) {
+                if (np.result().ok()) ok++;
+                result.add(renderSourceProbe(np));
             }
+            Span summary = new Span("一括テスト完了: " + targets.size() + " 件中 成功 " + ok
+                    + " / 失敗 " + (targets.size() - ok) + "（DBには保存していません）");
+            summary.getStyle().set("font-weight", "600").set("font-size", "13px").set("margin-top", "4px");
+            result.addComponentAsFirst(summary);
+        });
+        probeAll.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        Span note = new Span("実サイトのRSS/AtomフィードのURLを入れて「取得テスト」を押すと、実際に取得・解析して "
+                + "件数と先頭" + FeedProbeService.SAMPLE_LIMIT + "件を表示します。"
+                + "「情報源マスタを一括テスト」は登録済み情報源のURLを1件ずつ個別に確認します。"
+                + "いずれもDBには保存しません。収集バッチ・テーマ検索収集と同じ取得/解析経路を使うため、"
+                + "ここで取れれば本番でも取れます。取れない場合は、そのURLがRSSでない/取得がブロックされている可能性です。");
+        note.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+
+        box.add(url, new HorizontalLayout(probe, probeAll), note, result);
+        return box;
+    }
+
+    /** 情報源1件ぶんの結果を「名前＋URL＋判定＋サンプル」で描画する（一括テスト用）。 */
+    private VerticalLayout renderSourceProbe(FeedProbeService.NamedProbe np) {
+        VerticalLayout block = new VerticalLayout();
+        block.setPadding(false);
+        block.setSpacing(false);
+        block.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)").set("padding-top", "6px");
+        Span head = new Span((np.result().ok() ? "✓ " : "✕ ") + np.name());
+        head.getStyle().set("font-weight", "700").set("font-size", "13px")
+                .set("color", np.result().ok() ? "#4e7d55" : "var(--lumo-error-text-color)");
+        Span urlLine = new Span(np.url());
+        urlLine.getStyle().set("font-size", "11px").set("color", "var(--lumo-secondary-text-color)");
+        block.add(head, urlLine, renderProbe(np.result(), false));
+        return block;
+    }
+
+    /**
+     * 診断結果を描画する。{@code withSamples=true} なら先頭数件のタイトル/日付/リンクも出す（単発テスト用）。
+     * 一括テストでは件数だけ簡潔に出す（{@code withSamples=false}）。
+     */
+    private VerticalLayout renderProbe(FeedProbeService.ProbeResult r, boolean withSamples) {
+        VerticalLayout out = new VerticalLayout();
+        out.setPadding(false);
+        out.setSpacing(false);
+        if (!r.ok()) {
+            Span err = new Span("✕ " + r.error());
+            err.getStyle().set("color", "var(--lumo-error-text-color)").set("font-weight", "600").set("font-size", "13px");
+            out.add(err);
+            return out;
+        }
+        Span ok = new Span("✓ 取得成功: " + r.count() + " 件");
+        ok.getStyle().set("color", "#4e7d55").set("font-weight", "600").set("font-size", "13px");
+        out.add(ok);
+        if (r.count() == 0) {
+            Span empty = new Span("※フィードとしては読めましたが、記事が0件でした（検索語ヒットなし等）。");
+            empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+            out.add(empty);
+        }
+        if (withSamples) {
             for (FeedProbeService.ProbeItem it : r.samples()) {
                 String date = it.publishedAt() != null ? PROBE_DATE.format(it.publishedAt()) : "日付なし";
                 Span line = new Span("・[" + date + "] " + (it.title() == null ? "(タイトルなし)" : it.title()));
@@ -122,19 +191,16 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
                     a.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
                     item.add(a);
                 }
-                result.add(item);
+                out.add(item);
             }
-        });
-        probe.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        Span note = new Span("実サイトのRSS/AtomフィードのURLを入れて「取得テスト」を押すと、実際に取得・解析して "
-                + "件数と先頭" + FeedProbeService.SAMPLE_LIMIT + "件を表示します。DBには保存しません。"
-                + "収集バッチ・テーマ検索収集と同じ取得/解析経路を使うため、ここで取れれば本番でも取れます。"
-                + "取れない場合は、そのURLがRSSでない/取得がブロックされている可能性です。");
-        note.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
-
-        box.add(url, probe, note, result);
-        return box;
+        } else if (!r.samples().isEmpty()) {
+            // 一括テストでは代表として先頭1件のタイトルだけ添える（一覧を短く保つ）。
+            FeedProbeService.ProbeItem first = r.samples().get(0);
+            Span sample = new Span("例: " + (first.title() == null ? "(タイトルなし)" : first.title()));
+            sample.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
+            out.add(sample);
+        }
+        return out;
     }
 
     // LLM 稼働状況＋既存記事の再解析（発売日の穴埋め）
