@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.example.aggregator.domain.collect.HttpFetcher;
+import com.example.aggregator.domain.model.FetchType;
+import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.infra.rss.RomeFeedFetcher;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -101,5 +104,24 @@ class FeedProbeServiceTest {
 
         assertThat(r.ok()).isFalse();
         assertThat(r.error()).contains("解析");
+    }
+
+    @Test
+    @DisplayName("情報源マスタの各URLを個別にテストし、1件失敗しても残りは続行する")
+    void probeSourcesPerSource() {
+        SourceEntity good = new SourceEntity("良RSS", "https://good.example.com/rss", FetchType.RSS);
+        SourceEntity bad = new SourceEntity("不通", "https://bad.example.com/rss", FetchType.RSS);
+        when(http.get("https://good.example.com/rss")).thenReturn(rssWith(2));
+        when(http.get("https://bad.example.com/rss")).thenThrow(new RuntimeException("connect refused"));
+
+        List<FeedProbeService.NamedProbe> results = service().probeSources(List.of(good, bad));
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).name()).isEqualTo("良RSS");
+        assertThat(results.get(0).result().ok()).isTrue();
+        assertThat(results.get(0).result().count()).isEqualTo(2);
+        assertThat(results.get(1).name()).isEqualTo("不通");
+        assertThat(results.get(1).result().ok()).isFalse();       // 失敗しても結果に含まれる
+        assertThat(results.get(1).url()).isEqualTo("https://bad.example.com/rss");
     }
 }
