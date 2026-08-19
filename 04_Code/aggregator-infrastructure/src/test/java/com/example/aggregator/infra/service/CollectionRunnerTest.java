@@ -107,15 +107,4 @@ class CollectionRunnerTest {
         verify(crawlLogs, org.mockito.Mockito.times(2)).save(any());   // 失敗分も必ず記録
     }
 
-    @Test
-    @DisplayName("未対応の取得方式(HTMLパーサー)はこの情報源だけ失敗にして継続")
-    void unsupportedFetchType() {
-        SourceEntity html = new SourceEntity("h", "https://h.example.com", FetchType.HTML_PARSER);
-        when(sources.findByActiveTrueAndTermsReviewedTrue()).thenReturn(List.of(html));
-
-        CollectionRunner.RunResult r = runner().run();
-
-        assertThat(r.failed()).isEqualTo(1);
-        verify(collectionService, never()).ingest(any(), any());
-    }
 }

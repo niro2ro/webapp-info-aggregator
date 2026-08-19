@@ -5,7 +5,6 @@ import com.example.aggregator.domain.collect.RawItem;
 import com.example.aggregator.domain.collect.RobotsGate;
 import com.example.aggregator.domain.model.CrawlLogEntity;
 import com.example.aggregator.domain.model.CrawlStatus;
-import com.example.aggregator.domain.model.FetchType;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.infra.persistence.CrawlLogRepository;
 import com.example.aggregator.infra.persistence.SourceRepository;
@@ -81,11 +80,8 @@ public class CollectionRunner {
         return new RunResult(targets.size(), ok, ng, fetched, registered);
     }
 
-    /** 1情報源からの取得〜取り込み。取得方式に応じて分岐（現状 RSS を配線。専用パーサー/LLM 情報源は後続）。 */
+    /** 1情報源からの取得〜取り込み。取得方式は RSS のみ（専用パーサー/LLM取得は廃止）。 */
     private CollectionService.IngestResult collectFrom(SourceEntity source) {
-        if (source.getFetchType() != FetchType.RSS) {
-            throw new IllegalStateException("未対応の取得方式: " + source.getFetchType() + "（専用パーサー/LLM情報源は後続）");
-        }
         if (!robotsGate.isAllowed(source.getUrl())) {
             throw new RobotsDisallowedException("robots.txt により不許可、または robots 取得エラー: " + source.getUrl());
         }
