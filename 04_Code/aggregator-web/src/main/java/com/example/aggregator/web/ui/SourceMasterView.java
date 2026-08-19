@@ -128,8 +128,6 @@ public class SourceMasterView extends VerticalLayout implements AdminOnly {
     static String fetchLabel(FetchType t) {
         return switch (t) {
             case RSS -> "RSS";
-            case HTML_PARSER -> "専用パーサー";
-            case LLM -> "LLM";
         };
     }
 }
