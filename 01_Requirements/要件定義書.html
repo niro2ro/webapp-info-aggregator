@@ -307,7 +307,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>収集（収集フェーズ）</td>
-<td>情報源から記事を取得し DB へ登録するバッチ処理。取得は RSS→専用パーサー→LLM の順</td>
+<td>情報源から記事を取得し DB へ登録するバッチ処理。取得は <strong>RSS のみ</strong>。取得後、RSS で埋まらない発売日・不明カテゴリだけを <strong>LLM で補完</strong>（予算内）</td>
 <td>FR-02・TBL-CrawlLogs</td>
 </tr>
 <tr>
@@ -386,8 +386,8 @@ strong{font-weight:700;}
 <td>FR-02-08/09</td>
 </tr>
 <tr>
-<td>取得優先順</td>
-<td>RSS → 専用パーサー → LLM（コスト・権利・安定性の順に有利）</td>
+<td>取得方式</td>
+<td><strong>RSS のみ</strong>（専用パーサー・LLM取得は廃止）。取得後、RSS で埋まらない発売日・不明カテゴリのみ LLM で補完（予算内）</td>
 <td>FR-02-04</td>
 </tr>
 <tr>
@@ -538,22 +538,22 @@ strong{font-weight:700;}
 <tr>
 <td>FR-02-01</td>
 <td>RSS 取得</td>
-<td>RSS/Atom を直接パース（LLM 不使用）</td>
+<td>RSS/Atom を直接パース（LLM 不使用）。<strong>唯一の取得方式</strong></td>
 </tr>
 <tr>
 <td>FR-02-02</td>
-<td>専用パーサー取得</td>
-<td>HTML 構造が安定した主要サイトを専用パーサーで取得（LLM 不使用）</td>
+<td>専用パーサー取得（<strong>廃止・不採用</strong>）</td>
+<td>HTMLスクレイピング（jsoup）による取得は採用しない。RSS を提供しないサイトは対象外とする（将来必要なら別途検討）</td>
 </tr>
 <tr>
 <td>FR-02-03</td>
-<td>LLM 構造化</td>
-<td>上記以外は本文抽出→Claude API で構造化</td>
+<td>LLM 構造化（取得後の補完）</td>
+<td><strong>取得方式ではなく取得後の工程</strong>。RSS で埋まらない発売日・不明カテゴリ等を、本文抽出→Claude API で補完する（予算内・任意ON/OFF）</td>
 </tr>
 <tr>
 <td>FR-02-04</td>
-<td>フォールバック制御</td>
-<td>取得順は RSS → 専用パーサー → LLM</td>
+<td>フォールバック制御（<strong>廃止</strong>）</td>
+<td>取得方式は RSS のみのため取得段のフォールバックは無い。LLM 補完（FR-02-03）は予算ガード（FR-02-11）で制御</td>
 </tr>
 <tr>
 <td>FR-02-05</td>
@@ -593,7 +593,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-02-11</td>
 <td>LLM予算ガード</td>
-<td>LLM構造化（FR-02-03）を呼ぶ直前に、当月累計コスト（<code>LlmUsageLogs</code> 集計）が上限（安全マージン込み）に達していないか判定。達していれば <strong>LLM を呼ばずスキップし RSS/専用パーサーの結果で登録</strong>（収集は継続）。呼び出し後は <code>usage</code> からコストを算出し記録（NFR-06 ハードキャップ）</td>
+<td>LLM構造化（FR-02-03）を呼ぶ直前に、当月累計コスト（<code>LlmUsageLogs</code> 集計）が上限（安全マージン込み）に達していないか判定。達していれば <strong>LLM を呼ばずスキップし RSS の結果で登録</strong>（収集は継続）。呼び出し後は <code>usage</code> からコストを算出し記録（NFR-06 ハードキャップ）</td>
 </tr>
 </tbody>
 </table></div>
@@ -835,10 +835,10 @@ strong{font-weight:700;}
 <td>①の心臓。冪等性（重複排除）含む</td>
 </tr>
 <tr>
-<td>└ FR-02-03 LLM構造化／専用パーサー／類似グルーピング</td>
+<td>└ FR-02-03 LLM構造化（取得後の発売日・カテゴリ補完）／類似グルーピング</td>
 <td><strong>Should</strong></td>
 <td>2</td>
-<td>RSSで骨格は回る。情報の充実は次段</td>
+<td>RSSで骨格は回る。情報の充実は次段（専用パーサーは不採用）</td>
 </tr>
 <tr>
 <td>FR-04 一覧表示（タイムライン・元リンク）</td>
@@ -1137,7 +1137,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>FetchType</td>
-<td>1:Rss / 2:HtmlParser / 3:Llm</td>
+<td>1:Rss（<strong>RSS のみ</strong>。旧 2:HtmlParser・3:Llm は廃止。既存/旧データの 2・3 は読込時 Rss にフォールバック）</td>
 </tr>
 <tr>
 <td>CrawlStatus</td>
@@ -1994,13 +1994,13 @@ strong{font-weight:700;}
   &lt;category&gt;イベント&lt;/category&gt;
 &lt;/item&gt;
 </code></pre>
-<h4 id="3rss">3段階の取得方式と、RSS を最優先にする理由</h4>
-<p>本アプリの心臓部は「複数サイトから最新情報を集めて構造化する」ことであり、取得方式を次の優先順で切り替える（FR-02-04）。</p>
+<h4 id="rss-llm">取得方式は RSS のみ／LLM は取得後の補完に限定</h4>
+<p>本アプリの心臓部は「複数サイトから最新情報を集めて構造化する」ことであり、<strong>取得方式は RSS に一本化</strong>する（専用パーサー・LLM取得は不採用）。取得した後、RSS では埋まらない項目（発売日・不明カテゴリ等）だけを <strong>LLM で補完</strong>する（＝LLM は取得手段ではなく、取得後の構造化工程）。</p>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
-<th>優先</th>
-<th>方式</th>
+<th>段</th>
+<th>位置づけ</th>
 <th>やること</th>
 <th>LLM</th>
 <th>コスト・手間</th>
@@ -2008,37 +2008,37 @@ strong{font-weight:700;}
 </thead>
 <tbody>
 <tr>
-<td>①</td>
-<td><strong>RSS</strong></td>
+<td>取得</td>
+<td><strong>RSS のみ</strong></td>
 <td>配信口の XML をそのまま読む</td>
 <td>不使用</td>
 <td><strong>最も軽い</strong></td>
 </tr>
 <tr>
-<td>②</td>
-<td>専用パーサー</td>
-<td>HTML を解析してデータを取り出す</td>
-<td>不使用</td>
-<td>中（サイトごとに実装）</td>
+<td>補完</td>
+<td>LLM 構造化（任意・予算内）</td>
+<td>RSS で不足する発売日・不明カテゴリ等を本文から補う</td>
+<td>使用</td>
+<td>記事単位で課金。予算ガードで停止可</td>
 </tr>
 <tr>
-<td>③</td>
-<td>LLM</td>
-<td>本文を Claude API に渡して構造化</td>
-<td>使用</td>
-<td>重い（課金あり）</td>
+<td>（不採用）</td>
+<td>専用パーサー</td>
+<td>HTMLスクレイピング（jsoup）</td>
+<td>—</td>
+<td>サイトごと実装・改装で破損。<strong>採用しない</strong></td>
 </tr>
 </tbody>
 </table></div>
-<p>RSS を最優先にするのは、本要件定義が掲げる制約に直結するため。</p>
+<p>RSS を取得方式に一本化するのは、本要件定義が掲げる制約に直結するため。</p>
 <ol>
-<li><strong>コスト（NFR-06・§9）</strong>: RSS はタイトル・日付・カテゴリが最初から構造化されているため <strong>LLM を呼ぶ必要がない</strong>。LLM は呼ぶたびに課金されるので「RSS で取れるものは RSS で」が AI コスト月500円以内の鍵。</li>
-<li><strong>権利配慮（§9）</strong>: RSS はサイトが自ら公開している正規の配信窓口であり、HTML を力ずくで解析（スクレイピング）するより<strong>規約・権利面で安全</strong>。ポートフォリオ評価にも資する。</li>
+<li><strong>コスト（NFR-06・§9）</strong>: RSS はタイトル・日付・カテゴリが最初から構造化されているため取得段で <strong>LLM を呼ぶ必要がない</strong>。LLM は呼ぶたびに課金されるので「RSS で取れるものは RSS で」が AI コスト月500円以内の鍵。LLM は取得後、不足分の補完だけに限定する。</li>
+<li><strong>権利配慮（§9）</strong>: RSS はサイトが自ら公開している正規の配信窓口であり、HTML を力ずくで解析（スクレイピング）するより<strong>規約・権利面で安全</strong>。スクレイピング（専用パーサー）を採用しないこと自体が権利リスク低減になる。ポートフォリオ評価にも資する。</li>
 <li><strong>実装の軽さ・安定性</strong>: HTML はサイト改装でレイアウトが変わると壊れるが、RSS は形式が標準で安定。<strong>Phase 1（1テーマを日付順に並べる）を最短で回せる</strong>。第一陣3サイトを全て RSS で選んだのはこの理由。</li>
 </ol>
-<p>RSS で不足する項目（要約・場所・発生日など）がある場合のみ、②専用パーサー → ③LLM の順で補完する。</p>
+<p>RSS で不足する項目（要約・場所・発生日など）は、<strong>LLM 構造化（予算内）でのみ</strong>補完する。</p>
 <h4 id="java">Java での扱い</h4>
-<p>XML を自力パースはしない。ライブラリ <strong>ROME (rome-tools)</strong> が RSS/Atom の読み取りを担い、<code>SyndFeedInput</code> でパースした <code>SyndFeed</code> から各記事 <code>SyndEntry</code> を <code>.getTitle()</code> / <code>.getLink()</code> / <code>.getPublishedDate()</code> / <code>.getDescription()</code> 等のメソッドで取り出せる。フォーマット解釈はライブラリ任せにできる（「決まった形式のファイルを構造体に読み込む」感覚に近い）。HTTP 取得は Spring <code>RestClient</code>（＋Resilience4j）で行い、取得した本文を必要に応じて <strong>jsoup</strong>（専用パーサー）で解析する。</p>
+<p>XML を自力パースはしない。ライブラリ <strong>ROME (rome-tools)</strong> が RSS/Atom の読み取りを担い、<code>SyndFeedInput</code> でパースした <code>SyndFeed</code> から各記事 <code>SyndEntry</code> を <code>.getTitle()</code> / <code>.getLink()</code> / <code>.getPublishedDate()</code> / <code>.getDescription()</code> 等のメソッドで取り出せる。フォーマット解釈はライブラリ任せにできる（「決まった形式のファイルを構造体に読み込む」感覚に近い）。HTTP 取得は Spring <code>RestClient</code>（＋Resilience4j）で行う。取得後の LLM 構造化に渡す本文の抽出には jsoup を<strong>テキスト整形の用途に限って</strong>使う（HTMLスクレイピングによる取得＝専用パーサーは採用しない）。</p>
 <blockquote>
 <p>注記: 第一陣3サイトは「RSS を提供していると見られる」段階であり、<strong>その RSS が実際に生きているかは着手時の実地確認が必要</strong>（本セッションの環境では検証不可）。§7.1 の検証注記を参照。</p>
 </blockquote>
@@ -2123,13 +2123,13 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 <blockquote>
 <p><strong>検証に関する注記</strong>: 本要件定義時点では、実行環境のネットワークポリシーにより外部ホストへの HTTP アクセスが全て遮断され、上記4サイトの RSS の生死・robots.txt・利用規約を実地検証できていない（電撃ホビーウェブは KADOKAWA 運営で利用規約ページ <code>hobby.dengeki.com/terms/</code> の実在のみ確認）。上記は WebSearch（二次情報）にもとづく暫定であり、<strong>Phase 1/2 着手時に実地確認する</strong>こと（RSS URL 特定・robots 尊重可否・規約上の可否）。使えない場合は控え候補（アニメージュプラス／アキバ総研 等、カプセルトイは下記専門サイト）へ差し替える。</p>
 </blockquote>
-<p>共通ルール: robots.txt 尊重、同一ホスト間隔1秒以上、User-Agent に連絡先を含める。RSS で不足する項目（要約・場所・発生日）は本文抽出→専用パーサー→LLM の順で補完。</p>
+<p>共通ルール: robots.txt 尊重、同一ホスト間隔1秒以上、User-Agent に連絡先を含める。RSS で不足する項目（要約・場所・発生日）は本文抽出→LLM で補完（専用パーサーは不採用）。</p>
 <p>将来Phase再検討（今回は不採用）:
-- タイトー/セガ/バンダイナムコ等 ゲームセンター公式のプライズ告知（RSS無し＋JS動的描画。一次情報だが専用パーサー＋規約確認前提。当面は HOBBY Watch 経由で代替）
+- タイトー/セガ/バンダイナムコ等 ゲームセンター公式のプライズ告知（RSS無し＋JS動的描画。<strong>取得方式をRSSに一本化したため、RSSが無いサイトは対象外</strong>。当面は HOBBY Watch 経由で代替）
 - コミックナタリー（CDNがbotを遮断の疑い。採用時は規約確認＋許諾前提）
-- アニメイトタイムズ（公式RSS無し。専用パーサー実装＋規約確認前提）
+- アニメイトタイムズ（公式RSS無し。<strong>RSS一本化のため対象外</strong>）
 - <strong>カプセルトイ専門サイト（ガチャパラ／キャラグー／トイサンタ／ガチャガチャアイランド 等）</strong>：網羅性は高いが専門/個人系で規約・RSS・スクレイピング可否が不透明。電撃ホビーウェブのカプセルトイ枠で不足する場合の<strong>控え</strong>（採用時は規約・RSS を実地確認）
-- <strong>メーカー公式のガチャ新商品（ガシャポン公式＝バンダイ／タカラトミーアーツ 等）</strong>：一次情報だが公式サイトは RSS 無し＋JS動的描画の恐れ。専用パーサー＋規約確認前提で将来検討</p>
+- <strong>メーカー公式のガチャ新商品（ガシャポン公式＝バンダイ／タカラトミーアーツ 等）</strong>：一次情報だが公式サイトは RSS 無し＋JS動的描画の恐れ。<strong>取得方式をRSSに一本化したため対象外</strong>（RSS提供があれば将来検討）</p>
 <h3 id="72-claude-api">7.2 Claude API（構造化・収集時のみ）</h3>
 <ul>
 <li>入力: 本文抽出テキスト（＋ページのタイトル/URL）</li>
@@ -2300,7 +2300,7 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 </tr>
 <tr>
 <td>2</td>
-<td>FR-02(LLM/専用パーサー/重複排除), <strong>FR-04-03(検索)</strong>, 情報源追加</td>
+<td>FR-02(LLM補完/重複排除), <strong>FR-04-03(検索)</strong>, 情報源追加</td>
 </tr>
 <tr>
 <td>3</td>

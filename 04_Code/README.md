@@ -76,7 +76,7 @@ curl -s localhost:8080/demo/timeline/theme       # テーマにマッチした�
 ## 設計上の遵守事項（ポートフォリオの要点・CLAUDE.md §5）
 
 - **権利配慮**: 記事本文・公式画像を保存/表示しない（**自作要約＋元URLのみ**）。robots.txt を自動ゲートで尊重、利用規約は人手確認ゲート（`terms_reviewed`）で担保。同一ホスト間隔1秒以上、User-Agent に連絡先。禁止サイトは除外。
-- **AIコスト**: LLM は収集時の構造化のみ。RSS→専用パーサー→LLM のフォールバックで LLM 使用を最小化。当月コストを `usage`×単価で自前計算し **月500円をハードキャップ**（上限到達で LLM 停止・RSS で継続）。通知処理では LLM を呼ばない（配線でも保証）。
+- **AIコスト**: LLM は収集時の構造化のみ。取得方式は **RSS のみ**（専用パーサー・LLM取得は廃止）で、RSS で埋まらない発売日・不明カテゴリだけを取得後に LLM 補完して使用を最小化。当月コストを `usage`×単価で自前計算し **月500円をハードキャップ**（上限到達で LLM 停止・RSS で継続）。通知処理では LLM を呼ばない（配線でも保証）。
 - **冪等性**: `articles.url_hash` UNIQUE、`article_notifications(user_id, article_id)` 複合PK。DB 制約を最終防衛線とし、同日2回目以降は通知しない。
 - **UTC 保存 / JST 表示**: DB は `timestamptz`、Java は `Instant`（UTC）。JST 変換は表示層に集約（`ZoneId.of("Asia/Tokyo")` を一箇所に）。
 - **移行性（VPS）**: OS 非依存（`Path.of`）、設定は環境変数で外部化、ログは DB／標準出力、SQLite 不使用、UTF-8。
