@@ -171,7 +171,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td><strong>infrastructure</strong>（DD-ARC-02）</td>
-<td>ポートの<strong>実装</strong>：Spring Data JPA リポジトリ、<code>RestClient</code> クライアント（Claude/LINE/HTTP取得）、ROME/jsoup アダプタ、robots(crawler-commons)、<code>AttributeConverter</code></td>
+<td>ポートの<strong>実装</strong>：Spring Data JPA リポジトリ、<code>RestClient</code>/HttpClient クライアント（Claude/LINE/HTTP取得）、ROME アダプタ（RSS取得）、jsoup アダプタ（<strong>LLM補完用の本文抽出のみ</strong>・専用パーサー取得は不採用）、robots(crawler-commons)、<code>AttributeConverter</code></td>
 <td>domain</td>
 <td>FR-02/03・§6</td>
 </tr>
@@ -282,9 +282,9 @@ strong{font-weight:700;}
 <td>例外・リトライ設計書</td>
 </tr>
 <tr>
-<td>RSS/HTML/robots</td>
-<td>ROME / jsoup / crawler-commons</td>
-<td>infrastructure アダプタ</td>
+<td>RSS取得/本文抽出/robots</td>
+<td>ROME / jsoup（本文抽出のみ） / crawler-commons</td>
+<td>infrastructure アダプタ（取得方式はRSSのみ・専用パーサー不採用）</td>
 </tr>
 <tr>
 <td>LLM/通知</td>

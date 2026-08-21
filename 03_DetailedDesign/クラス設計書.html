@@ -159,9 +159,9 @@ strong{font-weight:700;}
         &lt;&lt;interface&gt;&gt;
         +fetch(Source) List~RawItem~
     }
-    class HtmlParser {
+    class ArticleContentExtractor {
         &lt;&lt;interface&gt;&gt;
-        +parse(String html, String url) RawItem
+        +extract(String url) Optional~String~
     }
     class LlmStructurer {
         &lt;&lt;interface&gt;&gt;
@@ -181,7 +181,7 @@ strong{font-weight:700;}
     }
 
     CollectionService --&gt; FeedFetcher
-    CollectionService --&gt; HtmlParser
+    CollectionService --&gt; ArticleContentExtractor
     CollectionService --&gt; LlmStructurer
     CollectionService --&gt; RobotsGate
     CollectionService --&gt; ArticleRepository
@@ -192,7 +192,7 @@ strong{font-weight:700;}
     CollectionService --&gt; ThemeMatcher
 </pre>
 <blockquote>
-<p><code>&lt;&lt;interface&gt;&gt;</code> はポート。<code>CollectionService</code> は<strong>具象を知らず interface だけに依存</strong>し、実装（ROME/jsoup/Claude/crawler-commons/JPA）は DI で注入される（差し替え・テスト容易）。</p>
+<p><code>&lt;&lt;interface&gt;&gt;</code> はポート。<code>CollectionService</code> は<strong>具象を知らず interface だけに依存</strong>し、実装（ROME/Claude/crawler-commons/JPA）は DI で注入される（差し替え・テスト容易）。取得方式は RSS のみ（専用パーサーは廃止）。<code>ArticleContentExtractor</code> は <strong>LLM 補完に渡す本文テキスト抽出</strong>の用途で jsoup を使う（HTMLスクレイピング取得ではない）。</p>
 </blockquote>
 <hr />
 <h2 id="2-domainservice">2. ドメインサービス（domain.service）</h2>
@@ -290,16 +290,22 @@ strong{font-weight:700;}
 <td>FR-02-01</td>
 </tr>
 <tr>
-<td><code>HtmlParser</code>（DD-CLS-13）</td>
-<td><code>JsoupHtmlParser</code></td>
+<td><code>HtmlParser</code>（DD-CLS-13・<strong>廃止</strong>）</td>
+<td><code>JsoupHtmlParser</code>（廃止）</td>
+<td>—</td>
+<td>FR-02-02（不採用）</td>
+</tr>
+<tr>
+<td><code>ArticleContentExtractor</code>（DD-CLS-13）</td>
+<td><code>JsoupArticleContentExtractor</code></td>
 <td>jsoup</td>
-<td>FR-02-02</td>
+<td>FR-02-03（LLM補完用の本文抽出）</td>
 </tr>
 <tr>
 <td><code>HttpContentFetcher</code>（DD-CLS-14）</td>
-<td><code>RestClientHttpFetcher</code></td>
-<td>RestClient＋Resilience4j</td>
-<td>FR-02-04/05</td>
+<td><code>RestClientHttpFetcher</code>／JDK HttpClient</td>
+<td>RestClient/HttpClient＋Resilience4j</td>
+<td>FR-02-05</td>
 </tr>
 <tr>
 <td><code>RobotsGate</code>（DD-CLS-15）</td>
@@ -391,7 +397,7 @@ strong{font-weight:700;}
 <tr>
 <td><code>RawItem</code>（DD-CLS-25）</td>
 <td>取得直後の生データ（title/url/pubDate/description/category）</td>
-<td>ROME/jsoup の出力を統一</td>
+<td>ROME（RSS）の出力を統一</td>
 </tr>
 <tr>
 <td><code>ExtractedText</code>（DD-CLS-26）</td>

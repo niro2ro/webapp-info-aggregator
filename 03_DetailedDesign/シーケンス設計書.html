@@ -87,7 +87,7 @@ strong{font-weight:700;}
     <div class="toc-title">目次</div>
     <div class="toc">
 <ul>
-<li><a href="#1-1dd-seq-01">1. 収集：1記事の登録（冪等・フォールバック）DD-SEQ-01</a></li>
+<li><a href="#1-1rssllmdd-seq-01">1. 収集：1記事の登録（冪等・RSS取得＋取得後のLLM補完）DD-SEQ-01</a></li>
 <li><a href="#2-dd-seq-02">2. 収集：情報源単位の障害分離 DD-SEQ-02</a></li>
 <li><a href="#3-dd-seq-03">3. 通知：未通知抽出→送信→結果記録 DD-SEQ-03</a></li>
 <li><a href="#4-websc-02dd-seq-04">4. 一覧表示（Web・SC-02）DD-SEQ-04</a></li>
@@ -130,7 +130,7 @@ strong{font-weight:700;}
 <p>主要処理の<strong>呼び出し順序とトランザクション境界・冪等の担保点</strong>を確定する。</p>
 </blockquote>
 <hr />
-<h2 id="1-1dd-seq-01">1. 収集：1記事の登録（冪等・フォールバック）DD-SEQ-01</h2>
+<h2 id="1-1rssllmdd-seq-01">1. 収集：1記事の登録（冪等・RSS取得＋取得後のLLM補完）DD-SEQ-01</h2>
 <pre class="mermaid">sequenceDiagram
     participant R as CollectionRunner
     participant CS as CollectionService
@@ -148,7 +148,7 @@ strong{font-weight:700;}
         CS-&gt;&gt;CS: スキップし CrawlLogs 記録
     else Allow
         RG--&gt;&gt;CS: true
-        CS-&gt;&gt;HF: fetch(url)（RSS/HTML・間隔1秒・UA連絡先）
+        CS-&gt;&gt;HF: fetch(url)（RSSのみ・間隔1秒・UA連絡先）
         HF--&gt;&gt;CS: RawItem
         CS-&gt;&gt;UN: normalize→hash
         UN--&gt;&gt;CS: url_hash

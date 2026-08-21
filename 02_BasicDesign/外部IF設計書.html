@@ -88,8 +88,8 @@ strong{font-weight:700;}
     <div class="toc">
 <ul>
 <li><a href="#0-if">0. 秘密情報・設定の外部化（全IF共通）</a></li>
-<li><a href="#1-rss-html">1. インバウンド：収集対象（RSS / HTML）</a><ul>
-<li><a href="#11">1.1 収集方式の優先順位（フォールバック）</a></li>
+<li><a href="#1-rss">1. インバウンド：収集対象（RSS のみ）</a><ul>
+<li><a href="#11-llm">1.1 取得方式と、取得後の LLM 補完</a></li>
 <li><a href="#12">1.2 収集対象（第一陣シード）</a></li>
 <li><a href="#13">1.3 収集マナー（遵守事項）</a></li>
 <li><a href="#14">1.4 取得データ → 内部項目マッピング</a></li>
@@ -148,7 +148,7 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p>本書は外部システムとの入出力を確定する。<strong>インバウンド</strong>＝収集対象サイト（RSS/HTML）、<strong>アウトバウンド</strong>＝Claude API（収集時の構造化）・LINE Messaging API（通知）。<strong>通知処理では Claude を呼ばない</strong>（CLAUDE.md §5）。バージョン・料金・仕様は改定されうるため<strong>実装着手時に各公式ドキュメントを確認</strong>する（CLAUDE.md §0-4）。</p>
+<p>本書は外部システムとの入出力を確定する。<strong>インバウンド</strong>＝収集対象サイト（<strong>RSS のみ</strong>）、<strong>アウトバウンド</strong>＝Claude API（収集時の構造化）・LINE Messaging API（通知）。<strong>通知処理では Claude を呼ばない</strong>（CLAUDE.md §5）。バージョン・料金・仕様は改定されうるため<strong>実装着手時に各公式ドキュメントを確認</strong>する（CLAUDE.md §0-4）。</p>
 </blockquote>
 <hr />
 <h2 id="0-if">0. 秘密情報・設定の外部化（全IF共通）</h2>
@@ -180,12 +180,13 @@ strong{font-weight:700;}
 </table></div>
 <p>（根拠: NFR-11・§7.2/7.3・§9）</p>
 <hr />
-<h2 id="1-rss-html">1. インバウンド：収集対象（RSS / HTML）</h2>
-<h3 id="11">1.1 収集方式の優先順位（フォールバック）</h3>
+<h2 id="1-rss">1. インバウンド：収集対象（RSS のみ）</h2>
+<h3 id="11-llm">1.1 取得方式と、取得後の LLM 補完</h3>
+<p>取得方式は <strong>RSS に一本化</strong>（専用パーサー・LLM取得は不採用）。取得後、RSS で埋まらない項目だけを LLM で補完する（LLM は取得手段ではなく取得後の構造化工程）。</p>
 <div class="tbl-scroll"><table>
 <thead>
 <tr>
-<th>優先</th>
+<th>段</th>
 <th>方式</th>
 <th>ライブラリ</th>
 <th>LLM</th>
@@ -194,25 +195,25 @@ strong{font-weight:700;}
 </thead>
 <tbody>
 <tr>
-<td>①</td>
+<td>取得</td>
 <td>RSS/Atom</td>
 <td>ROME（<code>SyndFeedInput</code>→<code>SyndFeed</code>/<code>SyndEntry</code>）</td>
 <td>不使用</td>
-<td>既定。タイトル・日付・カテゴリが構造化済み</td>
+<td><strong>唯一の取得方式</strong>。タイトル・日付・カテゴリが構造化済み</td>
 </tr>
 <tr>
-<td>②</td>
-<td>専用パーサー</td>
-<td>jsoup（HTML 構造の安定した主要サイト）</td>
-<td>不使用</td>
-<td>RSS で不足する項目の補完</td>
-</tr>
-<tr>
-<td>③</td>
+<td>補完</td>
 <td>LLM 構造化</td>
 <td>anthropic-sdk-java（§2）</td>
 <td>使用</td>
-<td>①②で埋まらない項目のみ・予算内のみ</td>
+<td>RSS で埋まらない発売日・不明カテゴリ等のみ・予算内のみ・任意ON/OFF</td>
+</tr>
+<tr>
+<td>（不採用）</td>
+<td>専用パーサー（jsoup）</td>
+<td>jsoup</td>
+<td>—</td>
+<td><strong>HTMLスクレイピング取得は採用しない</strong>（権利・保守コスト）</td>
 </tr>
 </tbody>
 </table></div>

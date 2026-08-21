@@ -45,7 +45,7 @@ Flyway のマイグレーション SQL は `aggregator-infrastructure/src/main/r
 - **OS 非依存**: `Path.of(...)` を使い `C:\` を書かない。ローカルファイル依存を避けログは DB / 標準出力へ。Windows サービス化しない。UTF-8 統一。
 - **HTTP マナー**: robots.txt 尊重、同一ホスト間隔1秒以上、User-Agent に連絡先。禁止サイトは除外。
 - **障害分離**: 1情報源の失敗が全体を止めない（try/catch を情報源単位に、Resilience4j でリトライ）。
-- **LLM コスト**: 収集の構造化のみ。RSS 優先。取得は RSS→専用パーサー→LLM のフォールバック。
+- **LLM コスト**: 収集の構造化のみ。取得方式は **RSS のみ**（専用パーサー・LLM取得は廃止）。RSS で埋まらない発売日・不明カテゴリだけを取得後に LLM 補完。
 
 ## Java / Spring の書き方の説明義務
 
