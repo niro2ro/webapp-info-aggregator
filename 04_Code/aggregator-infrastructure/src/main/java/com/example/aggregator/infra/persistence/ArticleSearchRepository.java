@@ -9,4 +9,7 @@ import java.util.List;
  */
 public interface ArticleSearchRepository {
     List<ArticleEntity> search(ArticleQuery query);
+
+    /** 同じ絞り込み条件に一致する総件数（ページ数の計算に使う。並び順・ページングは無視）。 */
+    long count(ArticleQuery query);
 }

@@ -24,7 +24,30 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
     public List<ArticleEntity> search(ArticleQuery q) {
         StringBuilder sql = new StringBuilder("SELECT a.* FROM articles a WHERE 1=1 ");
         List<Object[]> binds = new ArrayList<>();
+        appendWhere(sql, binds, q);
+        sql.append("ORDER BY ").append(orderBy(q.sort()));
 
+        Query query = em.createNativeQuery(sql.toString(), ArticleEntity.class);
+        bind(query, binds);
+        if (q.offset() > 0) query.setFirstResult(q.offset());   // ページング開始位置
+        query.setMaxResults(q.limit() > 0 ? q.limit() : 50);
+        @SuppressWarnings("unchecked")
+        List<ArticleEntity> result = query.getResultList();
+        return result;
+    }
+
+    @Override
+    public long count(ArticleQuery q) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM articles a WHERE 1=1 ");
+        List<Object[]> binds = new ArrayList<>();
+        appendWhere(sql, binds, q);   // ORDER BY / LIMIT は付けない（件数だけ）
+        Query query = em.createNativeQuery(sql.toString());
+        bind(query, binds);
+        return ((Number) query.getSingleResult()).longValue();
+    }
+
+    /** 絞り込み条件（WHERE）を組み立てる。search と count で共有し、両者の一致を保証する。 */
+    private void appendWhere(StringBuilder sql, List<Object[]> binds, ArticleQuery q) {
         if (q.text() != null && !q.text().isBlank()) {
             sql.append("AND (a.title ILIKE :pat OR a.summary ILIKE :pat) ");
             binds.add(new Object[]{"pat", "%" + q.text().trim() + "%"});
@@ -60,16 +83,12 @@ public class ArticleSearchRepositoryImpl implements ArticleSearchRepository {
                     + "WHERE r.article_id = a.id AND r.user_id = :uid) ");
             binds.add(new Object[]{"uid", q.userId()});
         }
-        sql.append("ORDER BY ").append(orderBy(q.sort()));
+    }
 
-        Query query = em.createNativeQuery(sql.toString(), ArticleEntity.class);
+    private void bind(Query query, List<Object[]> binds) {
         for (Object[] b : binds) {
             query.setParameter((String) b[0], b[1]);
         }
-        query.setMaxResults(q.limit() > 0 ? q.limit() : 50);
-        @SuppressWarnings("unchecked")
-        List<ArticleEntity> result = query.getResultList();
-        return result;
     }
 
     /** ORDER BY はホワイトリスト（外部文字列を混ぜない）。 */
