@@ -49,6 +49,35 @@ class ThemeSearchCollectorTest {
     }
 
     @Test
+    @DisplayName("広いキーワードで大量に返っても1テーマ上限で切って取り込む（長時間化を防ぐ）")
+    void capsItemsPerTheme() {
+        CollectProperties props = new CollectProperties();
+        props.setSearchFeedUrlTemplate("https://example.com/rss?q={q}");
+        props.setSearchMaxItemsPerTheme(2);   // 上限2件
+        ThemeSearchCollector capped =
+                new ThemeSearchCollector(themes, sources, http, feedFetcher, collectionService, props);
+
+        when(sources.findFirstByName(any())).thenReturn(Optional.of(
+                new SourceEntity("s", "https://news.google.com/", FetchType.RSS)));
+        when(themes.findByUserIdAndActiveTrueOrderByKeyword(2L)).thenReturn(List.of(theme("ポケモン")));
+        when(http.get(anyString())).thenReturn("<rss/>");
+        when(feedFetcher.parse(anyString())).thenReturn(List.of(
+                new RawItem("t1", "https://x/1", null, null, null),
+                new RawItem("t2", "https://x/2", null, null, null),
+                new RawItem("t3", "https://x/3", null, null, null),
+                new RawItem("t4", "https://x/4", null, null, null),
+                new RawItem("t5", "https://x/5", null, null, null)));
+        when(collectionService.ingest(any(), any())).thenReturn(new CollectionService.IngestResult(2, 2, 0));
+
+        capped.collectForUser(2L);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<RawItem>> cap = ArgumentCaptor.forClass(List.class);
+        verify(collectionService).ingest(any(), cap.capture());
+        assertThat(cap.getValue()).hasSize(2);   // 5件返っても上限2件だけ処理
+    }
+
+    @Test
     @DisplayName("キーワードはURLエンコードされて検索URLに埋め込まれる")
     void encodesKeyword() {
         when(sources.findFirstByName(any())).thenReturn(Optional.of(

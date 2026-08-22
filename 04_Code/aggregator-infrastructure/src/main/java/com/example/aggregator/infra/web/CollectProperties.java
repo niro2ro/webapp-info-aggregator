@@ -32,6 +32,13 @@ public class CollectProperties {
     /** LLM へ渡す記事本文テキストの最大文字数（トークン/コストを抑えるため切り詰め）。 */
     private int maxBodyChars = 4000;
 
+    /**
+     * テーマ検索収集で 1テーマあたり処理する記事の上限。広いキーワード（例「ポケモン」）だと検索RSSが
+     * 大量に返り、1件ごとの本文取得＋LLM補完が直列で走って収集が長時間化する。上限で切り、実行時間を読める
+     * ようにする（新着はどのみち上位に来るため上位Nで十分）。0以下は無制限。
+     */
+    private int searchMaxItemsPerTheme = 30;
+
     public int getConnectTimeoutMs() { return connectTimeoutMs; }
     public void setConnectTimeoutMs(int v) { this.connectTimeoutMs = v; }
     public int getReadTimeoutMs() { return readTimeoutMs; }
@@ -46,4 +53,6 @@ public class CollectProperties {
     public void setSearchFeedUrlTemplate(String v) { this.searchFeedUrlTemplate = v; }
     public int getMaxBodyChars() { return maxBodyChars; }
     public void setMaxBodyChars(int v) { this.maxBodyChars = v; }
+    public int getSearchMaxItemsPerTheme() { return searchMaxItemsPerTheme; }
+    public void setSearchMaxItemsPerTheme(int v) { this.searchMaxItemsPerTheme = v; }
 }

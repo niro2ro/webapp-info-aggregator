@@ -63,7 +63,7 @@ public class ThemeSearchCollector {
             try {
                 String url = buildUrl(theme.getKeyword());
                 String xml = http.get(url);
-                List<RawItem> items = feedFetcher.parse(xml);
+                List<RawItem> items = capItems(feedFetcher.parse(xml));
                 CollectionService.IngestResult r = collectionService.ingest(source, items);
                 fetched += r.total();
                 registered += r.registered();
@@ -74,6 +74,16 @@ public class ThemeSearchCollector {
             }
         }
         return new RunResult(targets.size(), fetched, registered, failed);
+    }
+
+    /**
+     * 1テーマあたりの処理件数を上限で切る（広いキーワードで検索RSSが大量に返ると、1件ごとの本文取得＋LLM補完が
+     * 直列で走って収集が長時間化するため）。検索RSSは概ね新着順なので上位Nで十分。上限0以下は無制限。
+     */
+    private List<RawItem> capItems(List<RawItem> items) {
+        int cap = props.getSearchMaxItemsPerTheme();
+        if (cap <= 0 || items.size() <= cap) return items;
+        return items.subList(0, cap);
     }
 
     /** 検索キーワードをテンプレートに埋め込む（URLエンコード）。 */
