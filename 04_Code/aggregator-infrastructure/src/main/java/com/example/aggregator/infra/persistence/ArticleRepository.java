@@ -21,6 +21,21 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long>, A
     List<ArticleEntity> findByEventDateIsNullOrderByCreatedAtDesc(Pageable pageable);
 
     /**
+     * 指定利用者の有効テーマにマッチし、かつ実イベント日が未設定の記事（掲載日の新しい順）。
+     * 「発売日順」を選んだ時だけ、画面に出る自分のテーマ記事の未設定分を LLM で補完するために使う。
+     */
+    @Query(value = """
+            SELECT a.* FROM articles a
+            WHERE a.event_date IS NULL
+              AND EXISTS (
+                    SELECT 1 FROM article_theme_matches m
+                    JOIN themes t ON t.id = m.theme_id
+                    WHERE m.article_id = a.id AND t.user_id = :userId AND t.is_active = true)
+            ORDER BY a.published_at DESC NULLS LAST, a.created_at DESC
+            """, nativeQuery = true)
+    List<ArticleEntity> findUserThemedMissingEventDate(Long userId, Pageable pageable);
+
+    /**
      * タイムライン（発生日順・降順）。整列キーは式インデックス ix_articles_timeline と同一式にする。
      * timestamptz::date は IMMUTABLE でないため UTC 固定で date 化（実装Phase0で確定）。
      */

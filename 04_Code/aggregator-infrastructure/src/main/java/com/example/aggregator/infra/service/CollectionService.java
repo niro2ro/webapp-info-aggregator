@@ -1,10 +1,6 @@
 package com.example.aggregator.infra.service;
 
-import com.example.aggregator.domain.collect.ArticleContentExtractor;
 import com.example.aggregator.domain.collect.RawItem;
-import com.example.aggregator.domain.llm.ExtractedText;
-import com.example.aggregator.domain.llm.LlmStructurer;
-import com.example.aggregator.domain.llm.StructuredArticle;
 import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.ArticleThemeMatchEntity;
 import com.example.aggregator.domain.model.Category;
@@ -18,7 +14,6 @@ import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Optional;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.persistence.ArticleThemeMatchRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
@@ -34,6 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
  * 収集の中核（DD-CLS-01・DD-SEQ-01）。取得済みの {@link RawItem} を受け取り、
  * URL 正規化→ハッシュ→冪等判定→種別決定→登録→テーマ突合 を行う（RSS 取得や robots ゲートは
  * 呼び出し側／別コンポーネントが担当する）。依存はコンストラクタ注入（DD-DI-01）。
+ *
+ * <p><b>収集は RSS のみ・LLM は呼ばない</b>。取得時は掲載日(published_at)まで（RSSで確実に取れる）を登録し、
+ * 発売日(event_date)は未設定(NULL)のままにする。発売日の抽出はタイムラインで「発売日順」を選んだ時や
+ * 管理画面の再解析ボタンで <b>オンデマンドに</b>{@code ArticleReanalyzeService} が LLM で行う（収集を軽く保つ）。
  */
 @Service
 public class CollectionService {
@@ -47,25 +46,19 @@ public class CollectionService {
     private final UrlNormalizer urlNormalizer;
     private final UrlHasher urlHasher;
     private final EventDateKindResolver kindResolver;
-    private final LlmStructurer llmStructurer;
-    private final ArticleContentExtractor contentExtractor;
 
     public CollectionService(ArticleRepository articles,
                              ArticleThemeMatchRepository matches,
                              ThemeRepository themes,
                              UrlNormalizer urlNormalizer,
                              UrlHasher urlHasher,
-                             EventDateKindResolver kindResolver,
-                             LlmStructurer llmStructurer,
-                             ArticleContentExtractor contentExtractor) {
+                             EventDateKindResolver kindResolver) {
         this.articles = articles;
         this.matches = matches;
         this.themes = themes;
         this.urlNormalizer = urlNormalizer;
-        this.contentExtractor = contentExtractor;
         this.urlHasher = urlHasher;
         this.kindResolver = kindResolver;
-        this.llmStructurer = llmStructurer;
     }
 
     public record IngestResult(int total, int registered, int duplicated) {}
@@ -103,47 +96,20 @@ public class CollectionService {
             return false;
         }
 
-        // --- ① RSS 由来の値（既定・LLM を使わない一次情報） ---
+        // --- RSS 由来の値のみで登録（収集では LLM を呼ばない・軽量） ---
         Category category = guessCategory(item.categoryHint());
         String summary = toSummary(item.description());
         String textForKind = item.title() + " " + (item.description() == null ? "" : item.description());
         EventDateKind kind = kindResolver.resolve(category, textForKind);
-        String eventDateText = null;
-        String location = null;
 
-        // 記事の掲載日（配信日）は published_at に保持する（＝「記事発生日」）。
-        // event_date は「実イベント日（発売日/開催日/放送日）」専用にし、RSS 配信日を代入しない。
-        // 実イベント日は記事本文の理解が要るため、LLM/パーサーが埋める（無ければ NULL のまま）。
+        // 記事の掲載日（配信日）は published_at に保持する（＝「記事発生日」・RSSで確実に取れる）。
+        // event_date は「実イベント日（発売日/開催日/放送日）」専用。本文理解が要るため収集では埋めず NULL。
+        // 発売日は「発売日順」を選んだ時／再解析ボタンで ArticleReanalyzeService がオンデマンドに LLM で補完する。
         Instant publishedAt = item.publishedAt();
         LocalDate eventDate = null;
         EventDatePrecision precision = EventDatePrecision.UNKNOWN;
-
-        // --- ② LLM フォールバック（外部IF §1.1 ③）: RSS で「発生日不明」または「分類不明」のときだけ ---
-        // LLM が無効（NoOp・キー未設定）なら本文取得もLLM呼び出しも行わず①の値のまま進む＝軽量・無課金。
-        // 予算判定・使用量記録は実装側（LLM 境界）に閉じている（NFR-06）。
-        if ((eventDate == null || category == Category.OTHER) && llmStructurer.isEnabled()) {
-            // 記事本文を取得して LLM に渡す（外部IF §2.2「本文抽出テキスト」）。robots/間隔は抽出器が担保。
-            // 取得できなければ RSS 説明文にフォールバック。本文は保存しない（§9）。
-            String extractText = contentExtractor.extract(item.url())
-                    .orElseGet(() -> item.description() == null ? item.title() : item.description());
-            Optional<StructuredArticle> enriched =
-                    llmStructurer.structure(new ExtractedText(item.title(), item.url(), extractText));
-            if (enriched.isPresent()) {
-                StructuredArticle sa = enriched.get();
-                if (category == Category.OTHER && sa.category() != null) category = sa.category();
-                if (sa.eventDate() != null) {
-                    eventDate = sa.eventDate();
-                    precision = sa.eventDatePrecision() != null ? sa.eventDatePrecision() : EventDatePrecision.EXACT;
-                } else if (sa.eventDatePrecision() != null) {
-                    precision = sa.eventDatePrecision();
-                }
-                if (sa.eventDateText() != null) eventDateText = sa.eventDateText();
-                // 種別はカテゴリ/原文ルールを優先し、ルールで OTHER のときだけ LLM 出力を採用（外部IF §2.2）。
-                if (kind == EventDateKind.OTHER && sa.eventDateKind() != null) kind = sa.eventDateKind();
-                if (sa.location() != null) location = sa.location();
-                if (sa.summary() != null && !sa.summary().isBlank()) summary = sa.summary();
-            }
-        }
+        String eventDateText = null;
+        String location = null;
 
         ArticleEntity article = ArticleEntity.builder()
                 .sourceId(source.getId())
