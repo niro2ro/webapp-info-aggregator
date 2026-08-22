@@ -57,6 +57,13 @@ public class ThemeEntity {
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
     public String getKeyword() { return keyword; }
+    public void setKeyword(String keyword) { this.keyword = keyword; }
     public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public Set<Category> getCategories() { return categories; }
+
+    /** 対象カテゴリを入れ替える（@ElementCollection は中身を差し替えると save で反映される）。 */
+    public void setCategories(Set<Category> categories) {
+        this.categories = new HashSet<>(categories);
+    }
 }
