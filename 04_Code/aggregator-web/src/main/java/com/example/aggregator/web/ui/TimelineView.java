@@ -48,8 +48,10 @@ public class TimelineView extends VerticalLayout {
     // ログイン中の利用者（Phase 5・認証導入）。ガード未通過の一時生成に備え、未ログイン時は -1（該当データ無し）。
     private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
-    /** 「発売日順」を選んだ時に1回でLLM補完する件数の上限（本文取得＋LLMが件数ぶん走るため小さめ）。 */
-    private static final int ONDEMAND_LLM_CAP = 6;
+    /** 1ページの表示件数。小さくして1回あたりの取得・（発売日順の）LLM補完を軽くする。 */
+    private static final int PAGE_SIZE = 10;
+    /** 現在ページ（0始まり）。 */
+    private int page = 0;
 
     private final ArticleRepository articles;
     private final SampleIngestService sampleIngest;
@@ -66,6 +68,7 @@ public class TimelineView extends VerticalLayout {
     private final Select<ArticleQuery.Sort> sortSelect = new Select<>();
     private final Checkbox unreadOnly = new Checkbox("未読のみ");
     private final VerticalLayout list = new VerticalLayout();
+    private final HorizontalLayout pager = new HorizontalLayout();   // ページ切替（1,2,3…）
     private Map<Long, String> sourceNames = Map.of();   // source_id → 名前（カード表示用）
 
     public TimelineView(ArticleRepository articles, SampleIngestService sampleIngest,
@@ -90,26 +93,26 @@ public class TimelineView extends VerticalLayout {
         search.setPlaceholder("検索（タイトル・要約）");
         search.setClearButtonVisible(true);
         search.setValueChangeMode(ValueChangeMode.LAZY);
-        search.addValueChangeListener(e -> refresh());
+        search.addValueChangeListener(e -> resetPageAndRefresh());
 
         categoryFilter.setPlaceholder("カテゴリ：すべて");
         categoryFilter.setItems(Category.values());
         categoryFilter.setItemLabelGenerator(ThemeView::categoryLabelStatic);
         categoryFilter.setClearButtonVisible(true);
-        categoryFilter.addValueChangeListener(e -> refresh());
+        categoryFilter.addValueChangeListener(e -> resetPageAndRefresh());
 
         // テーマ絞り込み（登録テーマにマッチした記事のみ表示・BD-SC-02-05）
         themeFilter.setPlaceholder("テーマ：すべて");
         themeFilter.setItemLabelGenerator(ThemeEntity::getKeyword);
         themeFilter.setClearButtonVisible(true);
-        themeFilter.addValueChangeListener(e -> refresh());
+        themeFilter.addValueChangeListener(e -> resetPageAndRefresh());
         reloadThemeItems();
 
         // 情報源で絞り込み（統合タイムラインのまま、RSS/検索など由来を切り替えられる）
         sourceFilter.setPlaceholder("情報源：すべて");
         sourceFilter.setItemLabelGenerator(SourceEntity::getName);
         sourceFilter.setClearButtonVisible(true);
-        sourceFilter.addValueChangeListener(e -> refresh());
+        sourceFilter.addValueChangeListener(e -> resetPageAndRefresh());
         reloadSourceItems();
 
         sortSelect.setLabel(null);
@@ -118,7 +121,7 @@ public class TimelineView extends VerticalLayout {
         sortSelect.setValue(ArticleQuery.Sort.PUBLISHED_DESC);   // 既定は掲載日順（RSSで確実・LLM不要）
         sortSelect.addValueChangeListener(e -> onSortChanged(e.getValue()));
 
-        unreadOnly.addValueChangeListener(e -> refresh());
+        unreadOnly.addValueChangeListener(e -> resetPageAndRefresh());
 
         HorizontalLayout toolbar = new HorizontalLayout(sortSelect, themeFilter, sourceFilter, categoryFilter, unreadOnly, search);
         toolbar.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
@@ -154,7 +157,23 @@ public class TimelineView extends VerticalLayout {
         list.setSpacing(true);
         list.setWidthFull();
 
-        add(title, actions, toolbar, list);
+        pager.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        pager.setWidthFull();
+        pager.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        add(title, actions, toolbar, list, pager);
+        refresh();
+    }
+
+    private void resetPageAndRefresh() {
+        page = 0;
+        refresh();
+    }
+
+    private void goToPage(int p) {
+        page = Math.max(0, p);
+        // 発売日順のときは、このページに出す自分のテーマ記事の発売日を（未設定分だけ）補完してから表示。
+        maybeFillReleaseDates(sortSelect.getValue());
         refresh();
     }
 
@@ -170,41 +189,55 @@ public class TimelineView extends VerticalLayout {
         sourceNames = all.stream().collect(Collectors.toMap(SourceEntity::getId, SourceEntity::getName));
     }
 
-    /**
-     * 並び順が変わったときの処理。「発売日順」を選んだ時だけ、自分のテーマ記事で発売日が未設定のものを
-     * 上限内で LLM 補完してから並べ替える（掲載日順など他の並びは LLM を呼ばず即時）。上限で切るため1回で
-     * 全ては埋まらない＝再度選ぶと続きを補完する。処理中は Vaadin の読み込みインジケータが出る。
-     */
+    /** 並び順が変わったとき。ページを先頭へ戻し、発売日順ならこのページ分の発売日を補完してから表示。 */
     private void onSortChanged(ArticleQuery.Sort sort) {
-        if (sort == ArticleQuery.Sort.RELEASE_ASC || sort == ArticleQuery.Sort.RELEASE_DESC) {
-            ArticleReanalyzeService.Result r = reanalyze.reanalyzeForUserThemes(USER_ID, ONDEMAND_LLM_CAP);
-            if (!r.llmEnabled()) {
-                Notification.show("LLMが無効のため発売日は空のままです（掲載日順を推奨）。"
-                        + "環境変数 LLM_ENABLED=true と ANTHROPIC_API_KEY を設定すると発売日を補完できます。",
-                        5000, Notification.Position.MIDDLE);
-            } else if (r.updated() > 0) {
-                Notification.show("発売日を " + r.updated() + " 件補完しました。"
-                        + "（未設定が残る場合はもう一度「発売日順」を選ぶと続きを補完します）");
-            } else if (r.scanned() > 0) {
-                Notification.show("未設定の記事はありましたが、本文から発売日を特定できませんでした。");
-            }
-        }
+        page = 0;
+        maybeFillReleaseDates(sort);
         refresh();
     }
 
-    private void refresh() {
-        list.removeAll();
-        ArticleQuery q = new ArticleQuery(
+    /**
+     * 「発売日順」のときだけ、自分のテーマ記事で発売日が未設定のものを1ページぶん(PAGE_SIZE)を上限に LLM 補完する
+     * （掲載日順など他の並びは LLM を呼ばず即時）。上限で切るため1回で全ては埋まらない＝ページ送り/再選択で続きを補完。
+     * 処理中は Vaadin の読み込みインジケータが出る。
+     */
+    private void maybeFillReleaseDates(ArticleQuery.Sort sort) {
+        if (sort != ArticleQuery.Sort.RELEASE_ASC && sort != ArticleQuery.Sort.RELEASE_DESC) return;
+        ArticleReanalyzeService.Result r = reanalyze.reanalyzeForUserThemes(USER_ID, PAGE_SIZE);
+        if (!r.llmEnabled()) {
+            Notification.show("LLMが無効のため発売日は空のままです（掲載日順を推奨）。"
+                    + "環境変数 LLM_ENABLED=true と ANTHROPIC_API_KEY を設定すると発売日を補完できます。",
+                    5000, Notification.Position.MIDDLE);
+        } else if (r.updated() > 0) {
+            Notification.show("発売日を " + r.updated() + " 件補完しました。（未設定が残る場合はページ送り等で続きを補完します）");
+        }
+    }
+
+    /** 現在の絞り込み・並び順・ページ位置から検索条件を組み立てる。 */
+    private ArticleQuery query(ArticleQuery.Sort sort, int offset) {
+        return new ArticleQuery(
                 USER_ID,
                 search.getValue(),
                 categoryFilter.getValue(),
                 null,   // 発生日種別（未使用）
-                themeFilter.getValue() == null ? null : themeFilter.getValue().getId(),   // テーマ絞り込み
-                sourceFilter.getValue() == null ? null : sourceFilter.getValue().getId(), // 情報源絞り込み
+                themeFilter.getValue() == null ? null : themeFilter.getValue().getId(),
+                sourceFilter.getValue() == null ? null : sourceFilter.getValue().getId(),
                 unreadOnly.getValue(),
-                sortSelect.getValue() == null ? ArticleQuery.Sort.PUBLISHED_DESC : sortSelect.getValue(),
-                50);
-        List<ArticleEntity> rows = articles.search(q);
+                sort,
+                PAGE_SIZE,
+                offset);
+    }
+
+    private void refresh() {
+        list.removeAll();
+        ArticleQuery.Sort sort = sortSelect.getValue() == null ? ArticleQuery.Sort.PUBLISHED_DESC : sortSelect.getValue();
+
+        long total = articles.count(query(sort, 0));
+        int totalPages = (int) Math.max(1, Math.ceil(total / (double) PAGE_SIZE));
+        if (page > totalPages - 1) page = totalPages - 1;   // 絞り込みで減ったとき末尾に丸める
+        if (page < 0) page = 0;
+
+        List<ArticleEntity> rows = articles.search(query(sort, page * PAGE_SIZE));
         Set<Long> readIds = interaction.readArticleIds(USER_ID);
         Set<Long> bmIds = interaction.bookmarkedArticleIds(USER_ID);
         if (rows.isEmpty()) {
@@ -212,30 +245,76 @@ public class TimelineView extends VerticalLayout {
                     + "「登録テーマの記事を収集」を押すと、そのテーマの最近の記事を集めます（条件を変えても確認できます）。");
             empty.getStyle().set("color", "var(--lumo-secondary-text-color)");
             list.add(empty);
+            renderPager(total);
             return;
         }
         for (ArticleEntity a : rows) {
-            list.add(card(a, readIds.contains(a.getId()), bmIds.contains(a.getId())));
+            list.add(card(a, readIds.contains(a.getId()), bmIds.contains(a.getId()), sort));
         }
+        renderPager(total);
     }
 
-    private Div card(ArticleEntity a, boolean read, boolean bookmarked) {
-        // 代表日の表示を明確化:
-        //  ・実イベント日(event_date)があれば「発売日/開催日/放送日 + 日付」
-        //  ・無ければ「掲載日(published_at)」、それも無ければ「収集日(created_at)」
+    /** ページ切替（前へ / 1 2 3 … / 次へ）。総件数からページ数を出し、現在ページ中心に最大5個の番号を出す。 */
+    private void renderPager(long total) {
+        pager.removeAll();
+        int totalPages = (int) Math.max(1, Math.ceil(total / (double) PAGE_SIZE));
+        if (totalPages <= 1) { pager.setVisible(false); return; }
+        pager.setVisible(true);
+
+        Button prev = new Button("前へ", e -> goToPage(page - 1));
+        prev.setEnabled(page > 0);
+        prev.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        pager.add(prev);
+
+        int to = Math.min(totalPages - 1, Math.max(page + 2, 4));
+        int from = Math.max(0, to - 4);
+        for (int i = from; i <= to; i++) {
+            int p = i;
+            Button b = new Button(String.valueOf(i + 1), e -> goToPage(p));
+            b.addThemeVariants(i == page ? ButtonVariant.LUMO_PRIMARY : ButtonVariant.LUMO_TERTIARY,
+                    ButtonVariant.LUMO_SMALL);
+            pager.add(b);
+        }
+
+        Button next = new Button("次へ", e -> goToPage(page + 1));
+        next.setEnabled(page < totalPages - 1);
+        next.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        pager.add(next);
+
+        Span info = new Span("全 " + total + " 件 / " + (page + 1) + " / " + totalPages + " ページ");
+        info.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px")
+                .set("margin-left", "8px");
+        pager.add(info);
+    }
+
+    private Div card(ArticleEntity a, boolean read, boolean bookmarked, ArticleQuery.Sort sort) {
+        // 表示する日付は「並び順に一致」させる（混在させない）:
+        //  ・発売日順 → 発売日(event_date)のみ（未設定は「未定」）
+        //  ・掲載日順 → 掲載日(published_at)のみ
+        //  ・収集日順 → 収集日(created_at)のみ
         String kind;
         String date;
-        if (a.getEventDate() != null) {
-            kind = a.getEventDateKind().label();
-            if (kind == null || kind.isEmpty()) kind = "予定日";
-            date = a.getEventDate().toString();
-        } else if (a.getPublishedAt() != null) {
-            kind = "掲載日";
-            date = a.getPublishedAt().atZone(TimeZones.JST).toLocalDate().toString();
-        } else {
-            kind = "収集日";
-            date = a.getCreatedAt() != null
-                    ? a.getCreatedAt().atZone(TimeZones.JST).toLocalDate().toString() : "-";
+        switch (sort) {
+            case RELEASE_ASC, RELEASE_DESC -> {
+                kind = "発売日";
+                if (a.getEventDate() != null) {
+                    String k = a.getEventDateKind() == null ? null : a.getEventDateKind().label();
+                    if (k != null && !k.isEmpty()) kind = k;   // 発売日/開催日/放送日 等
+                    date = a.getEventDate().toString();
+                } else {
+                    date = "未定";
+                }
+            }
+            case COLLECTED_DESC -> {
+                kind = "収集日";
+                date = a.getCreatedAt() != null
+                        ? a.getCreatedAt().atZone(TimeZones.JST).toLocalDate().toString() : "-";
+            }
+            default -> {   // PUBLISHED_DESC（掲載日順）
+                kind = "掲載日";
+                date = a.getPublishedAt() != null
+                        ? a.getPublishedAt().atZone(TimeZones.JST).toLocalDate().toString() : "-";
+            }
         }
         Span kindSpan = new Span(kind.isEmpty() ? " " : kind);
         kindSpan.getStyle().set("display", "block").set("font-size", "11px")

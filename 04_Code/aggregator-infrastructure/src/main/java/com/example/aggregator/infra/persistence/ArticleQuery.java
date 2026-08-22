@@ -16,12 +16,13 @@ public record ArticleQuery(
         Long sourceId,        // 情報源絞り込み。null は無視
         boolean unreadOnly,   // 未読のみ
         Sort sort,
-        int limit) {
+        int limit,            // 1ページの件数
+        int offset) {         // 取得開始位置（ページング。0=先頭）
 
     /** 並び順: 発売日(実イベント日)の近い/遠い順、掲載日順、収集日順。 */
     public enum Sort { RELEASE_ASC, RELEASE_DESC, PUBLISHED_DESC, COLLECTED_DESC }
 
     public static ArticleQuery defaults(Long userId) {
-        return new ArticleQuery(userId, null, null, null, null, null, false, Sort.PUBLISHED_DESC, 50);
+        return new ArticleQuery(userId, null, null, null, null, null, false, Sort.PUBLISHED_DESC, 50, 0);
     }
 }
