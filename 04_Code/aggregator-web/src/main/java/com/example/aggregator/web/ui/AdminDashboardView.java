@@ -209,7 +209,7 @@ public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
         Span status = new Span();
         if (llmProps.isEnabled()) {
-            status.setText("状態: 有効（model=" + llmProps.getModel() + "）— 収集時に記事本文を読んで発売日を抽出します");
+            status.setText("状態: 有効（model=" + llmProps.getModel() + "）— 「発売日順」表示時やこの再解析で本文を読んで発売日を抽出します");
             status.getStyle().set("color", "#4e7d55");
         } else {
             status.setText("状態: 無効（APIキー未設定 → 発売日は抽出されません。環境変数 LLM_ENABLED=true と "
