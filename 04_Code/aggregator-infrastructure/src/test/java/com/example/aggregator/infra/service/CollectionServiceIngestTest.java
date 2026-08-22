@@ -3,6 +3,7 @@ package com.example.aggregator.infra.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.aggregator.domain.collect.RawItem;
@@ -10,6 +11,7 @@ import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.Category;
 import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
+import com.example.aggregator.domain.model.ThemeEntity;
 import com.example.aggregator.domain.rule.EventDateExtractor;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
 import com.example.aggregator.domain.rule.UrlHasher;
@@ -84,6 +86,66 @@ class CollectionServiceIngestTest {
         assertThat(saved.getEventDate()).isEqualTo(java.time.LocalDate.of(2026, 9, 18));   // ルールで抽出
         assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.EXACT);
         assertThat(saved.getEventDateText()).contains("2026年9月18日");
+    }
+
+    // --- テーマ突合（カテゴリ絞り込みの挙動）: 各カテゴリで確認 ---
+
+    private ThemeEntity theme(String keyword, Category... cats) {
+        return new ThemeEntity(2L, keyword, java.util.Set.of(cats));
+    }
+
+    @Test
+    @DisplayName("カテゴリ不明(その他)の記事は、テーマのカテゴリに関係なくキーワード一致で突合される")
+    void unknownCategoryMatchesAnyCategoryTheme() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        // テーマ検索由来を想定: categoryHint=null → 記事カテゴリは OTHER になる
+        RawItem item = new RawItem("セガ 新作アーケード筐体が稼働", "https://ex.com/arcade", null, "ゲーセン情報", null);
+
+        // ゲームセンターだけを対象にしたテーマ（その他は含めない）でも、OTHER記事はキーワードで拾える
+        service().ingestOne(source(), item, List.of(theme("セガ", Category.ARCADE)));
+
+        verify(matches).save(any());   // 突合が作られる（＝タイムラインに出る）
+    }
+
+    @Test
+    @DisplayName("分類が確定している記事は、テーマのカテゴリが合わなければ突合しない（絞り込みは効く）")
+    void knownCategoryMismatchDoesNotMatch() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        // categoryHint=「ゲーム」→ 記事カテゴリ GAME（確定）
+        RawItem item = new RawItem("フィギュア付き限定ゲーム", "https://ex.com/g", null, "説明", "ゲーム");
+
+        // グッズだけのテーマ → GAME は対象外なので突合しない
+        service().ingestOne(source(), item, List.of(theme("フィギュア", Category.GOODS)));
+
+        verify(matches, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ゲームセンターのヒント(プライズ)があれば ARCADE 判定＝ゲームセンターのテーマに突合")
+    void arcadeHintMatchesArcadeTheme() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        RawItem item = new RawItem("新プライズ景品が登場", "https://ex.com/p", null, "説明", "プライズ");
+
+        service().ingestOne(source(), item, List.of(theme("プライズ", Category.ARCADE)));
+
+        ArticleEntity saved = captureSaved();
+        assertThat(saved.getCategory()).isEqualTo(Category.ARCADE);   // ゲームセンター(ARCADE)に分類
+        verify(matches).save(any());
+    }
+
+    @Test
+    @DisplayName("空カテゴリのテーマは全カテゴリ対象（キーワード一致だけで突合）")
+    void emptyCategoryThemeMatchesAny() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+        RawItem item = new RawItem("アニメ 第2期 制作決定", "https://ex.com/a", null, "説明", "アニメ");
+
+        service().ingestOne(source(), item, List.of(theme("第2期")));   // カテゴリ指定なし
+
+        verify(matches).save(any());
     }
 
     @Test

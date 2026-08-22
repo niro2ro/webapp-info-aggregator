@@ -153,7 +153,11 @@ public class CollectionService {
     private void matchThemes(ArticleEntity article, List<ThemeEntity> activeThemes) {
         String haystack = (article.getTitle() + " " + (article.getSummary() == null ? "" : article.getSummary()));
         for (ThemeEntity theme : activeThemes) {
+            // カテゴリ絞り込みは「分類が確定しているとき」だけ効かせる。RSS にカテゴリが無い記事（テーマ検索の
+            // Googleニュース等）は分類が付けられず OTHER になるため、カテゴリで弾くと全て漏れる。よって OTHER
+            // （＝分類不明）はカテゴリゲートを素通りさせ、キーワード一致で拾う（絞り込みで取りこぼさない・FR-01/02-10）。
             boolean categoryOk = theme.getCategories().isEmpty()
+                    || article.getCategory() == Category.OTHER
                     || theme.getCategories().contains(article.getCategory());
             if (categoryOk && haystack.contains(theme.getKeyword())) {
                 matches.save(new ArticleThemeMatchEntity(article.getId(), theme.getId()));
