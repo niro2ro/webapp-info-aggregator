@@ -262,6 +262,11 @@ public class TimelineView extends VerticalLayout {
         if (totalPages <= 1) { pager.setVisible(false); return; }
         pager.setVisible(true);
 
+        Button first = new Button("« 最初へ", e -> goToPage(0));
+        first.setEnabled(page > 0);
+        first.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        pager.add(first);
+
         Button prev = new Button("前へ", e -> goToPage(page - 1));
         prev.setEnabled(page > 0);
         prev.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
@@ -281,6 +286,11 @@ public class TimelineView extends VerticalLayout {
         next.setEnabled(page < totalPages - 1);
         next.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         pager.add(next);
+
+        Button last = new Button("最後へ »", e -> goToPage(totalPages - 1));
+        last.setEnabled(page < totalPages - 1);
+        last.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        pager.add(last);
 
         Span info = new Span("全 " + total + " 件 / " + (page + 1) + " / " + totalPages + " ページ");
         info.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px")
