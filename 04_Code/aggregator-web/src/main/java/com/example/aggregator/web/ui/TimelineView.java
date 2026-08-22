@@ -203,13 +203,14 @@ public class TimelineView extends VerticalLayout {
      */
     private void maybeFillReleaseDates(ArticleQuery.Sort sort) {
         if (sort != ArticleQuery.Sort.RELEASE_ASC && sort != ArticleQuery.Sort.RELEASE_DESC) return;
+        // まずルールベースで（無料・即時）、取れない曖昧なものだけ LLM（有効時）で補完する。
         ArticleReanalyzeService.Result r = reanalyze.reanalyzeForUserThemes(USER_ID, PAGE_SIZE);
-        if (!r.llmEnabled()) {
-            Notification.show("LLMが無効のため発売日は空のままです（掲載日順を推奨）。"
-                    + "環境変数 LLM_ENABLED=true と ANTHROPIC_API_KEY を設定すると発売日を補完できます。",
-                    5000, Notification.Position.MIDDLE);
-        } else if (r.updated() > 0) {
+        if (r.updated() > 0) {
             Notification.show("発売日を " + r.updated() + " 件補完しました。（未設定が残る場合はページ送り等で続きを補完します）");
+        } else if (!r.llmEnabled() && r.scanned() > 0) {
+            Notification.show("ルールで発売日を特定できない記事が残っています。"
+                    + "LLMを有効化すると本文から抽出できます（LLM_ENABLED=true と ANTHROPIC_API_KEY）。",
+                    5000, Notification.Position.MIDDLE);
         }
     }
 

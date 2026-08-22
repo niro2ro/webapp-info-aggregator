@@ -10,6 +10,7 @@ import com.example.aggregator.domain.model.ArticleEntity;
 import com.example.aggregator.domain.model.Category;
 import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
+import com.example.aggregator.domain.rule.EventDateExtractor;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
 import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
@@ -34,7 +35,7 @@ class CollectionServiceIngestTest {
 
     private CollectionService service() {
         return new CollectionService(articles, matches, themes,
-                new UrlNormalizer(), new UrlHasher(), new EventDateKindResolver());
+                new UrlNormalizer(), new UrlHasher(), new EventDateKindResolver(), new EventDateExtractor());
     }
 
     private SourceEntity source() {
@@ -66,6 +67,23 @@ class CollectionServiceIngestTest {
         assertThat(saved.getPublishedAt()).isEqualTo(pub);         // 掲載日はRSS配信日で確実
         assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.UNKNOWN);
         assertThat(saved.getSummary()).isEqualTo("本文の説明");
+    }
+
+    @Test
+    @DisplayName("タイトルに日付があればルールで発売日(event_date)を収集時に埋める（LLM不使用）")
+    void ruleFillsEventDateAtIngest() {
+        when(articles.existsByUrlHash(any())).thenReturn(false);
+        when(articles.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+
+        RawItem item = new RawItem("夏目友人帳 一番くじ 2026年9月18日発売",
+                "https://example.com/c", null, "グッズ情報", null);
+        boolean added = service().ingestOne(source(), item, List.of());
+
+        assertThat(added).isTrue();
+        ArticleEntity saved = captureSaved();
+        assertThat(saved.getEventDate()).isEqualTo(java.time.LocalDate.of(2026, 9, 18));   // ルールで抽出
+        assertThat(saved.getEventDatePrecision()).isEqualTo(EventDatePrecision.EXACT);
+        assertThat(saved.getEventDateText()).contains("2026年9月18日");
     }
 
     @Test
