@@ -5,6 +5,7 @@ import com.example.aggregator.domain.llm.ExtractedText;
 import com.example.aggregator.domain.llm.LlmStructurer;
 import com.example.aggregator.domain.llm.StructuredArticle;
 import com.example.aggregator.domain.model.ArticleEntity;
+import com.example.aggregator.domain.rule.EventDateExtractor;
 import com.example.aggregator.infra.persistence.ArticleRepository;
 import java.util.List;
 import java.util.Optional;
@@ -30,45 +31,57 @@ public class ArticleReanalyzeService {
     private final ArticleRepository articles;
     private final ArticleContentExtractor extractor;
     private final LlmStructurer llm;
+    private final EventDateExtractor dateExtractor;
 
     public ArticleReanalyzeService(ArticleRepository articles, ArticleContentExtractor extractor,
-                                   LlmStructurer llm) {
+                                   LlmStructurer llm, EventDateExtractor dateExtractor) {
         this.articles = articles;
         this.extractor = extractor;
         this.llm = llm;
+        this.dateExtractor = dateExtractor;
     }
 
     public record Result(boolean llmEnabled, int scanned, int updated, int failed) {}
 
-    /** 実イベント日が空の記事を最大 limit 件、LLM で再解析して発売日等を埋める（管理画面の一括穴埋め）。 */
+    /** 実イベント日が空の記事を最大 limit 件、まずルールで、ダメなら（LLM有効時）LLMで埋める（管理画面の一括穴埋め）。 */
     @Transactional
     public Result reanalyzeMissingEventDates(int limit) {
-        if (!llm.isEnabled()) {
-            return new Result(false, 0, 0, 0);   // LLM 無効: 何もしない（画面で案内）
-        }
         return fill(articles.findByEventDateIsNullOrderByCreatedAtDesc(PageRequest.of(0, limit)));
     }
 
     /**
-     * 指定利用者の有効テーマ記事のうち発売日未設定を最大 limit 件だけ LLM で補完する
-     * （タイムラインで「発売日順」を選んだ時だけ呼ぶ・オンデマンド）。上限で切るため1回で全ては埋めない。
+     * 指定利用者の有効テーマ記事のうち発売日未設定を最大 limit 件だけ補完する（タイムラインで「発売日順」を
+     * 選んだ時だけ呼ぶ・オンデマンド）。まずルールベース（無料・即時）、取れなければ LLM（有効時のみ）。
+     * 上限で切るため1回で全ては埋めない。
      */
     @Transactional
     public Result reanalyzeForUserThemes(Long userId, int limit) {
-        if (!llm.isEnabled()) {
-            return new Result(false, 0, 0, 0);
-        }
         return fill(articles.findUserThemedMissingEventDate(userId, PageRequest.of(0, limit)));
     }
 
-    /** 対象記事群について本文取得→LLM構造化→発売日等を埋める共通処理。 */
+    /**
+     * 対象記事群の発売日を埋める共通処理（C案）。① まずルールベースでタイトル＋要約から日付を拾う（無料・即時）。
+     * ② 取れなければ LLM が有効なときだけ本文取得→LLM構造化で補う。ルールで埋まれば LLM は呼ばない＝最小コスト。
+     */
     private Result fill(List<ArticleEntity> targets) {
         int updated = 0, failed = 0;
         for (ArticleEntity a : targets) {
             try {
-                String text = extractor.extract(a.getUrl())
+                // ① ルールベース（LLM不使用）
+                String text = (a.getTitle() == null ? "" : a.getTitle())
+                        + " " + (a.getSummary() == null ? "" : a.getSummary());
+                var ruled = dateExtractor.extract(text, a.getPublishedAt());
+                if (ruled.isPresent()) {
+                    a.enrichEventDate(ruled.get().date(), ruled.get().precision(), null, ruled.get().text(), null);
+                    articles.save(a);
+                    updated++;
+                    continue;   // ルールで埋まったら LLM は呼ばない
+                }
+                // ② LLM フォールバック（有効なときだけ）
+                if (!llm.isEnabled()) continue;
+                String body = extractor.extract(a.getUrl())
                         .orElseGet(() -> a.getSummary() != null ? a.getSummary() : a.getTitle());
-                Optional<StructuredArticle> r = llm.structure(new ExtractedText(a.getTitle(), a.getUrl(), text));
+                Optional<StructuredArticle> r = llm.structure(new ExtractedText(a.getTitle(), a.getUrl(), body));
                 if (r.isPresent() && r.get().eventDate() != null) {
                     StructuredArticle sa = r.get();
                     a.enrichEventDate(sa.eventDate(), sa.eventDatePrecision(), sa.eventDateKind(),
@@ -81,7 +94,7 @@ public class ArticleReanalyzeService {
                 log.warn("[再解析] article id={} で失敗: {}", a.getId(), e.toString());
             }
         }
-        log.info("[再解析] 対象={} 更新={} 失敗={}", targets.size(), updated, failed);
-        return new Result(true, targets.size(), updated, failed);
+        log.info("[再解析] 対象={} 更新={} 失敗={} (LLM有効={})", targets.size(), updated, failed, llm.isEnabled());
+        return new Result(llm.isEnabled(), targets.size(), updated, failed);
     }
 }

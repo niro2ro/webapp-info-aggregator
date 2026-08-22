@@ -8,6 +8,7 @@ import com.example.aggregator.domain.model.EventDateKind;
 import com.example.aggregator.domain.model.EventDatePrecision;
 import com.example.aggregator.domain.model.SourceEntity;
 import com.example.aggregator.domain.model.ThemeEntity;
+import com.example.aggregator.domain.rule.EventDateExtractor;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
 import com.example.aggregator.domain.rule.TitleKey;
 import com.example.aggregator.domain.rule.UrlHasher;
@@ -46,19 +47,22 @@ public class CollectionService {
     private final UrlNormalizer urlNormalizer;
     private final UrlHasher urlHasher;
     private final EventDateKindResolver kindResolver;
+    private final EventDateExtractor eventDateExtractor;
 
     public CollectionService(ArticleRepository articles,
                              ArticleThemeMatchRepository matches,
                              ThemeRepository themes,
                              UrlNormalizer urlNormalizer,
                              UrlHasher urlHasher,
-                             EventDateKindResolver kindResolver) {
+                             EventDateKindResolver kindResolver,
+                             EventDateExtractor eventDateExtractor) {
         this.articles = articles;
         this.matches = matches;
         this.themes = themes;
         this.urlNormalizer = urlNormalizer;
         this.urlHasher = urlHasher;
         this.kindResolver = kindResolver;
+        this.eventDateExtractor = eventDateExtractor;
     }
 
     public record IngestResult(int total, int registered, int duplicated) {}
@@ -103,13 +107,22 @@ public class CollectionService {
         EventDateKind kind = kindResolver.resolve(category, textForKind);
 
         // 記事の掲載日（配信日）は published_at に保持する（＝「記事発生日」・RSSで確実に取れる）。
-        // event_date は「実イベント日（発売日/開催日/放送日）」専用。本文理解が要るため収集では埋めず NULL。
-        // 発売日は「発売日順」を選んだ時／再解析ボタンで ArticleReanalyzeService がオンデマンドに LLM で補完する。
         Instant publishedAt = item.publishedAt();
+
+        // 発売日(event_date)は、まず<b>ルールベース</b>でタイトル＋説明文から日付表現を拾う（LLM不使用・無料・即時）。
+        // 拾えた記事は収集時点で発売日が埋まり「発売日順」が LLM 無しで並ぶ。拾えなければ NULL のままで、
+        // 曖昧なものだけ「発売日順」選択時などに ArticleReanalyzeService がオンデマンドに LLM で補完する（C案）。
         LocalDate eventDate = null;
         EventDatePrecision precision = EventDatePrecision.UNKNOWN;
         String eventDateText = null;
         String location = null;
+        String dateSource = item.title() + " " + (item.description() == null ? "" : item.description());
+        var extracted = eventDateExtractor.extract(dateSource, publishedAt);
+        if (extracted.isPresent()) {
+            eventDate = extracted.get().date();
+            precision = extracted.get().precision();
+            eventDateText = extracted.get().text();
+        }
 
         ArticleEntity article = ArticleEntity.builder()
                 .sourceId(source.getId())

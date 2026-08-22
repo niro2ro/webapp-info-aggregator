@@ -1,5 +1,6 @@
 package com.example.aggregator.infra.config;
 
+import com.example.aggregator.domain.rule.EventDateExtractor;
 import com.example.aggregator.domain.rule.EventDateKindResolver;
 import com.example.aggregator.domain.rule.UrlHasher;
 import com.example.aggregator.domain.rule.UrlNormalizer;
@@ -23,4 +24,7 @@ public class DomainRuleConfig {
 
     @Bean
     EventDateKindResolver eventDateKindResolver() { return new EventDateKindResolver(); }
+
+    @Bean
+    EventDateExtractor eventDateExtractor() { return new EventDateExtractor(); }
 }
