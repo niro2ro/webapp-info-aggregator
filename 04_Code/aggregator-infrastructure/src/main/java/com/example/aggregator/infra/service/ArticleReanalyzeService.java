@@ -40,13 +40,29 @@ public class ArticleReanalyzeService {
 
     public record Result(boolean llmEnabled, int scanned, int updated, int failed) {}
 
-    /** 実イベント日が空の記事を最大 limit 件、LLM で再解析して発売日等を埋める。 */
+    /** 実イベント日が空の記事を最大 limit 件、LLM で再解析して発売日等を埋める（管理画面の一括穴埋め）。 */
     @Transactional
     public Result reanalyzeMissingEventDates(int limit) {
         if (!llm.isEnabled()) {
             return new Result(false, 0, 0, 0);   // LLM 無効: 何もしない（画面で案内）
         }
-        List<ArticleEntity> targets = articles.findByEventDateIsNullOrderByCreatedAtDesc(PageRequest.of(0, limit));
+        return fill(articles.findByEventDateIsNullOrderByCreatedAtDesc(PageRequest.of(0, limit)));
+    }
+
+    /**
+     * 指定利用者の有効テーマ記事のうち発売日未設定を最大 limit 件だけ LLM で補完する
+     * （タイムラインで「発売日順」を選んだ時だけ呼ぶ・オンデマンド）。上限で切るため1回で全ては埋めない。
+     */
+    @Transactional
+    public Result reanalyzeForUserThemes(Long userId, int limit) {
+        if (!llm.isEnabled()) {
+            return new Result(false, 0, 0, 0);
+        }
+        return fill(articles.findUserThemedMissingEventDate(userId, PageRequest.of(0, limit)));
+    }
+
+    /** 対象記事群について本文取得→LLM構造化→発売日等を埋める共通処理。 */
+    private Result fill(List<ArticleEntity> targets) {
         int updated = 0, failed = 0;
         for (ArticleEntity a : targets) {
             try {

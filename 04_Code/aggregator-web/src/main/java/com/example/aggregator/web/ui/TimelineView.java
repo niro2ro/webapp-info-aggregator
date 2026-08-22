@@ -10,6 +10,7 @@ import com.example.aggregator.infra.persistence.ArticleRepository;
 import com.example.aggregator.infra.persistence.SourceRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
+import com.example.aggregator.infra.service.ArticleReanalyzeService;
 import com.example.aggregator.infra.service.ThemeSearchCollector;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,12 +48,16 @@ public class TimelineView extends VerticalLayout {
     // ログイン中の利用者（Phase 5・認証導入）。ガード未通過の一時生成に備え、未ログイン時は -1（該当データ無し）。
     private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
+    /** 「発売日順」を選んだ時に1回でLLM補完する件数の上限（本文取得＋LLMが件数ぶん走るため小さめ）。 */
+    private static final int ONDEMAND_LLM_CAP = 6;
+
     private final ArticleRepository articles;
     private final SampleIngestService sampleIngest;
     private final ArticleInteractionService interaction;
     private final ThemeRepository themes;
     private final ThemeSearchCollector themeSearch;
     private final SourceRepository sources;
+    private final ArticleReanalyzeService reanalyze;
 
     private final TextField search = new TextField();
     private final ComboBox<Category> categoryFilter = new ComboBox<>();
@@ -65,13 +70,15 @@ public class TimelineView extends VerticalLayout {
 
     public TimelineView(ArticleRepository articles, SampleIngestService sampleIngest,
                         ArticleInteractionService interaction, ThemeRepository themes,
-                        ThemeSearchCollector themeSearch, SourceRepository sources) {
+                        ThemeSearchCollector themeSearch, SourceRepository sources,
+                        ArticleReanalyzeService reanalyze) {
         this.articles = articles;
         this.sampleIngest = sampleIngest;
         this.interaction = interaction;
         this.themes = themes;
         this.themeSearch = themeSearch;
         this.sources = sources;
+        this.reanalyze = reanalyze;
 
         setSizeFull();
         setPadding(true);
@@ -108,8 +115,8 @@ public class TimelineView extends VerticalLayout {
         sortSelect.setLabel(null);
         sortSelect.setItems(ArticleQuery.Sort.values());
         sortSelect.setItemLabelGenerator(this::sortLabel);
-        sortSelect.setValue(ArticleQuery.Sort.PUBLISHED_DESC);
-        sortSelect.addValueChangeListener(e -> refresh());
+        sortSelect.setValue(ArticleQuery.Sort.PUBLISHED_DESC);   // 既定は掲載日順（RSSで確実・LLM不要）
+        sortSelect.addValueChangeListener(e -> onSortChanged(e.getValue()));
 
         unreadOnly.addValueChangeListener(e -> refresh());
 
@@ -161,6 +168,28 @@ public class TimelineView extends VerticalLayout {
         List<SourceEntity> all = sources.findAll();
         sourceFilter.setItems(all);
         sourceNames = all.stream().collect(Collectors.toMap(SourceEntity::getId, SourceEntity::getName));
+    }
+
+    /**
+     * 並び順が変わったときの処理。「発売日順」を選んだ時だけ、自分のテーマ記事で発売日が未設定のものを
+     * 上限内で LLM 補完してから並べ替える（掲載日順など他の並びは LLM を呼ばず即時）。上限で切るため1回で
+     * 全ては埋まらない＝再度選ぶと続きを補完する。処理中は Vaadin の読み込みインジケータが出る。
+     */
+    private void onSortChanged(ArticleQuery.Sort sort) {
+        if (sort == ArticleQuery.Sort.RELEASE_ASC || sort == ArticleQuery.Sort.RELEASE_DESC) {
+            ArticleReanalyzeService.Result r = reanalyze.reanalyzeForUserThemes(USER_ID, ONDEMAND_LLM_CAP);
+            if (!r.llmEnabled()) {
+                Notification.show("LLMが無効のため発売日は空のままです（掲載日順を推奨）。"
+                        + "環境変数 LLM_ENABLED=true と ANTHROPIC_API_KEY を設定すると発売日を補完できます。",
+                        5000, Notification.Position.MIDDLE);
+            } else if (r.updated() > 0) {
+                Notification.show("発売日を " + r.updated() + " 件補完しました。"
+                        + "（未設定が残る場合はもう一度「発売日順」を選ぶと続きを補完します）");
+            } else if (r.scanned() > 0) {
+                Notification.show("未設定の記事はありましたが、本文から発売日を特定できませんでした。");
+            }
+        }
+        refresh();
     }
 
     private void refresh() {
