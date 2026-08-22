@@ -49,7 +49,7 @@ public class TimelineView extends VerticalLayout {
     private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);
 
     /** 1ページの表示件数。小さくして1回あたりの取得・（発売日順の）LLM補完を軽くする。 */
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 6;
     /** 現在ページ（0始まり）。 */
     private int page = 0;
 

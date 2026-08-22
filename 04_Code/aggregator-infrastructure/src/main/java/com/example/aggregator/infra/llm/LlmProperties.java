@@ -17,8 +17,8 @@ public class LlmProperties {
     /** LLM 構造化を有効化するか。false（既定）なら NoOp 実装が使われ、APIキー無しでも起動する。 */
     private boolean enabled = false;
 
-    /** 使用モデル（外部IF §2.1・コスト重視で Sonnet 既定）。着手時に公式のモデルIDを確認。 */
-    private String model = "claude-sonnet-5";
+    /** 使用モデル（外部IF §2.1・発売日抽出は軽量タスクのためコスト/速度重視で Haiku 既定）。着手時に公式のモデルIDを確認。 */
+    private String model = "claude-haiku-4-5";
 
     /** 応答上限トークン。構造化 JSON は短いので小さめ。 */
     private int maxTokens = 1024;
@@ -29,11 +29,11 @@ public class LlmProperties {
     /** 実際に止める安全マージン（上限のこの割合に達したら呼ばない・BD-IF-02-01）。 */
     private double budgetMargin = 0.9;
 
-    /** 入力1トークンあたりの概算単価（マイクロ円）。既定は Sonnet 目安（$3/1M・150円/$換算）。要確認。 */
-    private long inputMicroJpyPerToken = 450;
+    /** 入力1トークンあたりの概算単価（マイクロ円）。既定は Haiku 4.5 目安（$1/1M・150円/$換算＝150）。要確認。 */
+    private long inputMicroJpyPerToken = 150;
 
-    /** 出力1トークンあたりの概算単価（マイクロ円）。既定は Sonnet 目安（$15/1M・150円/$換算）。要確認。 */
-    private long outputMicroJpyPerToken = 2250;
+    /** 出力1トークンあたりの概算単価（マイクロ円）。既定は Haiku 4.5 目安（$5/1M・150円/$換算＝750）。要確認。 */
+    private long outputMicroJpyPerToken = 750;
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }

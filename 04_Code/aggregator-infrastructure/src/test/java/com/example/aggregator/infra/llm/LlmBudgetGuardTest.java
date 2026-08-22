@@ -44,12 +44,12 @@ class LlmBudgetGuardTest {
     @Test
     @DisplayName("使用量から概算コスト（マイクロ円）を計算して記録する")
     void recordUsageComputesCost() {
-        // 入力1000×450 + 出力200×2250 = 450,000 + 450,000 = 900,000 マイクロ円
-        guard().recordUsage(new LlmUsage("claude-sonnet-5", 1000, 200), LlmCallStatus.SUCCESS, null);
+        // Haiku 既定単価: 入力1000×150 + 出力200×750 = 150,000 + 150,000 = 300,000 マイクロ円
+        guard().recordUsage(new LlmUsage("claude-haiku-4-5", 1000, 200), LlmCallStatus.SUCCESS, null);
 
         ArgumentCaptor<LlmUsageLogEntity> captor = ArgumentCaptor.forClass(LlmUsageLogEntity.class);
         verify(usageLogs).save(captor.capture());
-        assertThat(captor.getValue().getEstCostMicroJpy()).isEqualTo(900_000L);
+        assertThat(captor.getValue().getEstCostMicroJpy()).isEqualTo(300_000L);
         assertThat(captor.getValue().getStatus()).isEqualTo(LlmCallStatus.SUCCESS);
     }
 }

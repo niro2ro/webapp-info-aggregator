@@ -34,7 +34,7 @@ app:
   # 本番は enabled=true にし ANTHROPIC_API_KEY を環境変数で注入（application.yml に実値を書かない）。
   llm:
     enabled: ${LLM_ENABLED:false}
-    model: ${LLM_MODEL:claude-sonnet-5}
+    model: ${LLM_MODEL:claude-haiku-4-5}
     monthly-budget-jpy: ${LLM_MONTHLY_BUDGET_JPY:500}
     # ANTHROPIC_API_KEY は SDK が環境変数から直接読む（ここには書かない）
 
