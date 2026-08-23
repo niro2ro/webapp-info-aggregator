@@ -44,6 +44,7 @@ app:
   line:
     enabled: ${LINE_ENABLED:false}
     channel-token: ${LINE_CHANNEL_TOKEN:}
+    channel-secret: ${LINE_CHANNEL_SECRET:}   # Webhook署名検証用（合言葉連携）。実値は環境変数で注入
     monthly-free-limit: ${LINE_MONTHLY_FREE_LIMIT:200}
 
 server:

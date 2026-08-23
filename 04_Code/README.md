@@ -50,6 +50,23 @@ LANG=C.UTF-8 LC_ALL=C.UTF-8 mvn -pl aggregator-web spring-boot:run
 - **通知バッチは自動化対象外**（LINE の実送信が未確立のため。NoOp 通知で「通知済み」記録が付くと後日の実送信ができなくなるのを避ける。Phase 4/6 で LINE 確立後に追加）。
 - VPS 移行後（Phase 6）は cron / systemd timer に置き換える（OS 非依存の設計・§5）。
 
+## LINE 連携（合言葉方式・userID入力不要）
+
+利用者に userId を入力させず、**友だち追加＋合言葉**で連携する（LINE通知設定 SC-05）:
+
+1. 利用者が公式アカウントを**友だち追加**する
+2. 画面の「合言葉を発行」で表示された6桁を、公式アカウントの**トークに送信**する
+3. LINE が **Webhook**（`POST /line/webhook`）でその合言葉＋送信者 `userId` をアプリへ送る → アプリが合言葉に紐づく利用者に `line_user_id` を保存＝連携完了
+
+必要な設定:
+
+- 環境変数 `LINE_CHANNEL_SECRET`（Developers Console のチャネルシークレット。Webhook 署名検証 `X-Line-Signature` に使用）＋ `LINE_CHANNEL_TOKEN`／`LINE_ENABLED=true`
+- Developers Console で **Webhook URL** に `https://<公開ホスト>/line/webhook` を設定し Webhook を ON
+- **公開URLが前提**: 自宅PC(localhost)では Cloudflare Tunnel 等で一時公開、恒久運用は VPS（Phase 6）
+- Webhook が未設定の間は、設定画面の「開発/検証用: userID を手動で入力」で連携をテストできる（`Developers Console → チャネル基本設定 → あなたのユーザーID`）
+
+技術: 署名検証は `LineSignatureVerifier`（HMAC-SHA256）、合言葉は `LineLinkService`（10分有効・メモリ保持）、受信は `LineWebhookController`。DB更新（`line_user_id`）は `UserService` に委譲。
+
 ## Phase 進行（CLAUDE.md §6）
 
 | Phase | 内容 | 状態 |

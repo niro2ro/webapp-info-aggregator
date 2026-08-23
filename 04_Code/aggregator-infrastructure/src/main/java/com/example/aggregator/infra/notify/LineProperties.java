@@ -17,6 +17,9 @@ public class LineProperties {
     /** チャネルアクセストークン（環境変数から注入。実値は application.yml に書かない）。 */
     private String channelToken;
 
+    /** チャネルシークレット（Webhook 署名検証 X-Line-Signature 用・環境変数から注入）。 */
+    private String channelSecret;
+
     /** 無料枠の月上限（通）。コミュニケーションプラン=200。この割合に達したら送信を止めアプリ内表示へ。 */
     private int monthlyFreeLimit = 200;
 
@@ -30,6 +33,8 @@ public class LineProperties {
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public String getChannelToken() { return channelToken; }
     public void setChannelToken(String channelToken) { this.channelToken = channelToken; }
+    public String getChannelSecret() { return channelSecret; }
+    public void setChannelSecret(String channelSecret) { this.channelSecret = channelSecret; }
     public int getMonthlyFreeLimit() { return monthlyFreeLimit; }
     public void setMonthlyFreeLimit(int monthlyFreeLimit) { this.monthlyFreeLimit = monthlyFreeLimit; }
     public double getLimitMargin() { return limitMargin; }
