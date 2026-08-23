@@ -15,11 +15,13 @@ import com.example.aggregator.infra.persistence.SourceRepository;
 import com.example.aggregator.infra.persistence.ThemeRepository;
 import com.example.aggregator.infra.service.ArticleInteractionService;
 import com.example.aggregator.infra.service.FavoriteService;
+import com.example.aggregator.infra.service.LineLinkService;
 import com.example.aggregator.infra.service.UserService;
 import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H2;
@@ -59,6 +61,7 @@ public class NotificationSettingsView extends VerticalLayout {
     private final UserService users;
     private final LineNotifier lineNotifier;
     private final LineProperties lineProps;
+    private final LineLinkService lineLink;
 
     private final Grid<ThemeEntity> themeGrid = new Grid<>(ThemeEntity.class, false);
     private final Grid<SourceEntity> sourceGrid = new Grid<>(SourceEntity.class, false);
@@ -66,7 +69,8 @@ public class NotificationSettingsView extends VerticalLayout {
 
     public NotificationSettingsView(ThemeRepository themes, SourceRepository sources, ArticleRepository articles,
                                     FavoriteService favorites, ArticleInteractionService interaction,
-                                    UserService users, LineNotifier lineNotifier, LineProperties lineProps) {
+                                    UserService users, LineNotifier lineNotifier, LineProperties lineProps,
+                                    LineLinkService lineLink) {
         this.themes = themes;
         this.sources = sources;
         this.articles = articles;
@@ -75,6 +79,7 @@ public class NotificationSettingsView extends VerticalLayout {
         this.users = users;
         this.lineNotifier = lineNotifier;
         this.lineProps = lineProps;
+        this.lineLink = lineLink;
 
         setSizeFull();
         setPadding(true);
@@ -86,7 +91,7 @@ public class NotificationSettingsView extends VerticalLayout {
         refresh();
     }
 
-    // ===== 上段: 自分のLINE連携（BD-SC-05-05〜08） =====
+    // ===== 上段: 自分のLINE連携（合言葉方式・userID入力不要／BD-SC-05-05〜08） =====
     private VerticalLayout buildLineBlock() {
         VerticalLayout block = new VerticalLayout();
         block.addClassName("line-link-card");
@@ -98,57 +103,70 @@ public class NotificationSettingsView extends VerticalLayout {
 
         UserEntity me = users.find(userId).orElse(null);
 
-        H3 h = new H3("自分のLINE連携");
+        H3 h = new H3("LINE連携（友だち追加＋合言葉）");
         h.getStyle().set("margin", "0");
-
-        TextField lineId = new TextField("LINEユーザーID");
-        lineId.setPlaceholder("Uxxxxxxxx（このbot用の宛先ID・33文字）");
-        lineId.setWidth("320px");
-        if (me != null && me.getLineUserId() != null) lineId.setValue(me.getLineUserId());
 
         Span status = new Span();
 
-        Button register = new Button("登録");
-        register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        // --- 連携手順（未連携時に表示） ---
+        Anchor addFriend = new Anchor("https://line.me/", "① 公式アカウントを友だち追加する");
+        addFriend.setTarget("_blank");
+        addFriend.getStyle().set("font-size", "14px").set("font-weight", "600");
+
+        Span codeLabel = new Span();   // 発行した合言葉を大きく表示
+        codeLabel.getStyle().set("font-size", "22px").set("font-weight", "700")
+                .set("letter-spacing", "3px").set("font-family", "monospace");
+        Span codeHint = new Span();
+        codeHint.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+
+        Button issue = new Button("② 合言葉を発行");
+        issue.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button recheck = new Button("③ 連携状況を更新");
+        recheck.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
         Button unlink = new Button("連携解除");
         unlink.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
         Button test = new Button("テスト送信");
         test.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        // 登録状況でボタンを活性/非活性に: 登録済み→「登録」を無効／未登録→「連携解除」「テスト送信」を無効
-        Runnable refreshButtons = () -> {
+        VerticalLayout steps = new VerticalLayout(addFriend,
+                new HorizontalLayout(issue, recheck), codeLabel, codeHint);
+        steps.setPadding(false);
+        steps.setSpacing(false);
+
+        // 連携状態で表示/活性を切り替える
+        Runnable refreshState = () -> {
             UserEntity cur = users.find(userId).orElse(null);
-            boolean registered = cur != null && cur.getLineUserId() != null && !cur.getLineUserId().isBlank();
-            register.setEnabled(!registered);
-            unlink.setEnabled(registered);
-            test.setEnabled(registered);
+            boolean linked = cur != null && cur.getLineUserId() != null && !cur.getLineUserId().isBlank();
+            applyStatus(status, cur);
+            steps.setVisible(!linked);        // 連携済みなら手順は隠す
+            unlink.setEnabled(linked);
+            test.setEnabled(linked);
+            if (linked) { codeLabel.setText(""); codeHint.setText(""); }
         };
 
-        // 登録＝DBに保存 / 連携解除＝DBから削除（line_user_id を null に）
-        register.addClickListener(e -> {
-            try {
-                users.linkLine(userId, lineId.getValue());
-                applyStatus(status, users.find(userId).orElse(null));
-                refreshButtons.run();
-                Notification.show("LINEユーザーIDを登録しました。");
-            } catch (IllegalArgumentException ex) {
-                Notification.show(ex.getMessage());
-            }
+        issue.addClickListener(e -> {
+            String code = lineLink.issueCode(userId);
+            codeLabel.setText("合言葉：" + code);
+            codeHint.setText("↑ この番号を、友だち追加した公式アカウントのトークにそのまま送ってください（10分間有効）。"
+                    + "送ったら「③ 連携状況を更新」を押します。");
+        });
+        recheck.addClickListener(e -> {
+            refreshState.run();
+            UserEntity cur = users.find(userId).orElse(null);
+            boolean linked = cur != null && cur.getLineUserId() != null && !cur.getLineUserId().isBlank();
+            Notification.show(linked ? "連携が完了しました。" : "まだ連携が確認できません。合言葉を送ったか確認して、少し待って再度お試しください。",
+                    4000, Notification.Position.MIDDLE);
         });
         unlink.addClickListener(e -> {
             users.unlinkLine(userId);
-            lineId.clear();
-            applyStatus(status, users.find(userId).orElse(null));
-            refreshButtons.run();
+            refreshState.run();
             Notification.show("LINE連携を解除しました（通知先を削除）。");
         });
         test.addClickListener(e -> sendTest(status));
 
-        refreshButtons.run();   // 初期状態を反映
-
-        HorizontalLayout row = new HorizontalLayout(lineId, register, unlink, test);
-        row.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
-        row.setSpacing(true);
+        HorizontalLayout linkedActions = new HorizontalLayout(unlink, test);
+        linkedActions.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
 
         // 通知の全体ON/OFF（マスタスイッチ）。変更で即保存する。
         Checkbox notifyAll = new Checkbox("通知を受け取る（全体ON/OFF）");
@@ -158,17 +176,33 @@ public class NotificationSettingsView extends VerticalLayout {
             applyStatus(status, users.find(userId).orElse(null));
         });
 
-        applyStatus(status, me);
-
-        // 未追加・ブロック時の自己解決導線（③を受信側が解決・BD-SC-05-08）。
-        Anchor addFriend = new Anchor("https://line.me/", "▶ LINEで友だち追加する（未追加・ブロック時）");
-        addFriend.setTarget("_blank");
-        addFriend.getStyle().set("font-size", "13px");
-
-        Span cond = new Span("通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE ID登録済 ⑤通数枠あり");
+        Span cond = new Span("通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE連携済 ⑤通数枠あり");
         cond.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
+        Span webhookNote = new Span("※合言葉での自動連携には、アプリが公開URLで受信できること（Webhook）が必要です。"
+                + "自宅PCでは Cloudflare Tunnel 等、恒久運用は VPS（Phase 6）。未設定の間は下の「手動で連携」で検証できます。");
+        webhookNote.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "11px");
 
-        block.add(h, row, notifyAll, status, addFriend, cond);
+        // --- 開発/検証用: userID を手動入力（Webhook未設定でもテストできる逃げ道） ---
+        TextField lineId = new TextField("LINEユーザーID（Uから始まる33文字）");
+        lineId.setWidth("340px");
+        if (me != null && me.getLineUserId() != null) lineId.setValue(me.getLineUserId());
+        Button manualReg = new Button("手動で連携", e -> {
+            try {
+                users.linkLine(userId, lineId.getValue());
+                refreshState.run();
+                Notification.show("手動で連携しました。");
+            } catch (IllegalArgumentException ex) {
+                Notification.show(ex.getMessage());
+            }
+        });
+        manualReg.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        HorizontalLayout manualRow = new HorizontalLayout(lineId, manualReg);
+        manualRow.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
+        Details manual = new Details("開発/検証用: userID を手動で入力（Webhook未設定時）", manualRow);
+
+        refreshState.run();   // 初期表示
+
+        block.add(h, status, steps, linkedActions, notifyAll, cond, webhookNote, manual);
         return block;
     }
 
