@@ -35,6 +35,21 @@ LANG=C.UTF-8 LC_ALL=C.UTF-8 mvn -pl aggregator-web spring-boot:run
 #   もしくは: java -jar aggregator-web/target/aggregator-web-0.1.0-SNAPSHOT.jar
 ```
 
+## 自動収集（Windows タスクスケジューラ・Phase 5）
+
+自宅 PC で収集を自動化する（Web を開かなくても新着が溜まる）。Windows 用の `.bat` を同梱:
+
+| ファイル | 役割 |
+|---|---|
+| `収集バッチ.bat` | 収集バッチ（`aggregator-batch` の collection jar）を**1回だけ実行して終了**。初回は jar を自動ビルド。手動実行で動作確認にも使える |
+| `タスク登録.bat` | タスクスケジューラに登録。**①ログオン5分後**（`ONLOGON /DELAY 0005:00`）＋**②毎日12:00**（`DAILY /ST 12:00`）。管理者権限不要（`/RL LIMITED`） |
+| `タスク解除.bat` | 上記タスクを削除 |
+
+- 前提: 収集時に **PostgreSQL が起動**していること（Docker Compose 等）。
+- LLM/LINE のキーは `secrets.bat`（git 管理外）を `収集バッチ.bat` が読み込む（無くても RSS 収集は動く）。
+- **通知バッチは自動化対象外**（LINE の実送信が未確立のため。NoOp 通知で「通知済み」記録が付くと後日の実送信ができなくなるのを避ける。Phase 4/6 で LINE 確立後に追加）。
+- VPS 移行後（Phase 6）は cron / systemd timer に置き換える（OS 非依存の設計・§5）。
+
 ## Phase 進行（CLAUDE.md §6）
 
 | Phase | 内容 | 状態 |
