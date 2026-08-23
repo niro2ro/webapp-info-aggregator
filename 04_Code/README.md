@@ -65,7 +65,28 @@ LANG=C.UTF-8 LC_ALL=C.UTF-8 mvn -pl aggregator-web spring-boot:run
 - **公開URLが前提**: 自宅PC(localhost)では Cloudflare Tunnel 等で一時公開、恒久運用は VPS（Phase 6）
 - Webhook が未設定の間は、設定画面の「開発/検証用: userID を手動で入力」で連携をテストできる（`Developers Console → チャネル基本設定 → あなたのユーザーID`）
 
-技術: 署名検証は `LineSignatureVerifier`（HMAC-SHA256）、合言葉は `LineLinkService`（10分有効・メモリ保持）、受信は `LineWebhookController`。DB更新（`line_user_id`）は `UserService` に委譲。
+技術: 署名検証は `LineSignatureVerifier`（HMAC-SHA256）、合言葉は `LineLinkService`（10分有効・メモリ保持）、受信は `LineWebhookController`。DB更新（`line_user_id`）は `UserService` に委譲。友だち追加QRは `QrCodeGenerator`（ZXing）。
+
+### ローカルで合言葉連携を試す（Cloudflare Tunnel）
+
+自宅PC(localhost)でも一時的に公開URLを作れば、合言葉の自動連携をそのまま試せる。
+
+1. `secrets.bat` に LINE 設定を入れて再起動（`更新して起動.bat`）:
+   ```bat
+   set LINE_ENABLED=true
+   set LINE_CHANNEL_TOKEN=（チャネルアクセストークン）
+   set LINE_CHANNEL_SECRET=（チャネルシークレット）
+   set LINE_ADD_FRIEND_URL=https://line.me/R/ti/p/@（公式アカウントのベーシックID）
+   ```
+2. `cloudflared` を入れる: `winget install --id Cloudflare.cloudflared`
+3. アプリ起動中に **`トンネル公開.bat`** を実行 → 表示された `https://xxxx.trycloudflare.com` を控える
+4. LINE Developers Console → Messaging API → **Webhook URL** に `https://xxxx.trycloudflare.com/line/webhook` を設定し **Webhook を ON**（「検証」ボタンで 200 が返ればOK）
+5. アプリの **LINE通知設定** 画面で: ①QRで公式アカウントを友だち追加 → ②合言葉を発行 → その番号を公式アカウントのトークへ送信 → ③「連携状況を更新」→ 連携完了
+6. 「テスト送信」で実際に届くか確認
+
+補足:
+- クイックトンネルのURLは**起動ごとに変わる**ため、その都度 Webhook URL を更新する（恒久URLは Phase 6 の VPS、または Cloudflare の名前付きトンネル）。
+- Webルーティング: `/line/webhook` は素の Spring MVC エンドポイント。Vaadin(ルート`/`)と共存する（Vaadin はルートマップ時に MVC エンドポイントを通す）。もし 404 になる場合は `vaadin.url-mapping` の調整を検討。
 
 ## Phase 進行（CLAUDE.md §6）
 
