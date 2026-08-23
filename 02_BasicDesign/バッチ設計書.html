@@ -287,13 +287,10 @@ strong{font-weight:700;}
     G1 --&gt; N1["URL正規化：クエリ除去・リダイレクト解決 → ハッシュ化"]
     N1 --&gt; D1{"url_hash が既存?"}
     D1 --&gt;|あり| DUP["重複：登録しない・UNIQUE制約が一次担保"]
-    D1 --&gt;|なし| B1{"当月LLMコスト &lt; 上限?・予算ガード"}
-    B1 --&gt;|超過| X1["LLMを呼ばず RSSの結果で登録"]
-    B1 --&gt;|OK| E1["抽出：タイトル・カテゴリ・発生日・種別・場所・要約。不足時のみLLM構造化"]
-    X1 --&gt; INS["Articles へ INSERT：要約＋メタ＋元URL・本文/画像は保存しない"]
-    E1 --&gt; INS
-    INS --&gt; M1["有効テーマと突合 → ArticleThemeMatches"]
-    M1 --&gt; LOG["CrawlLogs 更新・LLM呼出時は LlmUsageLogs 記録"]
+    D1 --&gt;|なし| E1["抽出：タイトル・カテゴリ・種別・要約＋発売日をルールベース抽出（無料・LLM不使用）"]
+    E1 --&gt; INS["Articles へ INSERT：要約＋メタ＋元URL・本文/画像は保存しない（発売日はルールで取れた分のみ）"]
+    INS --&gt; M1["有効テーマと突合 → ArticleThemeMatches（分類不明はキーワードで拾う）"]
+    M1 --&gt; LOG["CrawlLogs 更新（収集ではLLMを呼ばない＝LlmUsageLogsは記録しない）"]
     SKIP --&gt; LOG
     DUP --&gt; LOG
     LOG --&gt; LOOP
@@ -319,7 +316,7 @@ strong{font-weight:700;}
 <tr>
 <td>BD-BATCH-C-02</td>
 <td>取得方式</td>
-<td><strong>RSS のみ</strong>（<code>fetch_type=1:Rss</code>）。専用パーサー・LLM取得は不採用。RSS で埋まらない項目のみ取得後に LLM 補完（C-06/07）</td>
+<td><strong>RSS のみ</strong>（<code>fetch_type=1:Rss</code>）。専用パーサー・LLM取得は不採用。<strong>収集では LLM を呼ばない</strong>（発売日はルールベース抽出）。LLM補完はオンデマンド（下記 C-07 注記）</td>
 <td>FR-02-01〜04</td>
 </tr>
 <tr>
@@ -348,14 +345,14 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>BD-BATCH-C-07</td>
-<td>LLM予算ガード</td>
-<td>LLM 構造化の<strong>直前</strong>に当月累計コスト（<code>LlmUsageLogs</code> 集計・安全マージン込み）を判定。上限到達なら <strong>LLM を呼ばず RSS/パーサー結果で登録</strong>（収集は継続）</td>
+<td>LLM予算ガード（<strong>オンデマンド側</strong>）</td>
+<td>収集では LLM を呼ばない。発売日補完の LLM は「発売日順」表示時や再解析（Web 側 <code>ArticleReanalyzeService</code>）で<strong>オンデマンド</strong>に走り、その<strong>直前</strong>に当月累計コスト（<code>LlmUsageLogs</code>・安全マージン込み）を判定。上限到達なら LLM を呼ばずルール結果のまま（収集・表示は継続）</td>
 <td>FR-02-11・NFR-06</td>
 </tr>
 <tr>
 <td>BD-BATCH-C-08</td>
 <td>抽出・マッピング</td>
-<td>タイトル／カテゴリ／発生日（代表日・原文・精度）／<strong>発生日種別</strong>／場所／要約 を抽出。RSS/パーサーで埋まらない項目のみ LLM。<strong>要約は自作</strong>（本文転載しない）</td>
+<td>タイトル／カテゴリ／<strong>発生日種別</strong>／場所／要約 を抽出。<strong>発生日（代表日）はルールベース抽出</strong>（タイトル/要約の日付表現・無料・<code>EventDateExtractor</code>）で埋め、取れない曖昧な分はオンデマンドLLMへ委ねる。<strong>要約は自作</strong>（本文転載しない）</td>
 <td>FR-02-06・§9</td>
 </tr>
 <tr>
@@ -379,13 +376,13 @@ strong{font-weight:700;}
 <tr>
 <td>BD-BATCH-C-12</td>
 <td>テーマ突合</td>
-<td>収集記事を有効テーマのキーワードと突合し <code>ArticleThemeMatches</code> を永続化（複合PKで重複突合防止）</td>
+<td>収集記事を有効テーマのキーワードと突合し <code>ArticleThemeMatches</code> を永続化（複合PKで重複突合防止）。<strong>カテゴリ絞り込みは分類が確定した記事のみに効かせ、分類不明（その他）はキーワード一致で拾う</strong>（RSSにカテゴリが無い記事を取りこぼさない）</td>
 <td>FR-02-10</td>
 </tr>
 <tr>
 <td>BD-BATCH-C-13</td>
 <td>ログ記録</td>
-<td>情報源単位に <code>CrawlLogs</code>（件数・新規数・status・エラー）。LLM 呼出は <code>LlmUsageLogs</code>（usage×単価で概算コスト）</td>
+<td>情報源単位に <code>CrawlLogs</code>（件数・新規数・status・エラー）。<strong>収集では LLM を呼ばない</strong>ため <code>LlmUsageLogs</code> は記録しない（LLM のコスト記録はオンデマンド補完側で行う）</td>
 <td>§8・FR-06-05/06</td>
 </tr>
 <tr>
@@ -397,7 +394,7 @@ strong{font-weight:700;}
 </tbody>
 </table></div>
 <blockquote>
-<p><strong>取得とLLM補完の関係</strong>: 取得方式は RSS のみ。RSS で骨格（タイトル・日付・カテゴリ）が取れれば LLM 不要＝コスト最小。RSS で埋まらない発売日・不明カテゴリ等だけを取得後に LLM で補完する（専用パーサーは不採用）。予算ガード（C-07）で上限到達時は LLM を飛ばしても<strong>収集自体は止めない</strong>（RSS の結果で登録）。</p>
+<p><strong>取得・発売日・LLMの関係</strong>: 取得方式は RSS のみ。<strong>収集では LLM を呼ばない</strong>（発売日はルールベース抽出で埋める＝無料・即時）。ルールで取れない曖昧な発売日・不明カテゴリだけを、「発売日順」表示時や再解析で<strong>オンデマンドに LLM 補完</strong>する（別工程・Web 側）。予算ガードで上限到達時は LLM を飛ばしてもルール結果のまま表示は継続。これで発売日順が基本 LLM 無し・即時、LLM 課金は最小になる。</p>
 </blockquote>
 <hr />
 <h2 id="2-bd-batch-n">2. 通知バッチ（BD-BATCH-N）</h2>

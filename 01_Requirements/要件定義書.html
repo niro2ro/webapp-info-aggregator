@@ -307,7 +307,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>収集（収集フェーズ）</td>
-<td>情報源から記事を取得し DB へ登録するバッチ処理。取得は <strong>RSS のみ</strong>。取得後、RSS で埋まらない発売日・不明カテゴリだけを <strong>LLM で補完</strong>（予算内）</td>
+<td>情報源から記事を取得し DB へ登録するバッチ処理。取得は <strong>RSS のみ</strong>。発売日は収集時に<strong>ルールベース抽出</strong>（タイトル/要約の日付表現・無料・即時）で埋め、埋まらない曖昧な分だけ「発売日順」表示時などに<strong>オンデマンドで LLM 補完</strong>（予算内）</td>
 <td>FR-02・TBL-CrawlLogs</td>
 </tr>
 <tr>
@@ -387,7 +387,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>取得方式</td>
-<td><strong>RSS のみ</strong>（専用パーサー・LLM取得は廃止）。取得後、RSS で埋まらない発売日・不明カテゴリのみ LLM で補完（予算内）</td>
+<td><strong>RSS のみ</strong>（専用パーサー・LLM取得は廃止）。発売日は収集時にルールベース抽出→埋まらない分だけ「発売日順」表示時などにオンデマンドで LLM 補完（予算内）</td>
 <td>FR-02-04</td>
 </tr>
 <tr>
@@ -471,7 +471,7 @@ strong{font-weight:700;}
 <tr>
 <td>D6</td>
 <td>LLM</td>
-<td>Claude API（<strong>Claude Sonnet</strong>）を収集時の構造化のみに使用。コストは <code>usage</code>×単価で自前計算し月500円をハードキャップ（NFR-06）</td>
+<td>Claude API（既定 <strong>Claude Haiku 4.5</strong>・軽量/低コスト。設定で変更可）を発売日等の構造化補完のみに使用。発売日は先にルールベースで抽出し、取れない曖昧な分だけオンデマンドで LLM を呼ぶ。コストは <code>usage</code>×単価で自前計算し月500円をハードキャップ（NFR-06）</td>
 </tr>
 <tr>
 <td>D7</td>
@@ -547,8 +547,8 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td>FR-02-03</td>
-<td>LLM 構造化（取得後の補完）</td>
-<td><strong>取得方式ではなく取得後の工程</strong>。RSS で埋まらない発売日・不明カテゴリ等を、本文抽出→Claude API で補完する（予算内・任意ON/OFF）</td>
+<td>発売日の抽出（ルール→LLM補完）</td>
+<td><strong>取得方式ではなく取得後の工程</strong>。①収集時に<strong>ルールベース抽出</strong>（タイトル/要約の日付表現を正規表現で解釈・無料・即時・<code>EventDateExtractor</code>）で <code>event_date</code> を埋める。②取れない曖昧な分だけ「発売日順」表示時や再解析ボタンで<strong>オンデマンドに LLM</strong>（本文抽出→Claude API）で補完（予算内・LLMは任意ON/OFF）。カテゴリ不明分の補完も同様</td>
 </tr>
 <tr>
 <td>FR-02-04</td>
@@ -568,7 +568,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-02-06</td>
 <td>抽出項目マッピング</td>
-<td>タイトル/カテゴリ/発生日(代表日・原文・精度)/<strong>発生日種別(EventDateKind)</strong>/場所/元URL/要約 を抽出（§7 参照）。種別は「①カテゴリ既定→②原文キーワード補正→③LLM出力（呼ぶ記事のみ）」で決定（ビジネスルール(§1)。種別のためだけに LLM を新規に呼ばない）</td>
+<td>タイトル/カテゴリ/発生日(代表日・原文・精度)/<strong>発生日種別(EventDateKind)</strong>/場所/元URL/要約 を抽出（§7 参照）。<strong>代表日(event_date)</strong> は「①ルールベース抽出（タイトル/要約の日付表現・無料）→②取れなければオンデマンドLLM」で決定。<strong>種別</strong>は「①カテゴリ既定→②原文キーワード補正→③LLM出力（呼ぶ記事のみ）」で決定（種別のためだけに LLM を新規に呼ばない）</td>
 </tr>
 <tr>
 <td>FR-02-07</td>
@@ -588,7 +588,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-02-10</td>
 <td>テーマ突合</td>
-<td>収集記事を有効テーマのキーワードと突合し、マッチを永続化</td>
+<td>収集記事を有効テーマのキーワードと突合し、マッチを永続化。カテゴリ絞り込みは<strong>分類が確定している記事だけ</strong>に効かせ、<strong>分類不明（その他）の記事はキーワード一致で拾う</strong>（RSSにカテゴリが無い記事を取りこぼさない）</td>
 </tr>
 <tr>
 <td>FR-02-11</td>
@@ -1043,7 +1043,7 @@ strong{font-weight:700;}
 <tr>
 <td>SC-02</td>
 <td>タイムライン（一覧）</td>
-<td>一覧・<strong>並び順選択（発生日順/発売日順/収集日順＋昇順降順）</strong>・<strong>日付は種別ラベル付き表示</strong>・フィルタ（種別含む）・検索・未読既読・<strong>未通知の可視化</strong>・元リンク</td>
+<td>一覧・<strong>並び順選択（掲載日順(既定)/発売日順(近い順=昇順・遠い順=降順)/収集日順）</strong>・<strong>表示日付は並び順に一致</strong>（掲載日順=掲載日/発売日順=発売日/収集日順=収集日）・<strong>ページング（前後＋最初/最後＋番号）</strong>・「発売日順」選択時は未設定分をオンデマンドで発売日補完・フィルタ・検索・未読既読・<strong>未通知の可視化</strong>・元リンク</td>
 <td>共通</td>
 <td>FR-04</td>
 </tr>
@@ -2036,7 +2036,7 @@ strong{font-weight:700;}
 <li><strong>権利配慮（§9）</strong>: RSS はサイトが自ら公開している正規の配信窓口であり、HTML を力ずくで解析（スクレイピング）するより<strong>規約・権利面で安全</strong>。スクレイピング（専用パーサー）を採用しないこと自体が権利リスク低減になる。ポートフォリオ評価にも資する。</li>
 <li><strong>実装の軽さ・安定性</strong>: HTML はサイト改装でレイアウトが変わると壊れるが、RSS は形式が標準で安定。<strong>Phase 1（1テーマを日付順に並べる）を最短で回せる</strong>。第一陣3サイトを全て RSS で選んだのはこの理由。</li>
 </ol>
-<p>RSS で不足する項目（要約・場所・発生日など）は、<strong>LLM 構造化（予算内）でのみ</strong>補完する。</p>
+<p>RSS で不足する項目のうち<strong>発売日は、まずルールベース抽出</strong>（タイトル/要約の日付表現を正規表現で解釈・無料・即時・<code>EventDateExtractor</code>）で埋める。それでも取れない曖昧な分（本文にしか無い日付など）と不明カテゴリだけを、<strong>「発売日順」表示時などにオンデマンドで LLM 補完（予算内）</strong>する。これで発売日順は基本 LLM 無し・即時で並ぶ。</p>
 <h4 id="java">Java での扱い</h4>
 <p>XML を自力パースはしない。ライブラリ <strong>ROME (rome-tools)</strong> が RSS/Atom の読み取りを担い、<code>SyndFeedInput</code> でパースした <code>SyndFeed</code> から各記事 <code>SyndEntry</code> を <code>.getTitle()</code> / <code>.getLink()</code> / <code>.getPublishedDate()</code> / <code>.getDescription()</code> 等のメソッドで取り出せる。フォーマット解釈はライブラリ任せにできる（「決まった形式のファイルを構造体に読み込む」感覚に近い）。HTTP 取得は Spring <code>RestClient</code>（＋Resilience4j）で行う。取得後の LLM 構造化に渡す本文の抽出には jsoup を<strong>テキスト整形の用途に限って</strong>使う（HTMLスクレイピングによる取得＝専用パーサーは採用しない）。</p>
 <blockquote>
