@@ -45,6 +45,7 @@ app:
     enabled: ${LINE_ENABLED:false}
     channel-token: ${LINE_CHANNEL_TOKEN:}
     channel-secret: ${LINE_CHANNEL_SECRET:}   # Webhook署名検証用（合言葉連携）。実値は環境変数で注入
+    add-friend-url: ${LINE_ADD_FRIEND_URL:}   # 公式アカウント友だち追加URL（例 https://line.me/R/ti/p/@xxxx）。設定でQR表示
     monthly-free-limit: ${LINE_MONTHLY_FREE_LIMIT:200}
 
 server:

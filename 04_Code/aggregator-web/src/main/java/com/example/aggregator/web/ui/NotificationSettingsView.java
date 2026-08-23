@@ -17,6 +17,7 @@ import com.example.aggregator.infra.service.ArticleInteractionService;
 import com.example.aggregator.infra.service.FavoriteService;
 import com.example.aggregator.infra.service.LineLinkService;
 import com.example.aggregator.infra.service.UserService;
+import com.example.aggregator.web.QrCodeGenerator;
 import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -26,6 +27,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -62,6 +64,7 @@ public class NotificationSettingsView extends VerticalLayout {
     private final LineNotifier lineNotifier;
     private final LineProperties lineProps;
     private final LineLinkService lineLink;
+    private final QrCodeGenerator qr;
 
     private final Grid<ThemeEntity> themeGrid = new Grid<>(ThemeEntity.class, false);
     private final Grid<SourceEntity> sourceGrid = new Grid<>(SourceEntity.class, false);
@@ -70,7 +73,7 @@ public class NotificationSettingsView extends VerticalLayout {
     public NotificationSettingsView(ThemeRepository themes, SourceRepository sources, ArticleRepository articles,
                                     FavoriteService favorites, ArticleInteractionService interaction,
                                     UserService users, LineNotifier lineNotifier, LineProperties lineProps,
-                                    LineLinkService lineLink) {
+                                    LineLinkService lineLink, QrCodeGenerator qr) {
         this.themes = themes;
         this.sources = sources;
         this.articles = articles;
@@ -80,6 +83,7 @@ public class NotificationSettingsView extends VerticalLayout {
         this.lineNotifier = lineNotifier;
         this.lineProps = lineProps;
         this.lineLink = lineLink;
+        this.qr = qr;
 
         setSizeFull();
         setPadding(true);
@@ -109,9 +113,31 @@ public class NotificationSettingsView extends VerticalLayout {
         Span status = new Span();
 
         // --- 連携手順（未連携時に表示） ---
-        Anchor addFriend = new Anchor("https://line.me/", "① 公式アカウントを友だち追加する");
-        addFriend.setTarget("_blank");
-        addFriend.getStyle().set("font-size", "14px").set("font-weight", "600");
+        // 友だち追加URLが設定されていれば QR とリンクを、無ければ案内文のみ表示する。
+        String addUrl = lineProps.getAddFriendUrl();
+        boolean hasAddUrl = addUrl != null && !addUrl.isBlank();
+        VerticalLayout step1 = new VerticalLayout();
+        step1.setPadding(false);
+        step1.setSpacing(false);
+        Span step1Label = new Span("① 公式アカウントを友だち追加（スマホでQRを読み取り／PCはリンク）");
+        step1Label.getStyle().set("font-size", "14px").set("font-weight", "600");
+        step1.add(step1Label);
+        if (hasAddUrl) {
+            Image qrImg = new Image(qr.pngDataUri(addUrl, 180), "友だち追加QRコード");
+            qrImg.setWidth("180px");
+            qrImg.setHeight("180px");
+            qrImg.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "8px")
+                    .set("padding", "6px").set("background", "#fff");
+            Anchor addFriend = new Anchor(addUrl, "▶ 友だち追加リンク（PC/スマホ）");
+            addFriend.setTarget("_blank");
+            addFriend.getStyle().set("font-size", "13px");
+            step1.add(qrImg, addFriend);
+        } else {
+            Span noQr = new Span("※友だち追加URLが未設定です。`LINE_ADD_FRIEND_URL`（例 https://line.me/R/ti/p/@xxxx）"
+                    + "を設定するとここにQRが出ます。当面はLINEアプリで公式アカウントを検索して友だち追加してください。");
+            noQr.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
+            step1.add(noQr);
+        }
 
         Span codeLabel = new Span();   // 発行した合言葉を大きく表示
         codeLabel.getStyle().set("font-size", "22px").set("font-weight", "700")
@@ -129,7 +155,9 @@ public class NotificationSettingsView extends VerticalLayout {
         Button test = new Button("テスト送信");
         test.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        VerticalLayout steps = new VerticalLayout(addFriend,
+        Span step2Label = new Span("② 追加した公式アカウントのトークに、下の合言葉を送る");
+        step2Label.getStyle().set("font-size", "14px").set("font-weight", "600").set("margin-top", "8px");
+        VerticalLayout steps = new VerticalLayout(step1, step2Label,
                 new HorizontalLayout(issue, recheck), codeLabel, codeHint);
         steps.setPadding(false);
         steps.setSpacing(false);
