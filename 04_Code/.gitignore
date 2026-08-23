@@ -34,3 +34,6 @@ target/
 # --- OS ---
 .DS_Store
 Thumbs.db
+
+# --- ローカル取得のバイナリ（トンネル公開.bat が自動DL） ---
+cloudflared.exe
