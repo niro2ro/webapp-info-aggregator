@@ -41,13 +41,14 @@ LANG=C.UTF-8 LC_ALL=C.UTF-8 mvn -pl aggregator-web spring-boot:run
 
 | ファイル | 役割 |
 |---|---|
-| `収集バッチ.bat` | 収集バッチ（`aggregator-batch` の collection jar）を**1回だけ実行して終了**。初回は jar を自動ビルド。手動実行で動作確認にも使える |
-| `タスク登録.bat` | タスクスケジューラに登録。**①ログオン5分後**（`ONLOGON /DELAY 0005:00`）＋**②毎日12:00**（`DAILY /ST 12:00`）。管理者権限不要（`/RL LIMITED`） |
+| `収集バッチ.bat` | 収集バッチ（collection jar）を**1回だけ実行して終了**。初回は jar を自動ビルド。手動実行にも使える |
+| `通知バッチ.bat` | 通知バッチ（notification jar）を**1回だけ実行**。未通知×お気に入りの新着を LINE に1通で送り冪等記録 |
+| `タスク登録.bat` | タスクスケジューラに登録。**収集**＝ログオン5分後＋毎日12:00／**通知**＝ログオン10分後＋毎日12:15（収集の少し後）。管理者権限不要（`/RL LIMITED`） |
 | `タスク解除.bat` | 上記タスクを削除 |
 
-- 前提: 収集時に **PostgreSQL が起動**していること（Docker Compose 等）。
-- LLM/LINE のキーは `secrets.bat`（git 管理外）を `収集バッチ.bat` が読み込む（無くても RSS 収集は動く）。
-- **通知バッチは自動化対象外**（LINE の実送信が未確立のため。NoOp 通知で「通知済み」記録が付くと後日の実送信ができなくなるのを避ける。Phase 4/6 で LINE 確立後に追加）。
+- 前提: **PostgreSQL が起動**していること（Docker Compose 等）。
+- LLM/LINE のキーは `secrets.bat`（git 管理外）を各 bat が読み込む。**通知の実送信には `LINE_ENABLED`＋トークンが必要**（未設定なら NoOp＝ログのみで実送信なし）。
+- 通知が実際に届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE連携済 ⑤通数枠あり ＋ 未通知の新着があること。
 - VPS 移行後（Phase 6）は cron / systemd timer に置き換える（OS 非依存の設計・§5）。
 
 ## LINE 連携（合言葉方式・userID入力不要）
