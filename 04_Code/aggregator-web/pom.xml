@@ -27,6 +27,13 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring-boot-starter</artifactId>
         </dependency>
+        <!-- QRコード生成（LINE公式アカウントの友だち追加QRを画面に表示・SC-05）。core のみで
+             BitMatrix→PNG は java.awt/ImageIO で自前変換し javase 依存は増やさない。 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
     </dependencies>
 
     <build>

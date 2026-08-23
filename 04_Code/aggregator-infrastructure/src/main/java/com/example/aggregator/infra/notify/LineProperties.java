@@ -20,6 +20,12 @@ public class LineProperties {
     /** チャネルシークレット（Webhook 署名検証 X-Line-Signature 用・環境変数から注入）。 */
     private String channelSecret;
 
+    /**
+     * 公式アカウントの友だち追加URL（例 {@code https://line.me/R/ti/p/@xxxx}）。設定すると通知設定画面に
+     * このURLの QR コードと追加リンクを表示する。未設定なら QR は出さず案内文のみ。
+     */
+    private String addFriendUrl;
+
     /** 無料枠の月上限（通）。コミュニケーションプラン=200。この割合に達したら送信を止めアプリ内表示へ。 */
     private int monthlyFreeLimit = 200;
 
@@ -35,6 +41,8 @@ public class LineProperties {
     public void setChannelToken(String channelToken) { this.channelToken = channelToken; }
     public String getChannelSecret() { return channelSecret; }
     public void setChannelSecret(String channelSecret) { this.channelSecret = channelSecret; }
+    public String getAddFriendUrl() { return addFriendUrl; }
+    public void setAddFriendUrl(String addFriendUrl) { this.addFriendUrl = addFriendUrl; }
     public int getMonthlyFreeLimit() { return monthlyFreeLimit; }
     public void setMonthlyFreeLimit(int monthlyFreeLimit) { this.monthlyFreeLimit = monthlyFreeLimit; }
     public double getLimitMargin() { return limitMargin; }
