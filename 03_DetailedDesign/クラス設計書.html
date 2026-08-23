@@ -369,6 +369,11 @@ strong{font-weight:700;}
 <td>FR-02-06・§1</td>
 </tr>
 <tr>
+<td><code>EventDateExtractor</code>（DD-CLS-22b）</td>
+<td><strong>発売日(代表日)のルールベース抽出</strong>。タイトル/要約の日本語日付表現（<code>2026年9月18日</code>/<code>9月18日</code>/<code>9月上旬</code>/<code>2026年春</code> 等）を正規表現で解釈し代表日＋精度＋原文を返す（無料・即時・LLM不使用）。取れない曖昧分はオンデマンドLLMへ</td>
+<td>FR-02-03/06</td>
+</tr>
+<tr>
 <td><code>SummaryPolicy</code>（DD-CLS-23）</td>
 <td>本文を保存せず自作要約に整える方針の適用</td>
 <td>§9</td>
