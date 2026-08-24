@@ -1,60 +1,52 @@
-# ===== .NET =====
-bin/
-obj/
-out/
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Bb]uild/
-[Ll]og/
-[Ll]ogs/
-*.user
-*.suo
-*.userprefs
-.vs/
-.vscode/
-*.dll
-*.exe
-*.pdb
+# ルートの .gitignore（リポジトリ全体の共通ルール）
+# 実装モジュール固有の除外は 04_Code/.gitignore を参照。
 
-# ===== 秘密情報（絶対にコミットしない）=====
-# User Secrets は %APPDATA% 配下に保存されるため通常ここには来ないが、念のため
-secrets.json
-appsettings.*.Local.json
-appsettings.Local.json
-appsettings.Development.json
-*.env
+# ===== 秘密情報（絶対にコミットしない・NFR-11）=====
 .env
+*.env
 .env.*
+!.env.example
+secrets.bat
+!secrets.bat.sample
+*.pem
+*.key
+*.p12
 
-# ===== EF Core / DB =====
-*.db
-*.db-shm
-*.db-wal
+# ===== ビルド成果物（Maven / Java）=====
+target/
+*.class
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
 
-# ===== Docker（データボリューム等）=====
-# docker-compose.yml 自体はコミットする。ローカル生成物のみ除外
+# ===== フロントエンド生成物（Vaadin）=====
+**/node_modules/
+**/frontend/generated/
+
+# ===== Docker（データボリューム。docker-compose.yml 自体は追跡する）=====
 **/pgdata/
 **/postgres-data/
 
-# ===== OS / エディタ =====
+# ===== ログ・ローカル取得のバイナリ =====
+logs/
+*.log
+*.exe
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# ===== OS =====
+.DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-.DS_Store
 *.swp
 *~
-
-# ===== Rider / JetBrains =====
-.idea/
-
-# ===== テスト・カバレッジ =====
-[Tt]est[Rr]esult*/
-coverage*.json
-coverage*.xml
-*.coverage
 
 # ===== Claude Code（PCローカル設定・同期しない）=====
 .claude/settings.local.json
