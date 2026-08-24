@@ -89,6 +89,22 @@ vaadin-app-layout::part(navbar) {
   font-weight: 700;
 }
 
+/* 使い方ガイド（SC-02 冒頭の案内バー） */
+.timeline-guide {
+  background: var(--lumo-contrast-5pct);
+  border: 1px solid var(--lumo-contrast-10pct);
+  border-radius: var(--lumo-border-radius-m);
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  font-size: var(--lumo-font-size-s);
+  line-height: 1.7;
+  color: var(--lumo-secondary-text-color);
+}
+.timeline-guide a {
+  font-weight: 700;
+  color: #4e7d55;
+}
+
 /* --- ログイン/新規登録（SC-01/10）。和紙×七宝の落ち着いた中央カード --- */
 .login-view {
   background:
