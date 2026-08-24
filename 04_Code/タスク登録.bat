@@ -4,41 +4,30 @@ setlocal
 cd /d "%~dp0"
 
 rem ============================================================
-rem  収集バッチ＋通知バッチを Windows タスクスケジューラに登録する。
-rem  ・PC起動（ログオン）時のみ実行:
-rem      収集 = ログオン5分後 / 通知 = ログオン10分後（収集の少し後＝新着が入ってから送る）
-rem  DB や常駐アプリの立ち上げ余裕をとって遅延。同名タスクは上書き（/F）。
-rem  管理者権限は不要（LIMITED）。通知の実送信には secrets.bat の LINE 設定が必要
-rem  （未設定なら NoOp でログのみ）。
+rem  Register auto-run at logon WITHOUT admin or schtasks.
+rem  Puts a shortcut to 自動実行.bat into the user's Startup folder.
+rem  自動実行.bat waits, then runs 収集バッチ.bat and 通知バッチ.bat.
 rem ============================================================
 
-set "COLLECT=Aggregator収集"
-set "NOTIFY=Aggregator通知"
-set "RUN_C=cmd /c \"%~dp0収集バッチ.bat\""
-set "RUN_N=cmd /c \"%~dp0通知バッチ.bat\""
+set "STARTUP=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
+set "LNK=%STARTUP%\Aggregator自動実行.lnk"
+set "TARGET=%~dp0自動実行.bat"
 
-echo タスクを登録します...
+echo スタートアップに登録します...
 
-rem 念のため旧・日次タスクがあれば掃除（前バージョンで登録した場合の後始末）
-schtasks /Delete /TN "%COLLECT%_日次" /F >nul 2>nul
-schtasks /Delete /TN "%NOTIFY%_日次" /F >nul 2>nul
-
-rem ① 収集: ログオン5分後
-schtasks /Create /TN "%COLLECT%" /TR "%RUN_C%" /SC ONLOGON /DELAY 0005:00 /RL LIMITED /F
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=(New-Object -ComObject WScript.Shell).CreateShortcut('%LNK%'); $s.TargetPath='%TARGET%'; $s.WorkingDirectory='%~dp0'; $s.Save()"
 if errorlevel 1 goto :err
-rem ② 通知: ログオン10分後（収集の後）
-schtasks /Create /TN "%NOTIFY%" /TR "%RUN_N%" /SC ONLOGON /DELAY 0010:00 /RL LIMITED /F
-if errorlevel 1 goto :err
+if not exist "%LNK%" goto :err
 
 echo.
-echo [OK] 登録しました（PC起動時のみ）。
-echo   - 「%COLLECT%」 : ログオン5分後に収集
-echo   - 「%NOTIFY%」  : ログオン10分後に通知
+echo [OK] 登録しました。次回ログオン時に自動で「収集 → 通知」が実行されます。
+echo   登録先: %LNK%
 echo.
-echo 今すぐ試すには:  schtasks /Run /TN "%COLLECT%"   （収集）
-echo                  schtasks /Run /TN "%NOTIFY%"    （通知）
-echo 解除するには  :  タスク解除.bat
-echo （前提: PostgreSQL 起動。通知の実送信は secrets.bat の LINE 設定が必要）
+echo 今すぐ手動で試すには、この2つを順に実行:
+echo    収集バッチ.bat
+echo    通知バッチ.bat
+echo 解除するには:  タスク解除.bat
+echo （前提: 実行時に PostgreSQL が起動していること。通知の実送信には secrets.bat の LINE 設定）
 goto :end
 
 :err
