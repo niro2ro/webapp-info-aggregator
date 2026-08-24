@@ -11,6 +11,15 @@ rem  LLM/LINE keys come from secrets.bat.
 rem ============================================================
 
 if exist "secrets.bat" call "secrets.bat"
+
+rem Make sure PostgreSQL (Windows service) is up before we run the jar,
+rem so a manual single run does not fail on a cold DB. Idempotent.
+call "%~dp0DB起動.bat"
+if errorlevel 1 (
+    echo *** DB に接続できないため収集を中止します。 ***
+    endlocal & exit /b 1
+)
+
 set "JAVA_TOOL_OPTIONS=-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dfile.encoding=UTF-8"
 
 set "JAVACMD=java"
