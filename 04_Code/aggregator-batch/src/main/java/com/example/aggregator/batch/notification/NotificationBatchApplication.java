@@ -1,11 +1,15 @@
 package com.example.aggregator.batch.notification;
 
+import com.example.aggregator.batch.collection.CollectionBatchApplication;
 import com.example.aggregator.infra.llm.ClaudeLlmStructurer;
 import com.example.aggregator.infra.llm.LlmBudgetGuard;
 import com.example.aggregator.infra.llm.LlmProperties;
 import com.example.aggregator.infra.llm.NoOpLlmStructurer;
+import com.example.aggregator.infra.service.ArticleReanalyzeService;
+import com.example.aggregator.infra.service.CollectionRunner;
 import com.example.aggregator.infra.service.CollectionService;
 import com.example.aggregator.infra.service.NotificationService;
+import com.example.aggregator.infra.service.ThemeSearchCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -24,13 +28,24 @@ import org.springframework.context.annotation.FilterType;
  *
  * <p>{@code @SpringBootApplication} は既定で自クラスのパッケージを走査するが、ここでは明示的な
  * {@code @ComponentScan} で対象パッケージ（com.example.aggregator 全体）と除外を上書き指定する。
+ *
+ * <p><b>収集側エントリポイントの除外が必須</b>: このモジュールには収集用の
+ * {@link CollectionBatchApplication} も同居する。{@code @SpringBootApplication} は内部的に
+ * {@code @Configuration} でもあるため、com.example.aggregator を丸ごと走査すると収集側クラスが
+ * 設定クラスとして取り込まれ、その {@code @Bean} メソッド（CommandLineRunner）まで登録されてしまう。
+ * これは通知プロセスには不要なうえ、収集専用サービス（{@link CollectionRunner} 等＝{@code @Service}
+ * の既定 Bean 名と {@code @Bean} メソッド名が衝突する）や、除外済みの {@link CollectionService} を
+ * 要求して起動失敗（Bean 名重複／依存欠落）になる。そのため <b>兄弟のエントリポイントと収集専用サービスも
+ * 併せて除外</b>し、通知プロセスの Bean グラフを通知系だけに閉じる。
  */
 @SpringBootApplication
 @ComponentScan(
         basePackages = "com.example.aggregator",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {CollectionService.class, LlmBudgetGuard.class,
+                classes = {CollectionBatchApplication.class,
+                           CollectionRunner.class, ThemeSearchCollector.class, ArticleReanalyzeService.class,
+                           CollectionService.class, LlmBudgetGuard.class,
                            NoOpLlmStructurer.class, ClaudeLlmStructurer.class, LlmProperties.class}))
 public class NotificationBatchApplication {
 
