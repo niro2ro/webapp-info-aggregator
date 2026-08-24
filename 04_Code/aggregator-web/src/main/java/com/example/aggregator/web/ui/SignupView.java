@@ -41,7 +41,7 @@ public class SignupView extends VerticalLayout {
 
         TextField name = new TextField("表示名");
         name.setWidthFull();
-        name.setPlaceholder("例：ひろP");
+        name.setPlaceholder("例：アンパンマン");
 
         Button register = new Button("登録する", e -> {
             try {
