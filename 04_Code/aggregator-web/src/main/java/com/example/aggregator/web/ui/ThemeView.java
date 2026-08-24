@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * 業務ロジックはリポジトリに委ねる（DD-CLS-11）。
  */
 @Route(value = "themes", layout = MainLayout.class)
-@PageTitle("テーマ管理 | アグリゲーター")
+@PageTitle("テーマ管理 | 情報収集ツール")
 public class ThemeView extends VerticalLayout {
 
     private final Long USER_ID = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);

@@ -24,7 +24,7 @@ import com.vaadin.flow.router.Route;
  * {@code is_active=true} の情報源だけが収集対象になる。削除は不可（ON DELETE RESTRICT）、停止は無効化で行う。
  */
 @Route(value = "sources", layout = MainLayout.class)
-@PageTitle("情報源マスタ | アグリゲーター")
+@PageTitle("情報源マスタ | 情報収集ツール")
 public class SourceMasterView extends VerticalLayout implements AdminOnly {
 
     private final SourceService sources;

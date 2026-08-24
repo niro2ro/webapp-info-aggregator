@@ -17,7 +17,7 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>aggregator-parent</name>
-    <description>テーマ別最新情報アグリゲーター（Maven マルチモジュール親POM）</description>
+    <description>情報収集ツール（Maven マルチモジュール親POM）</description>
 
     <properties>
         <java.version>21</java.version>

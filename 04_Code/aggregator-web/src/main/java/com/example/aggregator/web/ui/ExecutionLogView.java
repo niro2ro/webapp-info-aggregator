@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * 通知の失敗行は分類（NotifyStatus）を日本語で示し、対応が要るもの（トークン無効・不具合）を把握できるようにする。
  */
 @Route(value = "logs", layout = MainLayout.class)
-@PageTitle("実行ログ | アグリゲーター")
+@PageTitle("実行ログ | 情報収集ツール")
 public class ExecutionLogView extends VerticalLayout implements AdminOnly {
 
     private static final java.time.ZoneId JST = java.time.ZoneId.of("Asia/Tokyo");

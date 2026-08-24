@@ -50,7 +50,7 @@ import java.util.Map;
  * 「お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しない）」。
  */
 @Route(value = "notify", layout = MainLayout.class)
-@PageTitle("LINE通知設定 | アグリゲーター")
+@PageTitle("LINE通知設定 | 情報収集ツール")
 public class NotificationSettingsView extends VerticalLayout {
 
     private final Long userId = CurrentUser.get().map(CurrentUser.Info::id).orElse(-1L);

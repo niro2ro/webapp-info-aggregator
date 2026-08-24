@@ -209,7 +209,7 @@ def build_tabbed(title, src_rel, body):
     {intro}
     <div class="tabbar">{''.join(tabs)}</div>
     {''.join(panes)}
-    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>{_html.escape(src_rel)}</code>）</div>
+    <div class="doc-foot">情報収集ツール — HTML整形版（正本は <code>{_html.escape(src_rel)}</code>）</div>
   </main>
 </div>
 {MERMAID_JS_BIG}
@@ -273,7 +273,7 @@ def convert(src_rel):
   <main>
     <div class="doc-nav">📁 {_html.escape(src_rel)}（正本は同名 .md）</div>
     {body}
-    <div class="doc-foot">テーマ別最新情報アグリゲーター — HTML整形版（正本は <code>{_html.escape(src_rel)}</code>）</div>
+    <div class="doc-foot">情報収集ツール — HTML整形版（正本は <code>{_html.escape(src_rel)}</code>）</div>
   </main>
 </div>
 {MERMAID_JS if has_mermaid else ""}

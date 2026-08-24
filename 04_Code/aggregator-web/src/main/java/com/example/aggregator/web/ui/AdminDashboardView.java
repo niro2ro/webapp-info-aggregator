@@ -38,7 +38,7 @@ import org.springframework.data.domain.PageRequest;
  * LLMコストは収集経由でのみ増える。
  */
 @Route(value = "admin", layout = MainLayout.class)
-@PageTitle("管理ダッシュボード | アグリゲーター")
+@PageTitle("管理ダッシュボード | 情報収集ツール")
 public class AdminDashboardView extends VerticalLayout implements AdminOnly {
 
     /** 診断結果の日付表示は JST（保存はUTC・表示のみJST・NFR-08）。 */

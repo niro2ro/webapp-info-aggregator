@@ -18,7 +18,7 @@ import com.vaadin.flow.router.Route;
  * 公開画面のため MainLayout は付けない。
  */
 @Route("signup")
-@PageTitle("新規登録 | アグリゲーター")
+@PageTitle("新規登録 | 情報収集ツール")
 public class SignupView extends VerticalLayout {
 
     public SignupView(UserService users) {
