@@ -1,5 +1,6 @@
 package com.example.aggregator.batch.collection;
 
+import com.example.aggregator.batch.notification.NotificationBatchApplication;
 import com.example.aggregator.infra.notify.LineBotNotifier;
 import com.example.aggregator.infra.notify.LineProperties;
 import com.example.aggregator.infra.notify.NoOpLineNotifier;
@@ -18,16 +19,22 @@ import org.springframework.context.annotation.FilterType;
 /**
  * 収集バッチのエントリポイント（詳細設計 DD-ARC-08）。Web と別プロセスでワンショット実行し終了する。
  *
- * <p>収集本体（RSS→専用パーサー→LLM のフォールバック・冪等・robots/規約ゲート）のオーケストレーションは
- * 引き続き整備する。LLM 構造化はこのプロセス側にのみ属し、<b>通知系 Bean は配線から除外</b>する
- * （収集プロセスに LINE 送信経路を持ち込まない・DD-DI-06 の対称）。
+ * <p>収集本体（RSS 収集・ルール抽出・冪等・robots/規約ゲート）のオーケストレーションを担う。
+ * <b>通知系 Bean は配線から除外</b>する（収集プロセスに LINE 送信経路を持ち込まない・DD-DI-06 の対称）。
+ *
+ * <p>同居する通知側 {@link NotificationBatchApplication} も {@code @Configuration} として取り込まれ
+ * その {@code @Bean}（{@link NotificationService} を要求）まで登録されると、除外済みの通知サービスが
+ * 見つからず起動失敗する。よって <b>兄弟のエントリポイントも除外</b>する。加えて、この設定クラスの
+ * {@code @Bean} メソッド名は {@code @Service CollectionRunner} の既定 Bean 名（collectionRunner）と
+ * 衝突しないよう {@code collectionJobRunner} にしている。
  */
 @SpringBootApplication
 @ComponentScan(
         basePackages = "com.example.aggregator",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {NotificationService.class, NotificationCountService.class,
+                classes = {NotificationBatchApplication.class,
+                           NotificationService.class, NotificationCountService.class,
                            LineBotNotifier.class, NoOpLineNotifier.class, LineProperties.class}))
 public class CollectionBatchApplication {
 
@@ -42,7 +49,7 @@ public class CollectionBatchApplication {
      * 規約確認済（terms_reviewed=true）の情報源から実収集する（対象0件なら何もせず終了）。
      */
     @Bean
-    CommandLineRunner collectionRunner(CollectionRunner collectionRunner) {
+    CommandLineRunner collectionJobRunner(CollectionRunner collectionRunner) {
         return args -> {
             CollectionRunner.RunResult r = collectionRunner.run();
             log.info("[収集バッチ] 完了: 情報源{} 成功{} 失敗{} 取得{} 新規{}",
