@@ -25,7 +25,7 @@ rem ============================================================
 echo [%date% %time%] PostgreSQL の起動を確認します...
 
 rem 1) Start the service if not already running (single line on purpose).
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$svc = Get-Service -Name 'postgresql*' -ErrorAction SilentlyContinue; if (-not $svc) { Write-Host '[!] no postgresql* service found - check the installed service name' } else { foreach ($s in $svc) { if ($s.Status -ne 'Running') { try { Start-Service $s.Name -ErrorAction Stop; Write-Host ('[i] started service: ' + $s.Name) } catch { Write-Host ('[!] could not start ' + $s.Name + ' status=' + $s.Status + ' (startup type may be Manual, or admin required)') } } else { Write-Host ('[i] already running: ' + $s.Name) } } }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$svc = Get-Service -Name '*postgres*' -ErrorAction SilentlyContinue; if (-not $svc) { Write-Host '[!] no postgresql* service found - check the installed service name' } else { foreach ($s in $svc) { if ($s.Status -ne 'Running') { try { Start-Service $s.Name -ErrorAction Stop; Write-Host ('[i] started service: ' + $s.Name) } catch { Write-Host ('[!] could not start ' + $s.Name + ' status=' + $s.Status + ' (startup type may be Manual, or admin required)') } } else { Write-Host ('[i] already running: ' + $s.Name) } } }"
 
 rem 2) Wait until port 5432 accepts TCP connections (max ~120s).
 powershell -NoProfile -ExecutionPolicy Bypass -Command "for ($i=0; $i -lt 60; $i++) { try { $ok = (Test-NetConnection -ComputerName 'localhost' -Port 5432 -WarningAction SilentlyContinue).TcpTestSucceeded } catch { $ok = $false }; if ($ok) { Start-Sleep -Seconds 1; exit 0 }; Start-Sleep -Seconds 2 }; exit 1"
