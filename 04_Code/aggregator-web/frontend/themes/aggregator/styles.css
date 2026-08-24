@@ -89,8 +89,8 @@ vaadin-app-layout::part(navbar) {
   font-weight: 700;
 }
 
-/* 使い方ガイド（SC-02 冒頭の案内バー） */
-.timeline-guide {
+/* 使い方ガイド（SC-02 / SC-04 冒頭の案内バー） */
+.view-guide {
   background: var(--lumo-contrast-5pct);
   border: 1px solid var(--lumo-contrast-10pct);
   border-radius: var(--lumo-border-radius-m);
@@ -100,7 +100,7 @@ vaadin-app-layout::part(navbar) {
   line-height: 1.7;
   color: var(--lumo-secondary-text-color);
 }
-.timeline-guide a {
+.view-guide a {
   font-weight: 700;
   color: #4e7d55;
 }
