@@ -105,6 +105,40 @@ vaadin-app-layout::part(navbar) {
   color: #4e7d55;
 }
 
+/* 通知ガイド（SC-05 冒頭）。この画面の要点なので案内バーより一段強く見せる */
+.notify-guide {
+  background: rgba(78, 125, 85, 0.10);
+  border: 1px solid rgba(78, 125, 85, 0.30);
+  border-left: 5px solid #4e7d55;
+  border-radius: var(--lumo-border-radius-m);
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+.notify-guide .guide-head {
+  font-weight: 800;
+  font-size: var(--lumo-font-size-m);
+  color: var(--lumo-body-text-color);
+  margin-bottom: 4px;
+}
+.notify-guide .guide-body {
+  font-size: var(--lumo-font-size-s);
+  line-height: 1.8;
+  color: var(--lumo-body-text-color);
+}
+.notify-guide .guide-cond {
+  margin-top: 6px;
+  font-size: var(--lumo-font-size-xs);
+  line-height: 1.7;
+  color: var(--lumo-secondary-text-color);
+}
+
+/* タブ先頭の一行注記（SC-05） */
+.tab-note {
+  font-size: var(--lumo-font-size-s);
+  font-weight: 600;
+  color: #4e7d55;
+}
+
 /* --- ログイン/新規登録（SC-01/10）。和紙×七宝の落ち着いた中央カード --- */
 .login-view {
   background:

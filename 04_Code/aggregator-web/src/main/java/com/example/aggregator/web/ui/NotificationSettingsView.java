@@ -25,6 +25,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
@@ -46,7 +47,8 @@ import java.util.Map;
  *   <li><b>上段＝LINEに繋ぐ設定</b>: line_user_id 登録／通知の全体ON/OFF／連携ステータス＋友だち追加案内</li>
  *   <li><b>下段＝何を通知するか</b>: テーマお気に入り／情報源お気に入り（各「お気に入り」＋「通知ON/OFF」）／ブックマーク</li>
  * </ul>
- * 通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE ID登録済 ⑤通数枠あり（画面にも明示）。
+ * 通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE ID登録済 ⑤通数枠あり
+ * （冒頭の通知ガイド BD-SC-05-09 と各タブ先頭の注記で明示する）。
  * 「お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しない）」。
  */
 @Route(value = "notify", layout = MainLayout.class)
@@ -91,8 +93,35 @@ public class NotificationSettingsView extends VerticalLayout {
         H2 title = new H2("LINE通知設定");
         title.addClassName("view-title");
 
-        add(title, buildLineBlock(), buildTabs());
+        add(title, buildGuide(), buildLineBlock(), buildTabs());
         refresh();
+    }
+
+    /**
+     * 画面冒頭の通知ガイド（BD-SC-05-09）。この画面で最も誤解されやすい
+     * 「★お気に入りにしたものだけが LINE に届く」を最初に言い切り、続けて操作手順と全条件を示す。
+     * 連携ブロックの中の小さな注記では見落とされるため、独立した強調バーとして最上部に置く。
+     */
+    private Div buildGuide() {
+        Div guide = new Div();
+        guide.addClassName("notify-guide");
+
+        Div head = new Div();
+        head.addClassName("guide-head");
+        head.setText("🔔 ★お気に入りにしたテーマの新着だけが LINE に届きます");
+
+        Div body = new Div();
+        body.addClassName("guide-body");
+        body.setText("下の「テーマお気に入り」タブで、通知したいテーマの「☆ お気に入り」を押して ★ にしてください。"
+                + "★ が付いていないテーマは、タイムラインには表示されますが LINE には届きません。");
+
+        Div cond = new Div();
+        cond.addClassName("guide-cond");
+        cond.setText("届く条件（すべて満たしたとき）: ①★お気に入りにする ②その行の「通知」がON "
+                + "③上の「通知を受け取る（全体ON/OFF）」がON ④LINE連携済み ⑤今月の通数枠が残っている");
+
+        guide.add(head, body, cond);
+        return guide;
     }
 
     // ===== 上段: 自分のLINE連携（合言葉方式・userID入力不要／BD-SC-05-05〜08） =====
@@ -204,8 +233,6 @@ public class NotificationSettingsView extends VerticalLayout {
             applyStatus(status, users.find(userId).orElse(null));
         });
 
-        Span cond = new Span("通知が届く条件: ①お気に入り登録 ②その通知ON ③全体通知ON ④LINE連携済 ⑤通数枠あり");
-        cond.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
         Span webhookNote = new Span("※合言葉での自動連携には、アプリが公開URLで受信できること（Webhook）が必要です。"
                 + "自宅PCでは Cloudflare Tunnel 等、恒久運用は VPS（Phase 6）。未設定の間は下の「手動で連携」で検証できます。");
         webhookNote.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "11px");
@@ -230,7 +257,7 @@ public class NotificationSettingsView extends VerticalLayout {
 
         refreshState.run();   // 初期表示
 
-        block.add(h, status, steps, linkedActions, notifyAll, cond, webhookNote, manual);
+        block.add(h, status, steps, linkedActions, notifyAll, webhookNote, manual);
         return block;
     }
 
@@ -286,15 +313,26 @@ public class NotificationSettingsView extends VerticalLayout {
         buildThemeGrid();
         buildSourceGrid();
         buildBookmarkGrid();
-        Span note = new Span("お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しません）");
-        note.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
 
         TabSheet tabs = new TabSheet();
         tabs.setWidthFull();
-        tabs.add("テーマお気に入り", themeGrid);
-        tabs.add("情報源お気に入り", sourceGrid);
-        tabs.add("ブックマーク", new VerticalLayout(note, bookmarkGrid));
+        tabs.add("テーマお気に入り", new VerticalLayout(
+                tabNote("★ を付けたテーマの新着だけが LINE に届きます（★なし＝タイムラインには出ますが通知されません）。"),
+                themeGrid));
+        tabs.add("情報源お気に入り", new VerticalLayout(
+                tabNote("★ を付けた情報源の新着が LINE に届きます（★なし＝通知されません）。"),
+                sourceGrid));
+        tabs.add("ブックマーク", new VerticalLayout(
+                tabNote("お気に入り＝通知する／ブックマーク＝後で見るだけ（通知しません）。"),
+                bookmarkGrid));
         return tabs;
+    }
+
+    /** タブ先頭の一行注記。冒頭ガイドを読み飛ばした利用者にも、操作の直前で同じことを伝える。 */
+    private static Span tabNote(String text) {
+        Span note = new Span(text);
+        note.addClassName("tab-note");
+        return note;
     }
 
     private void buildThemeGrid() {
