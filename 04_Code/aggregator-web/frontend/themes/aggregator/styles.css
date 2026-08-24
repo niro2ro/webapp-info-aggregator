@@ -1,5 +1,8 @@
-/* 和ノスタルジック（水彩・自然/黄昏）テーマ — Lumo カスタム（BD-SC-00-09 / §0.1）。
-   特定作品のロゴ/キャラ/公式色は使わず、伝統文様（七宝）＋暖色でムードのみ再現。 */
+/* 和モダン・ミニマル — Lumo カスタム（BD-SC-00-09 / §0.1）。
+   既存の「和×緑（苔・和紙）」の世界観は維持しつつ、装飾を引き算して
+   密度と階層で見せる。特定作品のロゴ/キャラ/公式色は使わない。
+   方針: グラデ・多重影・地紋タイル・絵文字を排し、単色＋極薄罫線＋
+   細い差し色ラインで「人が設計した業務プロダクト」の面構えにする。 */
 
 html {
   /* プライマリ（苔・若葉の緑） */
@@ -14,93 +17,132 @@ html {
   --lumo-secondary-text-color: #8c7f68;
   --lumo-tertiary-text-color: #a99e86;
   --lumo-contrast-5pct: #f4efe1;
-  --lumo-contrast-10pct: #efe7d5;
-  --lumo-contrast-20pct: #e6dcc7;
+  --lumo-contrast-10pct: #e9e1cf;
+  --lumo-contrast-20pct: #ded2ba;
 
-  /* 角丸・タイポ */
-  --lumo-border-radius-s: 8px;
-  --lumo-border-radius-m: 12px;
-  --lumo-border-radius-l: 16px;
+  /* 角丸は控えめに（“ぷにっ”とした既製テンプレ感を消す） */
+  --lumo-border-radius-s: 3px;
+  --lumo-border-radius-m: 5px;
+  --lumo-border-radius-l: 6px;
+
   --lumo-font-family: "Noto Sans JP", "Inter", -apple-system, BlinkMacSystemFont,
     "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
 
-  --wa: rgba(95, 135, 104, 0.10);
+  /* インク（墨緑）: 上部バー等の単色 */
+  --wa-ink: #33403a;
 }
 
-/* 七宝つなぎ（重ね円）の地紋を全体背景に淡く敷く */
+/* 背景は無地の和紙。地紋タイルは敷かない（一覧の密度を優先）。 */
 body,
 vaadin-app-layout {
-  background-color: #f4efe1;
-  background-image:
-    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%),
-    radial-gradient(circle at 50% 50%, transparent 62%, var(--wa) 63%, var(--wa) 65%, transparent 66%);
-  background-size: 38px 38px, 38px 38px;
-  background-position: 0 0, 19px 19px;
+  background-color: var(--lumo-contrast-5pct);
+  background-image: none;
 }
 
-/* 上部バー: 黄昏の緑→藍グラデ */
+/* 上部バー: 単色インク＋苔の細い差し色ライン（グラデ・多重影は使わない） */
 vaadin-app-layout::part(navbar) {
-  background: linear-gradient(100deg, #3c4a44, #4e4a60);
+  background: var(--wa-ink);
   color: #f2ecdd;
-  box-shadow: 0 2px 14px rgba(16, 20, 50, 0.18);
+  border-bottom: 2px solid var(--lumo-primary-color);
+  box-shadow: none;
 }
 .app-title {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   font-weight: 700;
+  letter-spacing: 0.02em;
   color: #f2ecdd;
 }
 
-/* 記事カード（SC-02） */
+/* 左ドロワー: 行型リンク＋控えめなホバー、選択中は苔色＋左の差し色 */
+vaadin-app-layout::part(drawer) {
+  background: var(--lumo-base-color);
+  border-right: 1px solid var(--lumo-contrast-10pct);
+}
+.drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--lumo-border-radius-s);
+  color: var(--lumo-body-text-color);
+  text-decoration: none;
+  font-size: 14px;
+  border-left: 2px solid transparent;
+}
+.drawer-link:hover {
+  background: var(--lumo-contrast-5pct);
+}
+.drawer-link[highlight],
+.drawer-link.router-link-active {
+  color: var(--lumo-primary-text-color);
+  font-weight: 600;
+  border-left-color: var(--lumo-primary-color);
+  background: var(--lumo-primary-color-10pct);
+}
+.nav-ic {
+  width: 18px;
+  height: 18px;
+  color: var(--lumo-secondary-text-color);
+}
+.drawer-link[highlight] .nav-ic,
+.drawer-link.router-link-active .nav-ic {
+  color: var(--lumo-primary-color);
+}
+
+/* 記事カード（SC-02）: 浮かせず、極薄罫線で地に置く。影・ホバー浮上はしない。 */
 .art-card {
   background: var(--lumo-base-color);
   border: 1px solid var(--lumo-contrast-10pct);
-  border-radius: var(--lumo-border-radius-l);
-  box-shadow: 0 1px 2px rgba(84, 68, 38, 0.07), 0 8px 22px rgba(84, 68, 38, 0.10);
+  border-radius: var(--lumo-border-radius-m);
+  box-shadow: none;
   padding: 14px 16px;
-  transition: box-shadow 0.15s, transform 0.08s;
+  transition: border-color 0.12s ease;
 }
 .art-card:hover {
-  box-shadow: 0 6px 26px rgba(84, 68, 38, 0.16);
-  transform: translateY(-1px);
+  border-color: var(--lumo-primary-color-50pct);
 }
 .art-title {
   font-weight: 700;
   font-size: var(--lumo-font-size-l);
   color: var(--lumo-body-text-color);
+  line-height: 1.4;
 }
 .art-date {
-  font-weight: 800;
-  color: #4e7d55;
+  font-weight: 700;
+  color: var(--lumo-primary-text-color);
+  letter-spacing: 0.01em;
 }
 .art-noimg {
-  width: 60px;
-  height: 60px;
-  border: 1px dashed var(--lumo-contrast-20pct);
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--lumo-contrast-20pct);
+  border-radius: var(--lumo-border-radius-s);
   display: grid;
   place-items: center;
   font-size: 9px;
-  color: var(--lumo-secondary-text-color);
+  color: var(--lumo-tertiary-text-color);
   text-align: center;
   flex: 0 0 auto;
 }
 .view-title {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-/* --- ログイン/新規登録（SC-01/10）。和紙×七宝の落ち着いた中央カード --- */
+/* --- ログイン/新規登録（SC-01/10）。“間”のある画面にだけ淡い地紋を許す --- */
 .login-view {
   background:
-    radial-gradient(circle at 10px 10px, rgba(95,135,104,0.10) 2px, transparent 3px) 0 0 / 20px 20px,
-    var(--lumo-base-color);
+    radial-gradient(circle at 10px 10px, rgba(95,135,104,0.07) 2px, transparent 3px) 0 0 / 22px 22px,
+    var(--lumo-contrast-5pct);
 }
 .login-card {
   background: var(--lumo-base-color);
   border: 1px solid var(--lumo-contrast-10pct);
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(57,50,42,0.12);
+  border-radius: var(--lumo-border-radius-l);
+  box-shadow: 0 1px 2px rgba(57, 50, 42, 0.06);
 }
 .login-card h1 {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  letter-spacing: 0.02em;
 }
