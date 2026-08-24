@@ -23,7 +23,7 @@ import com.vaadin.flow.router.Route;
  * ここでのみ「編集・削除・Admin付与・管理者PIN設定」を行う（自己登録 SC-10 は role=User 固定）。
  */
 @Route(value = "users", layout = MainLayout.class)
-@PageTitle("利用者管理 | アグリゲーター")
+@PageTitle("利用者管理 | 情報収集ツール")
 public class UserAdminView extends VerticalLayout implements AdminOnly {
 
     private final UserService users;

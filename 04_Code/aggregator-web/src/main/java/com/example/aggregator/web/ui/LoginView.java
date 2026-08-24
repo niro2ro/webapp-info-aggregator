@@ -23,7 +23,7 @@ import com.vaadin.flow.router.Route;
  * 未認証で到達できる公開画面のため <b>MainLayout（ドロワー）を付けない</b>（BD-SC-01・画面設計 §96）。
  */
 @Route("login")
-@PageTitle("ログイン | アグリゲーター")
+@PageTitle("ログイン | 情報収集ツール")
 public class LoginView extends VerticalLayout {
 
     private final UserService users;
@@ -43,7 +43,7 @@ public class LoginView extends VerticalLayout {
         card.setSpacing(true);
         card.setAlignItems(Alignment.STRETCH);
 
-        H1 title = new H1("📚 アグリゲーター");
+        H1 title = new H1("📚 情報収集ツール");
         title.getStyle().set("font-size", "22px").set("margin", "0 0 4px 0");
         Span sub = new Span("利用者を選んでください");
         sub.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");

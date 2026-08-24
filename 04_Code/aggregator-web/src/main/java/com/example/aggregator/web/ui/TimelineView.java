@@ -42,7 +42,7 @@ import java.util.Set;
  * Phase 3: 検索(pg_trgm)・カテゴリ/未読フィルタ・並び順・既読/ブックマークを追加（FR-04-02/03/04・FR-05-03）。
  */
 @Route(value = "", layout = MainLayout.class)
-@PageTitle("タイムライン | アグリゲーター")
+@PageTitle("タイムライン | 情報収集ツール")
 public class TimelineView extends VerticalLayout {
 
     // ログイン中の利用者（Phase 5・認証導入）。ガード未通過の一時生成に備え、未ログイン時は -1（該当データ無し）。

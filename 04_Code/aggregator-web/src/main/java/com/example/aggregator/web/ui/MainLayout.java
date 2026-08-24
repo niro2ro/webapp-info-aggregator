@@ -24,7 +24,7 @@ public class MainLayout extends AppLayout {
         setPrimarySection(Section.DRAWER);
 
         // --- 上部バー ---
-        Span title = new Span("📚 テーマ別最新情報アグリゲーター");
+        Span title = new Span("📚 情報収集ツール");
         title.addClassName("app-title");
 
         String userName = CurrentUser.get().map(CurrentUser.Info::displayName).orElse("ゲスト");
