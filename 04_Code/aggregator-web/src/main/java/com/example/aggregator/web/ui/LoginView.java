@@ -10,7 +10,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -44,7 +43,7 @@ public class LoginView extends VerticalLayout {
         card.setSpacing(true);
         card.setAlignItems(Alignment.STRETCH);
 
-        H1 title = new H1("アグリゲーター");
+        H1 title = new H1("📚 アグリゲーター");
         title.getStyle().set("font-size", "22px").set("margin", "0 0 4px 0");
         Span sub = new Span("利用者を選んでください");
         sub.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
@@ -54,8 +53,7 @@ public class LoginView extends VerticalLayout {
             card.add(userButton(u));
         }
 
-        Button signup = new Button("新規登録", e -> UI.getCurrent().navigate(SignupView.class));
-        signup.setIcon(VaadinIcon.PLUS.create());
+        Button signup = new Button("＋ 新規登録", e -> UI.getCurrent().navigate(SignupView.class));
         signup.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         card.add(signup);
 
@@ -65,9 +63,7 @@ public class LoginView extends VerticalLayout {
     /** 利用者1人ぶんの選択ボタン。管理者は鍵マークで区別（BD-SC-01-01）。 */
     private Button userButton(UserEntity u) {
         boolean admin = u.getRole() == UserRole.ADMIN;
-        // 絵文字ではなく統一アイコン（管理者=盾／一般=人物）で区別（BD-SC-01-01）。
-        Button b = new Button(u.getDisplayName());
-        b.setIcon((admin ? VaadinIcon.SHIELD : VaadinIcon.USER).create());
+        Button b = new Button((admin ? "🔒 " : "👤 ") + u.getDisplayName());
         b.setWidthFull();
         b.addThemeVariants(admin ? ButtonVariant.LUMO_PRIMARY : ButtonVariant.LUMO_CONTRAST);
         b.addClickListener(e -> {

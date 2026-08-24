@@ -378,11 +378,11 @@ public class TimelineView extends VerticalLayout {
         // 由来バッジ＋情報源名（検索由来か専門サイト由来かを一目で）
         String srcName = sourceNames.getOrDefault(a.getSourceId(), "情報源#" + a.getSourceId());
         boolean fromSearch = ThemeSearchCollector.SEARCH_SOURCE_NAME.equals(srcName);
-        Span origin = new Span(fromSearch ? "検索" : "サイト");
+        Span origin = new Span(fromSearch ? "🔎 検索" : "🏷 サイト");
         origin.getElement().getThemeList().add("badge");
         origin.getElement().getThemeList().add(fromSearch ? "contrast" : "success");
         origin.getStyle().set("font-size", "11px");
-        Span source = new Span(srcName);
+        Span source = new Span("🌐 " + srcName);
         source.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "12px");
         HorizontalLayout meta = new HorizontalLayout(origin, source, link, readBtn, bm);
         meta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
