@@ -88,7 +88,7 @@ public class TimelineView extends VerticalLayout {
 
         // 使い方ガイド。初見の利用者に「テーマ登録 → 収集 → ここに並ぶ」の流れを示す（記事が有る/無いに関わらず常時表示）。
         Div guide = new Div();
-        guide.addClassName("timeline-guide");
+        guide.addClassName("view-guide");
         guide.add(new Span("💡 まず "));
         RouterLink toThemes = new RouterLink("テーマ管理", ThemeView.class);
         guide.add(toThemes);

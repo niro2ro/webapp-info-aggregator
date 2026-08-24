@@ -10,7 +10,9 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -18,6 +20,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +44,15 @@ public class ThemeView extends VerticalLayout {
 
         H2 title = new H2("テーマ管理");
         title.addClassName("view-title");
+
+        // 使い方ガイド。登録したテーマが「どこで効くのか」（一覧＝自動／LINE＝お気に入り登録が必要）を明示する。
+        Div guide = new Div();
+        guide.addClassName("view-guide");
+        guide.add(new Span("💡 ここで追加したテーマは "));
+        guide.add(new RouterLink("タイムライン", TimelineView.class));
+        guide.add(new Span(" の記事収集と絞り込みに使われます。さらに "));
+        guide.add(new RouterLink("LINE通知設定", NotificationSettingsView.class));
+        guide.add(new Span(" でそのテーマを「お気に入り」にすると、新着が LINE で届きます。"));
 
         // --- 追加フォーム ---
         TextField keyword = new TextField("キーワード");
@@ -77,7 +89,7 @@ public class ThemeView extends VerticalLayout {
         }).setHeader("");
         grid.setWidthFull();
 
-        add(title, form, grid);
+        add(title, guide, form, grid);
         refresh();
     }
 
