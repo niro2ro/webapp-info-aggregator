@@ -14,7 +14,6 @@ import com.example.aggregator.infra.service.ArticleReanalyzeService;
 import com.example.aggregator.infra.service.ThemeSearchCollector;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.example.aggregator.web.SampleIngestService;
 import com.example.aggregator.web.security.CurrentUser;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -34,6 +33,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +54,6 @@ public class TimelineView extends VerticalLayout {
     private int page = 0;
 
     private final ArticleRepository articles;
-    private final SampleIngestService sampleIngest;
     private final ArticleInteractionService interaction;
     private final ThemeRepository themes;
     private final ThemeSearchCollector themeSearch;
@@ -71,12 +70,10 @@ public class TimelineView extends VerticalLayout {
     private final HorizontalLayout pager = new HorizontalLayout();   // ページ切替（1,2,3…）
     private Map<Long, String> sourceNames = Map.of();   // source_id → 名前（カード表示用）
 
-    public TimelineView(ArticleRepository articles, SampleIngestService sampleIngest,
-                        ArticleInteractionService interaction, ThemeRepository themes,
+    public TimelineView(ArticleRepository articles, ArticleInteractionService interaction, ThemeRepository themes,
                         ThemeSearchCollector themeSearch, SourceRepository sources,
                         ArticleReanalyzeService reanalyze) {
         this.articles = articles;
-        this.sampleIngest = sampleIngest;
         this.interaction = interaction;
         this.themes = themes;
         this.themeSearch = themeSearch;
@@ -88,6 +85,15 @@ public class TimelineView extends VerticalLayout {
 
         H2 title = new H2("タイムライン");
         title.addClassName("view-title");
+
+        // 使い方ガイド。初見の利用者に「テーマ登録 → 収集 → ここに並ぶ」の流れを示す（記事が有る/無いに関わらず常時表示）。
+        Div guide = new Div();
+        guide.addClassName("timeline-guide");
+        guide.add(new Span("💡 まず "));
+        RouterLink toThemes = new RouterLink("テーマ管理", ThemeView.class);
+        guide.add(toThemes);
+        guide.add(new Span(" で、情報を集めたいテーマ（作品名・キーワードなど）を登録してください。"
+                + "登録後に「登録テーマの記事を収集」を押すと、そのテーマの最新情報がこのタイムラインに並びます。"));
 
         // --- ツールバー（並び順・検索） ---
         search.setPlaceholder("検索（タイトル・要約）");
@@ -142,16 +148,7 @@ public class TimelineView extends VerticalLayout {
         });
         collectThemes.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        Button collect = new Button("サンプルRSSを収集", e -> {
-            sampleIngest.ensureSampleTheme();
-            var r = sampleIngest.ingestSample();
-            Notification.show("収集: 取得 " + r.total() + " / 新規 " + r.registered() + " / 重複 " + r.duplicated());
-            reloadThemeItems();
-            refresh();
-        });
-        collect.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-
-        HorizontalLayout actions = new HorizontalLayout(collectThemes, collect);
+        HorizontalLayout actions = new HorizontalLayout(collectThemes);
 
         list.setPadding(false);
         list.setSpacing(true);
@@ -161,7 +158,7 @@ public class TimelineView extends VerticalLayout {
         pager.setWidthFull();
         pager.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        add(title, actions, toolbar, list, pager);
+        add(title, guide, actions, toolbar, list, pager);
         refresh();
     }
 
