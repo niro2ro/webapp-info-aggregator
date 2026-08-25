@@ -984,7 +984,7 @@ strong{font-weight:700;}
 <tr>
 <td>NFR-06</td>
 <td>AIコスト</td>
-<td><strong>月500円以内をハードキャップで担保</strong>。LLM は収集時の構造化のみ。コストは<strong>各APIレスポンスの <code>usage</code>（入出力トークン数）× モデル単価で自前計算</strong>し <code>LlmUsageLogs</code> に記録（案A）。<strong>当月累計が上限に達したら LLM 構造化を停止し RSS のみで収集を継続</strong>（収集・表示は止めない）。安全マージン（例: 上限の90%）で手前停止。<strong>使用モデルは Claude Sonnet</strong>（1日あたりの想定呼び出しが少なく、標準単価でも月500円に収まる見込み。単価はモデルごとに <code>application.yml</code> で設定）</td>
+<td><strong>月500円以内をハードキャップで担保</strong>。LLM は収集時の構造化のみ。コストは<strong>各APIレスポンスの <code>usage</code>（入出力トークン数）× モデル単価で自前計算</strong>し <code>LlmUsageLogs</code> に記録（案A）。<strong>当月累計が上限に達したら LLM 構造化を停止し RSS のみで収集を継続</strong>（収集・表示は止めない）。安全マージン（例: 上限の90%）で手前停止。<strong>使用モデルは Claude Haiku 4.5</strong>（当初は Sonnet を選定したが、実装後の実測で抽出精度は Haiku で十分と判断しコスト削減のため変更。回答ログ Q21 追記を参照。単価はモデルごとに <code>application.yml</code> で設定）</td>
 </tr>
 <tr>
 <td>NFR-07</td>
@@ -2142,7 +2142,7 @@ Crawl-delay: 1         ← アクセスは1秒以上あけて
 <li><code>event_date_kind</code>（EventDateKind＝発売日/開催日/放送日/受付開始/その他。カテゴリ既定・原文から判断できる場合はそれを優先し、LLMは補助）</li>
 <li><code>location</code>（string or null）</li>
 <li><code>summary</code>（自作要約・本文転載しない）</li>
-<li><strong>モデル: Claude Sonnet</strong>（正確なモデルID・単価・リクエスト形式は実装着手時に公式ドキュメントで確認。単価は <code>application.yml</code> に設定し <code>LlmUsageLogs</code> の概算コスト計算に用いる）。</li>
+<li><strong>モデル: Claude Haiku 4.5</strong>（当初 Sonnet を選定 → 実装後に精度十分と確認できたためコスト削減目的で変更。回答ログ Q21 追記を参照。単価は <code>application.yml</code> に設定し <code>LlmUsageLogs</code> の概算コスト計算に用いる）。</li>
 <li><strong>コスト記録（案A）</strong>: 各レスポンスの <code>usage</code>（<code>input_tokens</code> / <code>output_tokens</code>）を取得し、<code>単価×トークン数</code> で概算コストを算出して <code>LlmUsageLogs</code> に記録。<strong>呼び出し前に当月累計を確認するハードキャップ（FR-02-11・NFR-06）</strong>。組織のAdmin使用量/コストAPIは実請求との突合（任意）に留める。</li>
 <li>呼び出しは公式 SDK <strong>anthropic-sdk-java</strong> を利用。差し替え可能にするため <code>LlmStructurer</code> インターフェース（Java の interface）を挟み、実装（Claude 版）を Spring の DI で注入する。予算判定は <code>LlmBudgetGuard</code> に集約し、収集サービスは LLM 呼び出し前に残予算を確認する。</li>
 </ul>

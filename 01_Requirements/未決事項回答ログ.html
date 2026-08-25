@@ -464,6 +464,11 @@ strong{font-weight:700;}
 <li><strong>使用モデル＝Claude Sonnet</strong>: 標準単価 入力$3/出力$15（100万トークンあたり）。1記事の想定トークン（入力≒2,000/出力≒300）で <strong>≒¥1.6/記事</strong>、月500円で<strong>約300記事/月（≒1日10記事）</strong>。開発者判断で「1日10記事も使わない」見込みのため Sonnet を採用（Haiku なら約3倍こなせるが、品質と余裕を優先）。単価は改定されうるため実装着手時に公式ドキュメントで確認し <code>application.yml</code> に設定。</li>
 <li><strong>根拠</strong>: 「月500円以内」を目標から<strong>守れる設計（ハードキャップ）</strong>に格上げしつつ、前回G3の「収集は止めない」方針と両立（LLM段のみ停止、RSSで継続）。案Aは呼び出し前に当月累計を即時に判定できる唯一現実的な方式（Admin API は用途に不適）。Sonnet 採用は実利用ボリュームが小さいという開発者の見立てに基づく。</li>
 </ul>
+<blockquote>
+<p><strong>【実装後の変更】使用モデルを Claude Sonnet → Claude Haiku 4.5 へ変更</strong>
+実装して実際に動かしたうえでの判断。<strong>発売日・カテゴリの抽出精度は Haiku で十分</strong>であり、Sonnet の性能までは必要なかった。加えて<strong>コスト削減</strong>の効果が大きい（同じ月次予算でより多くの記事を処理できる）。用途が「RSSで埋まらない項目の補完」という定型的な構造化に限定されているため、モデルを軽くしても品質が落ちなかった。
+ハードキャップ・usage自前計算（案A）の設計そのものは変更なし。モデルIDと単価は <code>application.yml</code> で設定するため、実装の変更はプロパティ値のみで済んだ（<code>LLM_MODEL</code> 既定値 = <code>claude-haiku-4-5</code>）。<strong>「設定を外部化しておけば選定をあとから覆せる」ことが実際に効いた例</strong>。</p>
+</blockquote>
 <h2 id="q22-line582026-08-07">Q22. LINE通知失敗の分類・再送方針（項目5外部制約/項目8エラー方針の詰め・2026-08-07）</h2>
 <p>(2)LINE配信失敗時の再送ポリシーを起点に、通知失敗の全分類と受信側の扱いを確定。要件定義書 §8.1・FR-03-07/08・FR-04-06・FR-07-03・NotifyStatus enum・ArticleNotifications に反映。</p>
 <ul>
