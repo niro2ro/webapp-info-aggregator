@@ -806,7 +806,7 @@ strong{font-weight:700;}
 <tr>
 <td>FR-07-04</td>
 <td>認可（ロール制御）</td>
-<td>admin/user の2ロールで機能・画面を出し分ける。<strong>管理系（SC-06 情報源マスタ／SC-07 管理ダッシュボード＝LLMコスト含む／SC-08 実行ログ／SC-09 利用者管理）は admin 限定</strong>。<strong>新規登録（SC-10）は未認証で誰でも可だが role=User 固定</strong>。Spring Security（<code>@PreAuthorize</code> 等）で制御し、認可層は VPS 移行後も不変</td>
+<td>admin/user の2ロールで機能・画面を出し分ける。<strong>管理系（SC-06 情報源マスタ／SC-07 管理ダッシュボード＝LLMコスト含む／SC-08 実行ログ／SC-09 利用者管理）は admin 限定</strong>。<strong>新規登録（SC-10）は未認証で誰でも可だが role=User 固定</strong>。Spring Security（<code>@PreAuthorize</code> 等）で制御し、認可層は VPS 移行後も不変。<strong>※実装では Spring Security を導入せず、Vaadin の <code>VaadinServiceInitListener</code> による自前の <code>AuthGuard</code> で同等の到達拒否を実装している（未実装項目・README 参照）</strong></td>
 </tr>
 </tbody>
 </table></div>
@@ -964,7 +964,7 @@ strong{font-weight:700;}
 <tr>
 <td>NFR-02</td>
 <td>認証・認可</td>
-<td><strong>認証</strong>: ローカルは利用者選択方式（一覧から自分をクリック。一般利用者はクレデンシャルなしの識別、<strong>管理者のみ4桁PIN</strong>をハッシュ照合）。<strong>認可</strong>: admin/user の2ロールを Spring Security で制御。VPS移行時(Phase 6)に全利用者を本格認証（パスワード/OAuth）へ差し替え、認可層は不変（authN/authZ 分離）</td>
+<td><strong>認証</strong>: ローカルは利用者選択方式（一覧から自分をクリック。一般利用者はクレデンシャルなしの識別、<strong>管理者のみ4桁PIN</strong>をハッシュ照合）。<strong>認可</strong>: admin/user の2ロールを Spring Security で制御。VPS移行時(Phase 6)に全利用者を本格認証（パスワード/OAuth）へ差し替え、認可層は不変（authN/authZ 分離）。<strong>※実装では Spring Security 未導入。自前の <code>AuthGuard</code> で代替（未実装項目・README 参照）</strong></td>
 </tr>
 <tr>
 <td>NFR-03</td>

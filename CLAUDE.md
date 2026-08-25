@@ -82,7 +82,7 @@
 | LLM | Claude API（**anthropic-sdk-java** 公式） | 収集時の構造化のみ。通知時は使わない |
 | 通知 | LINE Messaging API（**line-bot-sdk-java** 公式） | LINE Notify は 2025-03-31 終了済み。Notify 前提の記事に注意 |
 | 設定 | `application.yml` + 環境変数 / `.env` | トークン直書き禁止 |
-| テスト | JUnit 5 + Mockito + **Testcontainers** | Testcontainers で本物の PostgreSQL を起動して結合検証 |
+| テスト | JUnit 5 + Mockito（+ Testcontainers） | **現状は JUnit 5 + Mockito のみ導入済み。Testcontainers は未導入**（結合テスト工程で本物の PostgreSQL を起動して検証する想定） |
 | 起動 | タスクスケジューラ（ログオン時、遅延5分） | VPS では cron / systemd timer |
 
 ---

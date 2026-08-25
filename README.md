@@ -122,6 +122,20 @@
 
 現時点ではローカル環境（Windows）での運用のみで、公開 URL はありません。
 
+### 設計書に記載があるが未実装の項目
+
+設計と実装の差分を把握したうえで残しているものです。
+
+| 項目 | 設計書の記載 | 現状 |
+|---|---|---|
+| **結合テスト** | `06_IntegrationTest/` で実施 | **未着手**。単体テスト（JUnit 5 / Mockito・22クラス）のみ実施 |
+| **Testcontainers** | 実DBを起動して結合検証（CLAUDE.md §4・DD-ARC-05） | **未導入**。依存関係に含めていない |
+| **`aggregator-tests` モジュール** | 5モジュール構成の1つ（DD-ARC-05） | **未作成**。実際は domain / infrastructure / web / batch の4モジュール |
+| **認可の Spring Security 化** | `@PreAuthorize` 等でサーバー側制御（FR-07-04・BD-SC-00-06） | **未導入**。Vaadin の `VaadinServiceInitListener` による自前の `AuthGuard` で到達拒否を実装。`spring-security-crypto` は依存に含むが**管理者PINの BCrypt ハッシュにのみ使用**しており、`SecurityFilterChain` は使っていない |
+| **Phase 6** | インターネット公開・時刻ベース通知・死活監視 | **未着手** |
+
+認証は現状ローカル運用向けの簡易方式です（一般利用者は一覧から選択、管理者のみ4桁PIN）。インターネット公開にあたっては認証の作り直しが前提になります。
+
 ## セットアップ
 
 ```bash

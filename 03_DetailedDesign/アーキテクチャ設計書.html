@@ -177,7 +177,7 @@ strong{font-weight:700;}
 </tr>
 <tr>
 <td><strong>web</strong>（DD-ARC-03）</td>
-<td>Vaadin Flow の画面（SC-01〜10）、Spring Security、表示用DTOとJST変換</td>
+<td>Vaadin Flow の画面（SC-01〜10）、認証・認可、表示用DTOとJST変換</td>
 <td>domain・infrastructure</td>
 <td>SC-*</td>
 </tr>
@@ -195,6 +195,10 @@ strong{font-weight:700;}
 </tr>
 </tbody>
 </table></div>
+<blockquote>
+<p><strong>【実装状況】</strong> 現在の Maven モジュールは <strong>domain / infrastructure / web / batch の4つ</strong>で、<strong><code>aggregator-tests</code>（DD-ARC-05）は未作成</strong>、<strong>Testcontainers も未導入</strong>である。単体テストは各モジュールの <code>src/test</code> に JUnit 5 + Mockito で配置しており、実DBを起動する結合検証は結合テスト工程（<code>06_IntegrationTest/</code>・未着手）に持ち越している。
+また <strong>web（DD-ARC-03）の認可は Spring Security ではなく自前実装</strong>である。Vaadin の <code>VaadinServiceInitListener</code> を用いた <code>AuthGuard</code> が全画面遷移前に割り込み、未ログインの差し戻しと <code>AdminOnly</code> 画面の到達拒否を行う。<code>spring-security-crypto</code> は依存に含むが、用途は<strong>管理者PINの BCrypt ハッシュのみ</strong>で、<code>SecurityFilterChain</code> や <code>@PreAuthorize</code> は使用していない。</p>
+</blockquote>
 <h3 id="dd-arc-06">なぜ層（モジュール）を分けるのか（DD-ARC-06）</h3>
 <ul>
 <li><strong>依存を一方向に固定</strong>して「ビジネスの中心（domain）が、DBや外部API（infrastructure）や画面（web）に引きずられない」ようにする。domain は infrastructure を知らず、<strong>ポート（interface）</strong>だけを見る。実装は infrastructure 側に置き、Spring の DI で差し込む（依存性逆転）。</li>

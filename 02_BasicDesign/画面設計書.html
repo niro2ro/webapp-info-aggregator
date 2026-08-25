@@ -232,7 +232,7 @@ strong{font-weight:700;}
 <tr>
 <td>BD-SC-00-06</td>
 <td>ロール出し分け</td>
-<td>管理系画面/ブロックは Spring Security（<code>@PreAuthorize</code> 等）でサーバー側制御。メニュー非表示だけに頼らず、画面到達も拒否</td>
+<td>管理系画面/ブロックは Spring Security（<code>@PreAuthorize</code> 等）でサーバー側制御。メニュー非表示だけに頼らず、画面到達も拒否。<strong>※実装では Spring Security 未導入。Vaadin の <code>VaadinServiceInitListener</code>（<code>AuthGuard</code>）でサーバー側の到達拒否を実装</strong></td>
 <td>FR-07-04・NFR-02</td>
 </tr>
 <tr>
